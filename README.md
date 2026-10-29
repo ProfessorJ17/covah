@@ -1,10 +1,9 @@
 # Havoc v1.0.0
 
-**A Discord-like web application built for real-time communication**
+**Post-Quantum encrypted real-time communication platform**
 
-🌐 **Live Site:** https://www.havoc.my.id  
-📅 **Release Date:** October 28, 2026  
-👤 **Author:** Professor J  
+🌐 **Live Site:** https://www.havoc.my.id
+👤 **Author:** Professor J
 📦 **Version:** 1.0.0
 
 ---
@@ -28,7 +27,7 @@
 
 ## 🎯 Overview
 
-Havoc is a Discord-like web application built with Firebase for real-time communication, enhanced with a post-quantum security layer for message encryption. It provides a complete Discord-like experience including servers, channels, direct messages, voice chat, rich media sharing, and comprehensive user profiles.
+Havoc is a modern real-time communication platform built with Firebase, enhanced with a post-quantum security layer for message encryption. It provides a complete communication experience including servers, channels, direct messages, voice chat, rich media sharing, and comprehensive user profiles.
 
 ### Key Highlights
 
@@ -39,7 +38,7 @@ Havoc is a Discord-like web application built with Firebase for real-time commun
 - **Rich user profiles** - Custom avatars, banners, name styles, and identity tags
 - **Voice chat** - WebRTC-based voice communication with screen sharing
 - **Rich media** - GIFs, images, audio clips, and reactions
-- **Discord-like features** - Threads, pins, replies, mentions, and role-based permissions
+- **Rich messaging features** - Threads, pins, replies, mentions, and role-based permissions
 - **End-to-end encryption** - Messages encrypted before storage, decrypted on client
 
 ---
@@ -97,7 +96,7 @@ Havoc is a Discord-like web application built with Firebase for real-time commun
 
 ### 🔔 Notifications
 - **Mention Notifications** - Get notified when mentioned
-- **Sound Effects** - Discord-style notification sounds (Web Audio API)
+- **Sound Effects** - Notification sounds (Web Audio API)
 - **Notification Modes** - All mentions, @mentions only, or none per channel
 - **Suppression** - Suppress @everyone, @here, and @role mentions
 - **Mute System** - Mute entire servers or specific channels
@@ -166,7 +165,7 @@ Havoc is a Discord-like web application built with Firebase for real-time commun
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/ProfessorJ17/covah/tree/main
+   git clone https://github.com/ProfessorJ17/covah.git
    cd covah
    ```
 
@@ -706,12 +705,12 @@ Havoc uses a single HTML file containing:
 
 ## 📝 Version History
 
-### v1.0.0 (October 28, 2026)
+### v1.0.0 (October 28, 2025)
 - Initial release
 - Firebase-based real-time communication
 - Post-quantum security layer (AES-256-GCM encryption)
 - Message encryption and digital signatures
-- Complete Discord-like feature set
+- Complete feature set for real-time communication
 - Voice chat with screen sharing
 - Rich media support
 - User profiles with customization
@@ -719,6 +718,7 @@ Havoc uses a single HTML file containing:
 - Friends and DMs
 - Public discovery
 - End-to-end encryption for messages
+- Typing indicators for real-time communication
 
 ---
 
@@ -726,9 +726,9 @@ Havoc uses a single HTML file containing:
 
 This project is proprietary software. All rights reserved.
 
-**Copyright © 2026 Professor J**
+**Copyright © 2025 Professor J**
 
-For licensing inquiries, contact: [admin@j10.33mail.com]
+For licensing inquiries, contact: [contact@havoc.my.id](mailto:contact@havoc.my.id)
 
 ---
 
@@ -739,15 +739,15 @@ For licensing inquiries, contact: [admin@j10.33mail.com]
 - **Font Awesome** - Icon library
 - **Giphy** - GIF API
 - **DiceBear** - Avatar generation
-- **Discord** - Inspiration for UI/UX design
+- **Modern chat platforms** - Inspiration for UI/UX design
 
 ---
 
 ## 📞 Support
 
 - **Website:** https://www.havoc.my.id
-- **Email:** support@havoc.my.id
-- **GitHub Issues:** https://github.com/yourusername/havoc/issues
+- **Email:** admin@j10.33mail.com
+
 
 ---
 
@@ -779,4 +779,4 @@ For licensing inquiries, contact: [admin@j10.33mail.com]
 
 **Built with ❤️ by Professor J**
 
-*Last updated: October 28, 2026*
+*Last updated: October 28, 2025*
