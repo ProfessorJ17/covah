@@ -205,12 +205,12 @@
     </div>
 
     <div id="channelsView" class="hidden flex-1 overflow-y-auto px-2 py-3">
-      <div class="flex items-center justify-between px-2 mb-1.5">
+      <div class="flex items-center justify-between px-2 mb-1.5" oncontextmenu="showChannelContextMenu(event)">
         <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mono">Text Channels</span>
         <button id="addChanBtn" onclick="openModal('createChan')" class="hidden text-bch hover:text-bch-bright text-xs"><i class="fa-solid fa-plus"></i></button>
       </div>
       <div id="channelsList" class="space-y-0.5 mb-5"></div>
-      <div class="flex items-center justify-between px-2 mb-1.5">
+      <div class="flex items-center justify-between px-2 mb-1.5" oncontextmenu="showChannelContextMenu(event)">
         <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mono">Voice Channels</span>
         <button id="addVoiceBtn" onclick="createVoiceChannel()" class="hidden text-bch hover:text-bch-bright text-xs"><i class="fa-solid fa-plus"></i></button>
       </div>
@@ -480,6 +480,15 @@
 </div>
 
 <div id="ctxMenu" class="ctx-menu hidden"></div>
+<div id="channelContextMenu" class="fixed z-[500] bg-dark-900 border border-dark-700 rounded-xl shadow-xl hidden flex flex-col min-w-[200px]">
+  <div class="ctx-item" onclick="openModal('createChan')"><i class="fa-solid fa-hashtag w-4"></i> Create Channel</div>
+  <div class="ctx-item" onclick="createVoiceChannel()"><i class="fa-solid fa-volume-high w-4"></i> Create Voice Channel</div>
+  <div class="ctx-item" onclick="createCategory()"><i class="fa-solid fa-folder w-4"></i> Create Category</div>
+  <div class="border-t border-dark-700 my-1"></div>
+  <div class="ctx-item" onclick="openInviteToFriends()"><i class="fa-solid fa-user-plus w-4"></i> Invite to Server</div>
+  <div class="border-t border-dark-700 my-1"></div>
+  <div class="ctx-item" onclick="toggleHideMuted()"><i class="fa-solid fa-eye-slash w-4" id="hideMutedIcon"></i> <span id="hideMutedLabel">Hide Muted Channels</span></div>
+</div>
 <div id="reactionPicker" class="fixed z-[400] bg-dark-900 border border-dark-700 rounded-xl shadow-xl hidden flex flex-col" style="width:320px;max-height:360px">
   <div class="p-2 border-b border-dark-700">
     <input type="text" id="emojiSearch" placeholder="Search emoji or :smile:" class="field text-xs py-1.5" oninput="filterEmojis(this.value)" autocomplete="off">
@@ -3512,9 +3521,17 @@ function renderChannels(){
   if(!textList || !voiceList) return;
   textList.innerHTML = ''; voiceList.innerHTML = '';
 
-  S_channels.forEach(c => {
+  // Sort channels by position if available
+  S_channels.sort((a, b) => (a.position || 0) - (b.position || 0));
+
+  S_channels.forEach((c, index) => {
+    // Skip muted channels if hide muted is enabled
+    if(S.hideMutedChannels && isServerMuted(S.server?.id, c.id)) return;
+    
     const btn = document.createElement('button');
     btn.className = `w-full flex items-center gap-2 px-2 py-1 rounded text-sm transition-all group ${S.channel === c.id ? 'bg-dark-700 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-slate-200'}`;
+    btn.dataset.channelId = c.id;
+    btn.dataset.index = index;
     
     if(c.type === 'voice'){
       btn.onclick = () => joinVoice(c);
@@ -3528,7 +3545,49 @@ function renderChannels(){
         console.log('Clicked channel:', c);
         switchChannel(c);
       };
+      
+      // Add drag handle for admins
+      const dragHandle = S.canManage ? `<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600 cursor-grab hover:text-slate-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>` : '';
+      
+      // Make draggable for admins
+      if(S.canManage) {
+        btn.draggable = true;
+        btn.ondragstart = (e) => {
+          e.dataTransfer.setData('text/plain', index);
+          e.dataTransfer.effectAllowed = 'move';
+          btn.classList.add('opacity-50');
+        };
+        btn.ondragend = () => {
+          btn.classList.remove('opacity-50');
+        };
+        btn.ondragover = (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        };
+        btn.ondrop = async (e) => {
+          e.preventDefault();
+          const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+          const toIndex = index;
+          if(fromIndex === toIndex) return;
+          
+          // Reorder array
+          const movedChannel = S_channels.splice(fromIndex, 1)[0];
+          S_channels.splice(toIndex, 0, movedChannel);
+          
+          // Update positions in Firestore
+          for(let i = 0; i < S_channels.length; i++) {
+            if(S_channels[i].type === 'text') {
+              await updateDoc(doc(db, 'servers', S.server.id, 'channels', S_channels[i].id), { position: i });
+            }
+          }
+          
+          // Re-render
+          renderChannels();
+        };
+      }
+      
       btn.innerHTML = `
+        ${dragHandle}
         <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
         <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
       `;
@@ -5909,6 +5968,50 @@ function updateNotifMenuLabels(){
   if($('soundMuteLabel')) $('soundMuteLabel').textContent = S.soundsMuted ? 'Unmute Sounds' : 'Mute Sounds';
   if($('soundMuteIcon')) $('soundMuteIcon').className = S.soundsMuted ? 'fa-solid fa-volume-xmark w-4' : 'fa-solid fa-volume-high w-4';
 }
+
+// Channel context menu
+window.showChannelContextMenu = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const menu = $('channelContextMenu');
+  if(!menu) return;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 220) + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.remove('hidden');
+  updateHideMutedLabel();
+};
+
+window.createCategory = () => {
+  if(!S.canManage || !S.server) return;
+  const name = prompt('Category name:')?.trim();
+  if(!name) return;
+  // For now, categories are just visual - channels can be grouped by a category field
+  alert('Category support coming soon - for now channels are grouped by type (text/voice)');
+  $('channelContextMenu')?.classList.add('hidden');
+};
+
+window.toggleHideMuted = () => {
+  S.hideMutedChannels = !S.hideMutedChannels;
+  localStorage.setItem('havoc_hide_muted', S.hideMutedChannels ? '1' : '0');
+  updateHideMutedLabel();
+  renderChannels();
+  $('channelContextMenu')?.classList.add('hidden');
+};
+
+function updateHideMutedLabel(){
+  if($('hideMutedLabel')) $('hideMutedLabel').textContent = S.hideMutedChannels ? 'Show Muted Channels' : 'Hide Muted Channels';
+  if($('hideMutedIcon')) $('hideMutedIcon').className = S.hideMutedChannels ? 'fa-solid fa-eye w-4' : 'fa-solid fa-eye-slash w-4';
+}
+
+// Initialize hide muted channels state
+S.hideMutedChannels = localStorage.getItem('havoc_hide_muted') === '1';
+
+// Close context menu on click outside
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#channelContextMenu')) {
+    $('channelContextMenu')?.classList.add('hidden');
+  }
+});
 
 function getChanNotifMode(){
   if(!S.server || !S.channel) return 'all';
