@@ -1580,12 +1580,10 @@ window.openModal = id => {
 window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
 // ========== AUTH ==========
-let _autoLoginAttempted = false;
 onAuthStateChanged(auth, async user => {
   console.log('Auth state changed:', user ? `User: ${user.uid}` : 'No user');
   S.user = user;
   if(user){
-    _autoLoginAttempted = false; // Reset flag on successful login
     try{
       const snap = await getDoc(doc(db,'users',user.uid));
       if(snap.exists()){
@@ -1648,35 +1646,11 @@ onAuthStateChanged(auth, async user => {
     $('imgUploadBtn').classList.add('hidden');
     $('gifBtn') && $('gifBtn').classList.add('hidden');
     $('audioClipBtn').classList.add('hidden');
-    // Auto-login if remember me is checked (only attempt once)
-    if(!_autoLoginAttempted){
-      _autoLoginAttempted = true;
-      try{
-        const remembered = JSON.parse(localStorage.getItem('havoc_remember')||'null');
-        if(remembered?.email && remembered?.pass){
-          console.log('Auto-login with saved credentials');
-          await signInWithEmailAndPassword(auth, remembered.email, remembered.pass);
-        }
-      }catch(e){
-        console.warn('Auto-login failed:', e);
-      }
-    }
   }
-  // Force UI update
   updateUserUI();
   loadMyServers();
   console.log('Final state - User:', !!S.user, 'Profile:', !!S.profile);
 });
-
-// Fallback: Force UI update after 2 seconds if auth state seems stuck
-setTimeout(() => {
-  if (auth.currentUser && !S.user) {
-    console.log('Auth fallback triggered - forcing UI update');
-    S.user = auth.currentUser;
-    updateUserUI();
-    loadMyServers();
-  }
-}, 2000);
 
 window.doLogin = async e => { e.preventDefault(); clearAuthErr(); const email=$('lEmail').value.trim(), pass=$('lPass').value; try{
   const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
@@ -1716,8 +1690,7 @@ window.doSignOut = async () => {
     }
   });
 
-  // Clear saved credentials to prevent auto-login
-  localStorage.removeItem('havoc_remember');
+  // NOTE: Don't clear havoc_remember - "Remember me" should keep credentials for next login
 
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
   $('typingIndicator').classList.add('hidden');
