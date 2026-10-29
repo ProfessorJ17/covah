@@ -5664,7 +5664,7 @@ function listenForTyping() {
     const typers = {};
     snap.forEach(d => {
       const data = d.data();
-      if (data.uid !== S.user.uid && (now - (data.timestamp || 0)) < 5000) {
+      if (data.uid !== S.user.uid && (now - (data.timestamp || 0)) < 3000) {
         typers[data.uid] = data.handle;
       }
     });
