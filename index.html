@@ -3524,7 +3524,10 @@ function renderChannels(){
       `;
       voiceList.appendChild(btn);
     } else {
-      btn.onclick = () => switchChannel(c);
+      btn.onclick = () => {
+        console.log('Clicked channel:', c);
+        switchChannel(c);
+      };
       btn.innerHTML = `
         <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
         <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
@@ -3557,8 +3560,10 @@ function renderVoiceArea(){
   });
 }
 function switchChannel(c){
+  console.log('Switching to channel:', c, 'Current S.channel:', S.channel);
   leaveVoice();
   S.channel = c.id; S.channelType = 'text';
+  console.log('After setting S.channel:', S.channel);
 
   // Save last visited channel for this server
   if(S.server && c.id) {
@@ -4722,10 +4727,10 @@ async function joinVoice(c){
     S.localStream.getAudioTracks().forEach(t => t.enabled = !S.micMuted && !S.deafened);
     startVolumeMonitor(S.user.uid, S.localStream);
     $('voiceStatus').textContent = 'Connected — waiting for peers';
-    const roomKey = `voice_${S.server.id}_${c.id}`;
+    const roomKey = `${S.server.id}_${c.id}`;
     
-    // Use Firestore for voice signaling
-    const roomRef = doc(db, roomKey, 'users', S.user.uid);
+    // Use Firestore for voice signaling - proper nested collection structure
+    const roomRef = doc(db, 'voice_rooms', roomKey, 'users', S.user.uid);
     await setDoc(roomRef, {
       handle: safe(S.profile?.handle,'User'),
       avatar: safe(S.profile?.avatar,''),
@@ -4735,7 +4740,7 @@ async function joinVoice(c){
     S.voiceUsers[S.user.uid] = { handle: S.profile?.handle, avatar: S.profile?.avatar };
     
     // Listen for other users in the voice room
-    const usersRef = collection(db, roomKey, 'users');
+    const usersRef = collection(db, 'voice_rooms', roomKey, 'users');
     S.voiceUnsub = onSnapshot(usersRef, (snap) => {
       const now = Date.now();
       snap.forEach(doc => {
@@ -4750,7 +4755,7 @@ async function joinVoice(c){
     });
 
     // Listen for signaling messages
-    const signalRef = collection(db, roomKey, 'signals');
+    const signalRef = collection(db, 'voice_rooms', roomKey, 'signals');
     S.signalUnsub = onSnapshot(signalRef, (snap) => {
       snap.docChanges().forEach(change => {
         if (change.type !== 'added') return;
@@ -4822,14 +4827,14 @@ async function createPeer(remoteUid, meta, initiator){
   };
   pc.onicecandidate = (ev) => {
     if(ev.candidate) {
-      const signalRef = collection(db, `voice_${S.server.id}_${S.channel}`, 'signals');
+      const signalRef = collection(db, 'voice_rooms', `${S.server.id}_${S.channel}`, 'signals');
       addDoc(signalRef, { type:'ice', from:S.user.uid, to:remoteUid, candidate: ev.candidate, ts: Date.now() });
     }
   };
   if(initiator){
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    const signalRef = collection(db, `voice_${S.server.id}_${S.channel}`, 'signals');
+    const signalRef = collection(db, 'voice_rooms', `${S.server.id}_${S.channel}`, 'signals');
     addDoc(signalRef, { type:'offer', from:S.user.uid, to:remoteUid, sdp: pc.localDescription, ts: Date.now() });
   }
   return pc;
@@ -4862,8 +4867,8 @@ window.leaveVoice = () => {
   if(S.signalUnsub) { S.signalUnsub(); S.signalUnsub = null; }
   // Clean up voice room presence
   if (S.server && S.channel) {
-    const roomKey = `voice_${S.server.id}_${S.channel}`;
-    deleteDoc(doc(db, roomKey, 'users', S.user.uid)).catch(() => {});
+    const roomKey = `${S.server.id}_${S.channel}`;
+    deleteDoc(doc(db, 'voice_rooms', roomKey, 'users', S.user.uid)).catch(() => {});
   }
   // Clear processed signals to prevent memory leak
   S.processedSignals.clear();
