@@ -48,8 +48,9 @@
     .voice-user{font-size:11px;padding:2px 0 2px 26px;color:#b5bac1}
     .dm-active{background:#0AC18E!important;border-radius:12px!important}
     .reaction-bar{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
-    .reaction{background:#1c222e;border:1px solid #323c52;border-radius:12px;padding:1px 7px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:3px}
+    .reaction{background:#1c222e;border:1px solid #323c52;border-radius:12px;padding:1px 7px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;position:relative}
     .reaction:hover,.reaction.mine{border-color:#0AC18E;background:rgba(10,193,142,.15)}
+    .reaction[data-count]:hover::after{content:attr(data-users);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#0f1218;border:1px solid #323c52;border-radius:6px;padding:4px 8px;font-size:10px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;color:#fff;z-index:10;margin-bottom:4px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
     .video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;width:100%;max-width:900px}
     .video-tile{background:#0f1218;border-radius:12px;overflow:hidden;position:relative;aspect-ratio:16/10;transition:box-shadow 0.2s}
     .video-tile.speaking{box-shadow: 0 0 0 2px #0AC18E}
@@ -302,6 +303,7 @@
         <form id="msgForm" onsubmit="sendMsg(event)" class="bg-dark-800 border border-dark-700 focus-within:border-bch rounded-xl px-3 py-2.5 flex items-center gap-2">
           <button type="button" id="imgUploadBtn" onclick="triggerImageUpload()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Image URL"><i class="fa-solid fa-image"></i></button>
           <button type="button" id="gifBtn" onclick="openGifPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GIF"><span class="text-[10px] font-bold">GIF</span></button>
+          <button type="button" id="emojiBtn" onclick="openEmojiPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
           <button type="button" id="audioClipBtn" onclick="toggleAudioRecord()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Record audio clip"><i class="fa-solid fa-microphone"></i></button>
           <input type="file" id="imgFileInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
           <input type="text" id="chatInput" placeholder="Select a channel to chat…" autocomplete="off" class="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-slate-600 min-w-0" disabled>
@@ -476,6 +478,17 @@
   <div id="emojiFreqRow" class="flex flex-wrap gap-0.5 px-2 pb-1"></div>
   <div class="px-2 pt-1 text-[10px] font-bold text-slate-500 uppercase mono">All emojis</div>
   <div id="emojiGrid" class="flex-1 overflow-y-auto p-2 flex flex-wrap gap-0.5 content-start" style="max-height:240px"></div>
+</div>
+
+<!-- EMOJI PICKER -->
+<div id="emojiPicker" class="fixed z-[400] bg-dark-900 border border-dark-700 rounded-xl shadow-xl hidden flex flex-col" style="width:320px;max-height:360px">
+  <div class="p-2 border-b border-dark-700">
+    <input type="text" id="emojiInputSearch" placeholder="Search emoji or :smile:" class="field text-xs py-1.5" oninput="filterEmojisInput(this.value)" autocomplete="off">
+  </div>
+  <div class="px-2 pt-1 text-[10px] font-bold text-slate-500 uppercase mono hidden" id="emojiInputFreqLabel">Frequently used</div>
+  <div id="emojiInputFreqRow" class="flex flex-wrap gap-0.5 px-2 pb-1"></div>
+  <div class="px-2 pt-1 text-[10px] font-bold text-slate-500 uppercase mono">All emojis</div>
+  <div id="emojiInputGrid" class="flex-1 overflow-y-auto p-2 flex flex-wrap gap-0.5 content-start" style="max-height:240px"></div>
 </div>
 
 
@@ -1476,7 +1489,10 @@ const EMOJI_LIST = [
   '🤙','💪','⭐','🌟','✨','🎊','🏆','💯','✅','❌','❓','❗','💬','👀','🗿','🐸','👑','🐐','🤷','🤦',
   '🚀','💎','🍿','💅','🧠','☕','👁️','🥀','🎃','🗣️','🦴'
 ];
-function parseEmojis(t){ return t.replace(/:[a-z0-9_+-]+:/gi, m => EMOJI_MAP[m.toLowerCase()]||m); }
+function parseEmojis(t){ 
+  if (typeof t !== 'string') return t || '';
+  return t.replace(/:[a-z0-9_+-]+:/gi, m => EMOJI_MAP[m.toLowerCase()]||m); 
+}
 
 function getMutes(){ try{ return JSON.parse(localStorage.getItem('havoc_mutes')||'{}'); }catch{ return {}; } }
 function setMute(sid, type, val){ const m=getMutes(); if(!m[sid]) m[sid]={}; m[sid][type]=val; localStorage.setItem('havoc_mutes',JSON.stringify(m)); }
@@ -1558,6 +1574,11 @@ window.openModal = id => {
     // Load server tags from servers the user is in
     loadServerTagsForProfile();
 
+    // Load saved profile style
+    if(S.profile.style){
+      S.profileStyle = { ...S.profileStyle, ...S.profile.style };
+    }
+
     // Set initial avatar mode
     const av = S.profile.avatar || '';
     if(av.includes('dicebear.com')){
@@ -1572,8 +1593,11 @@ window.openModal = id => {
     }
     if(typeof avatarMethod === 'function') avatarMethod(S.avatarMode);
 
-    // Don't call initProfileEditor - that opens the Avatar Editor GIF picker
-    // The gear button should only open Edit Profile, not the avatar editor
+    // Initialize profile editor to load fonts and gradients
+    if(typeof initProfileEditor === 'function') initProfileEditor();
+    
+    // Update name preview with loaded style
+    if(typeof updateNamePreview === 'function') updateNamePreview();
   }
   if(id === 'auth' && typeof loadRemember === 'function') loadRemember();
   if(id === 'createServer' && !S.user){ openModal('auth'); return; }
@@ -1626,6 +1650,7 @@ onAuthStateChanged(auth, async user => {
     $('adminBtn').classList.toggle('hidden', !S.isAdmin);
     $('imgUploadBtn').classList.toggle('hidden', user.isAnonymous);
     $('gifBtn') && $('gifBtn').classList.toggle('hidden', user.isAnonymous);
+    $('emojiBtn') && $('emojiBtn').classList.toggle('hidden', user.isAnonymous);
     $('audioClipBtn').classList.toggle('hidden', user.isAnonymous);
     S.myStatus = (S.profile && S.profile.status) ? S.profile.status : 'online';
     if(S.myStatus === 'invisible') S.myStatus = 'online';
@@ -1661,6 +1686,7 @@ onAuthStateChanged(auth, async user => {
     $('adminBtn').classList.add('hidden');
     $('imgUploadBtn').classList.add('hidden');
     $('gifBtn') && $('gifBtn').classList.add('hidden');
+    $('emojiBtn') && $('emojiBtn').classList.add('hidden');
     $('audioClipBtn').classList.add('hidden');
   }
   updateUserUI();
@@ -2468,6 +2494,88 @@ async function loadFullTgifDataset(){
     console.error('TGIF load error', e);
   }
   S.tgifLoading = false;
+}
+
+// Emoji picker for chat input
+window.openEmojiPicker = () => {
+  $('emojiInputSearch').value = '';
+  loadEmojis();
+  const p = $('emojiPicker');
+  p.style.left = Math.min(event.clientX, window.innerWidth-340)+'px';
+  p.style.top = Math.min(Math.max(8, event.clientY-280), window.innerHeight-380)+'px';
+  p.classList.remove('hidden');
+};
+
+function loadEmojis(){
+  const grid = $('emojiInputGrid');
+  const freqRow = $('emojiInputFreqRow');
+  grid.innerHTML = '';
+  freqRow.innerHTML = '';
+  
+  // Load frequently used emojis
+  const freq = getFrequentEmojis(16);
+  if(freq.length){
+    $('emojiInputFreqLabel').classList.remove('hidden');
+    freq.forEach(emoji => {
+      const btn = document.createElement('button');
+      btn.className = 'w-7 h-7 rounded hover:bg-dark-700 text-lg flex items-center justify-center cursor-pointer transition-all';
+      btn.textContent = emoji;
+      btn.onclick = () => {
+        insertEmoji(emoji);
+        $('emojiPicker').classList.add('hidden');
+      };
+      freqRow.appendChild(btn);
+    });
+  } else {
+    $('emojiInputFreqLabel').classList.add('hidden');
+  }
+  
+  // Load all emojis
+  EMOJI_LIST.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.className = 'w-7 h-7 rounded hover:bg-dark-700 text-lg flex items-center justify-center cursor-pointer transition-all';
+    btn.textContent = emoji;
+    btn.onclick = () => {
+      insertEmoji(emoji);
+      $('emojiPicker').classList.add('hidden');
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function filterEmojisInput(q){
+  const grid = $('emojiInputGrid');
+  const freqRow = $('emojiInputFreqRow');
+  grid.innerHTML = '';
+  freqRow.innerHTML = '';
+  
+  if(!q){
+    loadEmojis();
+    return;
+  }
+  
+  const qLower = q.toLowerCase();
+  const matches = EMOJI_LIST.filter(e => 
+    qLower.includes(e) || (EMOJI_MAP[':'+e+':'] && EMOJI_MAP[':'+e+':'].toLowerCase().includes(qLower))
+  );
+  
+  matches.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.className = 'w-7 h-7 rounded hover:bg-dark-700 text-lg flex items-center justify-center cursor-pointer transition-all';
+    btn.textContent = emoji;
+    btn.onclick = () => {
+      insertEmoji(emoji);
+      $('emojiPicker').classList.add('hidden');
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function insertEmoji(emoji){
+  const input = $('chatInput');
+  input.value += emoji;
+  input.focus();
+  bumpEmojiFreq(emoji);
 }
 
 window.toggleGifSettings = () => {
@@ -3724,7 +3832,13 @@ async function renderMsgs(msgs){
         reactHtml = '<div class="reaction-bar">' + entries.map(([emoji, users]) => {
           const count = Array.isArray(users) ? users.length : 0;
           const mine = Array.isArray(users) && users.includes(S.user?.uid);
-          return `<span class="reaction ${mine?'mine':''}" onclick="toggleReaction('${esc(m.id)}','${emoji}')">${emoji} ${count}</span>`;
+          // Generate user list for tooltip
+          const userList = Array.isArray(users) ? users.map(uid => {
+            const member = S.membersCache.find(m => m.uid === uid);
+            return member ? member.handle : 'Unknown';
+          }).join(', ') : '';
+          const tooltipAttr = count > 1 ? `data-users="${esc(userList)}" data-count="${count}"` : '';
+          return `<span class="reaction ${mine?'mine':''}" ${tooltipAttr} onclick="toggleReaction('${esc(m.id)}','${emoji}')">${emoji} ${count}</span>`;
         }).join('') + '</div>';
       }
     }
