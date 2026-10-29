@@ -728,7 +728,7 @@ This project is proprietary software. All rights reserved.
 
 **Copyright © 2026 Professor J**
 
-For licensing inquiries, contact: [contact@havoc.my.id](mailto:contact@havoc.my.id)
+For licensing inquiries, contact: [havoc@j10.33mail.com]
 
 ---
 
