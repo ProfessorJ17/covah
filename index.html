@@ -1572,7 +1572,8 @@ window.openModal = id => {
     }
     if(typeof avatarMethod === 'function') avatarMethod(S.avatarMode);
 
-    if(typeof initProfileEditor === 'function') initProfileEditor();
+    // Don't call initProfileEditor - that opens the Avatar Editor GIF picker
+    // The gear button should only open Edit Profile, not the avatar editor
   }
   if(id === 'auth' && typeof loadRemember === 'function') loadRemember();
   if(id === 'createServer' && !S.user){ openModal('auth'); return; }
@@ -1696,7 +1697,15 @@ window.doAnon = async () => { clearAuthErr(); try{ await signInAnonymously(auth)
 window.showForgot = () => { clearAuthErr(); $('formLogin').classList.add('hidden'); $('formReg').classList.add('hidden'); $('formForgot').classList.remove('hidden'); };
 window.doForgot = async () => { clearAuthErr(); const email=$('fEmail').value.trim(); if(!email) return showAuthErr('Enter email'); try{ await sendPasswordResetEmail(auth,email); $('authOk').textContent='Reset link sent!'; $('authOk').classList.remove('hidden'); }catch(err){ showAuthErr(err.message); } };
 window.doSignOut = async () => {
-  leaveVoice(); await signOut(auth);
+  console.log('Signing out...');
+  try {
+    leaveVoice();
+    await signOut(auth);
+    console.log('Signed out successfully');
+  } catch(e) {
+    console.error('Sign out error:', e);
+  }
+  
   S.server=null; S.channel=null; S.profile=null; S.inDMs=false; S.dmTarget=null;
 
   // Clear last server/channel on sign out
@@ -1710,6 +1719,9 @@ window.doSignOut = async () => {
   // NOTE: Don't clear havoc_remember - "Remember me" should keep credentials for next login
 
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
+  if(S.unsubMsgs){ try{ S.unsubMsgs(); }catch(e){} S.unsubMsgs = null; }
+  if(S.unsubMembers){ try{ S.unsubMembers(); }catch(e){} S.unsubMembers = null; }
+  if(S.unsubDms){ try{ S.unsubDms(); }catch(e){} S.unsubDms = null; }
   $('typingIndicator').classList.add('hidden');
 
   $('currentServerName').textContent='Select a Server';
@@ -1720,9 +1732,13 @@ window.doSignOut = async () => {
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
   $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
-  showChannelsView(); closeModal('profile'); updateUserUI();
+  showChannelsView(); closeModal('profile'); closeModal('serverSettings');
+  updateUserUI();
+  loadMyServers();
+  
   // Open login modal after logout
-  openModal('auth');
+  setTimeout(() => openModal('auth'), 100);
+  console.log('Logout complete');
 };
 
 // ========== DM ==========
@@ -3395,11 +3411,11 @@ function switchChannel(c){
   renderChannels();
   if(S.server) listenMessages(S.server.id, c.id);
   listenForTyping();
-  // Auto-scroll to bottom after messages load
+  // Auto-scroll to bottom after messages load (longer delay for async load)
   setTimeout(() => {
     const c = $('msgContainer');
     if(c) c.scrollTop = c.scrollHeight;
-  }, 100);
+  }, 500);
 }
 window.createChan = async () => {
   if(!S.canManage || !S.server) return;
