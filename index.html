@@ -1102,7 +1102,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInAnonymously, onAuthStateChanged, signOut, sendPasswordResetEmail
+  signInAnonymously, onAuthStateChanged, signOut, sendPasswordResetEmail,
+  inMemoryPersistence
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
@@ -1412,6 +1413,11 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Set auth persistence to NONE - user must login every time they refresh the page
+setPersistence(auth, inMemoryPersistence).catch(e => {
+  console.error('Failed to set auth persistence:', e);
+});
+
 const $ = s => document.getElementById(s);
 const esc = s => String(s||'').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const rand = (n=6) => Math.random().toString(36).slice(2,2+n).toUpperCase();
@@ -1704,6 +1710,8 @@ window.doSignOut = async () => {
   $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
   showChannelsView(); closeModal('profile'); updateUserUI();
+  // Open login modal after logout
+  openModal('auth');
 };
 
 // ========== DM ==========
