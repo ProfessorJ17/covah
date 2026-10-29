@@ -1619,12 +1619,18 @@ onAuthStateChanged(auth, async user => {
       if(snap.exists()){
         S.profile = snap.data();
         console.log('Profile loaded:', S.profile);
-        if(!S.profile?.handle) S.profile.handle = user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User');
-        if(!S.profile.avatar) S.profile.avatar = userAvatar(user.uid);
-        // Load text size preference
-        if(S.profile.textSize) {
-          S.textSize = S.profile.textSize;
-          updateTextSize(S.textSize);
+        let needsUpdate = false;
+        if(!S.profile?.handle) {
+          S.profile.handle = user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User');
+          needsUpdate = true;
+        }
+        if(!S.profile.avatar) {
+          S.profile.avatar = userAvatar(user.uid);
+          needsUpdate = true;
+        }
+        // Save avatar and handle if they were missing
+        if(needsUpdate) {
+          try{ await updateDoc(doc(db,'users',user.uid), { handle: S.profile.handle, avatar: S.profile.avatar }); }catch(e){}
         }
         // Ensure createdAt always exists (set to now if missing)
         if(!S.profile.createdAt){
