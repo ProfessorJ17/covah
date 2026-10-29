@@ -1556,7 +1556,7 @@ window.openModal = id => {
   if(id === 'discover' && typeof loadDiscovery === 'function') loadDiscovery();
   if(id === 'admin' && S.isAdmin && typeof adminTab === 'function') adminTab('servers');
   if(id === 'profile' && S.profile && typeof loadServerTagsForProfile === 'function'){
-    $('profileHandle').value = safe(S.profile.handle,'');
+    $('profileHandle').value = safe(S.profile?.handle,'');
     $('profileBio').value = safe(S.profile.bio,'');
     $('profileStatus').value = safe(S.profile.status,'');
     const avatarUrl = safe(S.profile.avatar, userAvatar('Guest'));
@@ -1619,7 +1619,7 @@ onAuthStateChanged(auth, async user => {
       if(snap.exists()){
         S.profile = snap.data();
         console.log('Profile loaded:', S.profile);
-        if(!S.profile.handle) S.profile.handle = user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User');
+        if(!S.profile?.handle) S.profile.handle = user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User');
         if(!S.profile.avatar) S.profile.avatar = userAvatar(user.uid);
         // Load text size preference
         if(S.profile.textSize) {
@@ -2313,7 +2313,7 @@ window.joinPublicServer = async (id) => {
     
     if(!isMember){
       await setDoc(mRef, {
-        handle: S.profile.handle,
+        handle: safe(S.profile?.handle, ''),
         avatar: S.profile.avatar,
         role: 'member',
         joinedAt: Date.now()
@@ -2389,7 +2389,7 @@ window.saveProfile = async () => {
   }
 
   try {
-    const oldHandle = (S.profile.handle||'').toLowerCase();
+    const oldHandle = (S.profile?.handle||'').toLowerCase();
     if(oldHandle && oldHandle !== handleKey){
       try{ await deleteDoc(doc(db,'usernames', oldHandle)); }catch(e){}
     }
@@ -3383,7 +3383,7 @@ window.createServer = async () => {
         name, 
         desc:desc||'', 
         ownerUid:S.user.uid, 
-        ownerHandle:safe(S.profile.handle,'Owner'), 
+        ownerHandle:safe(S.profile?.handle,'Owner'), 
         iconUrl, 
         tag,
         tagEmoji,
@@ -3399,7 +3399,7 @@ window.createServer = async () => {
       await setDoc(doc(db,'serverTags', tag), { serverId: ref.id, ownerUid: S.user.uid });
       await setDoc(doc(db,'servers',ref.id,'members',S.user.uid), {
       role:'owner',
-      handle:safe(S.profile.handle,'Owner'),
+      handle:safe(S.profile?.handle,'Owner'),
       avatar:safe(S.profile.avatar, userAvatar(S.user.uid)),
       uid:S.user.uid,
       joinedAt:Date.now(),
@@ -3412,7 +3412,7 @@ window.createServer = async () => {
     await setDoc(doc(db,'servers',ref.id,'channels','voice'), {name:'voice',type:'voice',createdAt:Date.now()});
     await setDoc(doc(db,'servers',ref.id,'roles','everyone'), {name:'@everyone',color:'#99aab5',position:0});
     const code = `HAVOC-${rand()}`;
-    await setDoc(doc(db,'invites',code), {code,serverId:ref.id,serverName:name,createdBy:S.user.uid,createdByHandle:safe(S.profile.handle,'Owner'),maxUses:10,uses:0,active:true,createdAt:Date.now()});
+    await setDoc(doc(db,'invites',code), {code,serverId:ref.id,serverName:name,createdBy:S.user.uid,createdByHandle:safe(S.profile?.handle,'Owner'),maxUses:10,uses:0,active:true,createdAt:Date.now()});
     closeModal('createServer');
     $('newServerName').value=''; $('newServerDesc').value=''; $('newServerSeed').value=''; $('newServerIconUrl').value='';
     await loadMyServers();
@@ -4095,6 +4095,8 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
 
     await PQFirestore.secureAddDoc(collection(db,'dms',dmId,'messages'), {
       from: S.user.uid,
+      handle: safe(S.profile?.handle, 'User'),
+      avatar: safe(S.profile?.avatar, userAvatar(S.user.uid)),
       content: encryptedContent,
       signature: signature,
       imageUrl: imageUrl||null,
@@ -5461,7 +5463,7 @@ function sendTypingEvent() {
 
   setDoc(typingRef, {
     uid: S.user.uid,
-    handle: S.profile?.handle || 'User',
+    handle: safe(S.profile?.handle, 'User'),
     timestamp: Date.now()
   }).catch(e => console.warn('Typing event error:', e));
 
@@ -5526,6 +5528,23 @@ function updateTypingIndicator(typers) {
   }
 }
 
+// Show self-typing indicator when user is typing
+function showSelfTyping(isTyping) {
+  const indicator = $('typingIndicator');
+  const text = $('typingText');
+  if (!indicator || !text) return;
+
+  if (isTyping) {
+    indicator.classList.remove('hidden');
+    text.textContent = `${safe(S.profile?.handle, 'You')} is typing...`;
+  } else {
+    // Hide if no other typers
+    if (Object.keys(S.typing || {}).length === 0) {
+      indicator.classList.add('hidden');
+    }
+  }
+}
+
 function setupTypingInput() {
   const input = $('chatInput');
   if (!input) return;
@@ -5533,6 +5552,17 @@ function setupTypingInput() {
   input.addEventListener('input', () => {
     if (input.value.trim().length > 0) {
       sendTypingEvent();
+      showSelfTyping(true);
+      
+      // Clear any existing self-typing timer
+      if (typingTimer) clearTimeout(typingTimer);
+      
+      // Hide self-typing after 3 seconds of no typing
+      typingTimer = setTimeout(() => {
+        showSelfTyping(false);
+      }, TYPING_TIMEOUT);
+    } else {
+      showSelfTyping(false);
     }
   });
 
@@ -5540,6 +5570,7 @@ function setupTypingInput() {
   const form = $('msgForm');
   if (form) {
     form.addEventListener('submit', () => {
+      showSelfTyping(false);
       let typingRef;
       if (S.inDMs && S.dmTarget) {
         const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
@@ -5642,7 +5673,7 @@ function updateUserUI(){
   const bar = $('authBar'), logoutBtn = $('logoutBtn');
   if(S.user && S.profile){
     const handleEl = $('ucHandle');
-    handleEl.textContent = safe(S.profile.handle,'User');
+    handleEl.textContent = safe(S.profile?.handle,'User');
     applyUserStyle(handleEl, S.profile);
     
     const stLabel = {online:'Online',idle:'Idle',dnd:'Do Not Disturb',invisible:'Invisible'}[S.myStatus] || 'Online';
@@ -5679,7 +5710,7 @@ function updateUserUI(){
           <img src="${esc(avatarUrl)}" class="w-8 h-8 rounded-full border border-bch/40" id="authBarAvatar">
         </div>
         <div class="flex items-center gap-1">
-          <span class="font-bold text-slate-200 mono text-xs" id="authBarHandle">${esc(S.profile.handle)}</span>
+          <span class="font-bold text-slate-200 mono text-xs" id="authBarHandle">${esc(safe(S.profile?.handle, 'User'))}</span>
           ${renderUserTag(S.profile)}
         </div>
         ${S.isAdmin?'<span class="badge-admin">ADMIN</span>':''}
