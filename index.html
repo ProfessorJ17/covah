@@ -3542,8 +3542,13 @@ window.createChan = async () => {
   if(!name) return;
   await setDoc(doc(db,'servers',S.server.id,'channels',name), {name,type:'text',createdAt:Date.now()});
   closeModal('createChan'); $('newChanName').value = '';
+  // Reload channels to include the new one
   await loadChannels(S.server.id);
-  switchChannel({id:name,name,type:'text'});
+  // Find the newly created channel and switch to it
+  const newChannel = S_channels.find(c => c.id === name);
+  if(newChannel) {
+    switchChannel(newChannel);
+  }
 };
 window.createVoiceChannel = async () => {
   if(!S.canManage || !S.server) return;
@@ -5647,16 +5652,16 @@ function isNewMember(uid){
 }
 
 // ===== MEMBERS PANEL TOGGLE =====
-S.membersHidden = false;
 window.toggleMembersPanel = () => {
   const panel = $('membersPanel');
   if(!panel) return;
-  S.membersHidden = !S.membersHidden;
-  if(S.membersHidden){
-    panel.style.display = 'none';
-  } else {
-    panel.style.display = '';
+  // Toggle visibility - if it's currently visible, hide it; if hidden, show it
+  if(panel.classList.contains('hidden') || panel.style.display === 'none'){
     panel.classList.remove('hidden');
+    panel.style.display = '';
+  } else {
+    panel.classList.add('hidden');
+    panel.style.display = 'none';
   }
 };
 
