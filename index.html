@@ -302,14 +302,6 @@
       </div>
       <div class="px-4 pb-4 pt-2 bg-dark-900/80 border-t border-dark-700 shrink-0">
         <div id="replyBar" class="hidden"></div>
-        <div id="typingIndicator" class="hidden h-6 px-2 mb-1 flex items-center gap-2">
-          <div class="flex gap-0.5">
-            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 0ms"></span>
-            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 150ms"></span>
-            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 300ms"></span>
-          </div>
-          <span id="typingText" class="text-xs text-slate-400 mono"></span>
-        </div>
         <form id="msgForm" onsubmit="sendMsg(event)" class="bg-dark-800 border border-dark-700 focus-within:border-bch rounded-xl px-3 py-2.5 flex items-center gap-2">
           <button type="button" id="imgUploadBtn" onclick="triggerImageUpload()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Image URL"><i class="fa-solid fa-image"></i></button>
           <button type="button" id="gifBtn" onclick="openGifPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GIF"><span class="text-[10px] font-bold">GIF</span></button>
@@ -319,6 +311,14 @@
           <input type="text" id="chatInput" placeholder="Select a channel to chat…" autocomplete="off" class="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-slate-600 min-w-0" disabled>
           <button type="submit" class="btn-primary px-3 py-1.5 text-xs"><i class="fa-solid fa-paper-plane"></i></button>
         </form>
+        <div id="typingIndicator" class="hidden h-6 px-2 mt-1 flex items-center gap-2">
+          <div class="flex gap-0.5">
+            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 0ms"></span>
+            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 150ms"></span>
+            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full" style="animation:bounce 0.6s infinite;animation-delay: 300ms"></span>
+          </div>
+          <span id="typingText" class="text-xs text-slate-400 mono"></span>
+        </div>
         <div id="imgPreview" class="hidden mt-2 flex items-center gap-2">
           <img id="imgPreviewSrc" class="h-16 rounded-lg border border-dark-600 object-cover">
           <button onclick="clearImagePreview()" class="text-red-400 text-xs"><i class="fa-solid fa-xmark"></i> Remove</button>
@@ -5650,7 +5650,8 @@ function updateUserUI(){
     updateStatusDot();
     
     const avatarEl = $('ucAvatar');
-    avatarEl.src = safe(S.profile.avatar, userAvatar('Guest'));
+    const avatarUrl = safe(S.profile.avatar, userAvatar(S.user?.uid || 'Guest'));
+    avatarEl.src = avatarUrl;
 
     // Ensure wrapper is 40px
     if(avatarEl.parentElement) {
@@ -5671,11 +5672,11 @@ function updateUserUI(){
 
     logoutBtn.classList.remove('hidden');
     
-    // Auth bar name also styled
+    // Auth bar name also styled - use same avatar URL
     bar.innerHTML = `
       <div class="flex items-center gap-2">
         <div class="avatar-wrapper" style="width:32px;height:32px">
-          <img src="${esc(S.profile.avatar)}" class="w-8 h-8 rounded-full border border-bch/40" id="authBarAvatar">
+          <img src="${esc(avatarUrl)}" class="w-8 h-8 rounded-full border border-bch/40" id="authBarAvatar">
         </div>
         <div class="flex items-center gap-1">
           <span class="font-bold text-slate-200 mono text-xs" id="authBarHandle">${esc(S.profile.handle)}</span>
@@ -5721,8 +5722,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFullTgifDataset();
   loadRemember();
   setupTypingInput();
-  // Initialize text size
-  updateTextSize(S.textSize);
 });
 
 
