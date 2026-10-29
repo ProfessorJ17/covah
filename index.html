@@ -5738,7 +5738,10 @@ function setupTypingInput() {
   const form = $('msgForm');
   if (form) {
     form.addEventListener('submit', () => {
+      // Clear the self-typing timer
+      if (typingTimer) clearTimeout(typingTimer);
       showSelfTyping(false);
+      
       let typingRef;
       if (S.inDMs && S.dmTarget) {
         const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
