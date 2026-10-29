@@ -1123,7 +1123,7 @@ const SERVER_ICON_STYLE = 'shapes';     // geometric shapes for servers
 // This layer provides quantum-resistant encryption on top of Firebase
 // Currently uses Web Crypto API (AES-256-GCM) with hooks for future post-quantum algorithms
 const PQ = {
-  enabled: true,
+  enabled: false, // Disabled until key persistence is implemented
   algorithm: 'AES-256-GCM', // Current: AES-256-GCM (quantum-resistant for near-term)
   // Future: Can swap to CRYSTALS-Kyber when browser support is available
   
@@ -1187,26 +1187,31 @@ const PQ = {
     if (!this.enabled || !encryptedData || typeof encryptedData !== 'object' || !encryptedData.encrypted) {
       return encryptedData; // Return as-is if not encrypted
     }
-    
+
     try {
       const key = this.keys.get(encryptedData.keyId);
       if (!key) {
-        console.warn('Decryption key not found, returning encrypted data');
+        console.warn('Decryption key not found, treating as plain text');
+        // If key is missing, this might be old unencrypted data
+        // Return the encrypted object's content if it exists, otherwise return as-is
+        if (encryptedData.content) {
+          return encryptedData.content;
+        }
         return encryptedData;
       }
-      
+
       const encryptedBuffer = new Uint8Array(encryptedData.encrypted);
       const iv = new Uint8Array(encryptedData.iv);
-      
+
       const decrypted = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv },
         key,
         encryptedBuffer
       );
-      
+
       const decoder = new TextDecoder();
       const decryptedStr = decoder.decode(decrypted);
-      
+
       // Try to parse as JSON, return as string if fails
       try {
         return JSON.parse(decryptedStr);
@@ -3628,7 +3633,9 @@ async function renderMsgs(msgs){
     // Decrypt content if encrypted with post-quantum layer
     let content = m.content || '';
     if (typeof content === 'object' && content.encrypted) {
-      content = await PQ.decrypt(content);
+      const decrypted = await PQ.decrypt(content);
+      // If decryption returned an object with content field, use that
+      content = (typeof decrypted === 'object' && decrypted.content) ? decrypted.content : decrypted;
     }
     
     let contentHtml = parseMentions(esc(parseEmojis(content)));
@@ -4355,7 +4362,9 @@ async function loadDms(targetUid){
     // Decrypt content if encrypted with post-quantum layer
     let content = m.content || '';
     if (typeof content === 'object' && content.encrypted) {
-      content = await PQ.decrypt(content);
+      const decrypted = await PQ.decrypt(content);
+      // If decryption returned an object with content field, use that
+      content = (typeof decrypted === 'object' && decrypted.content) ? decrypted.content : decrypted;
     }
     
     let contentHtml = esc(parseEmojis(content));
