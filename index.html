@@ -3425,7 +3425,8 @@ window.createServer = async () => {
       userTag: S.profile?.userTag || ''
     });
     await setDoc(doc(db,'servers',ref.id,'channels','general'), {name:'general',type:'text',createdAt:Date.now()});
-    await setDoc(doc(db,'servers',ref.id,'channels','voice'), {name:'Voice',type:'voice',createdAt:Date.now()});
+    await setDoc(doc(db,'servers',ref.id,'channels','rules'), {name:'rules',type:'text',createdAt:Date.now()});
+    await setDoc(doc(db,'servers',ref.id,'channels','voice'), {name:'voice',type:'voice',createdAt:Date.now()});
     await setDoc(doc(db,'servers',ref.id,'roles','everyone'), {name:'@everyone',color:'#99aab5',position:0});
     const code = `HAVOC-${rand()}`;
     await setDoc(doc(db,'invites',code), {code,serverId:ref.id,serverName:name,createdBy:S.user.uid,createdByHandle:safe(S.profile.handle,'Owner'),maxUses:10,uses:0,active:true,createdAt:Date.now()});
@@ -4721,7 +4722,7 @@ async function joinVoice(c){
     S.localStream.getAudioTracks().forEach(t => t.enabled = !S.micMuted && !S.deafened);
     startVolumeMonitor(S.user.uid, S.localStream);
     $('voiceStatus').textContent = 'Connected — waiting for peers';
-    const roomKey = `voice/${S.server.id}_${c.id}`;
+    const roomKey = `voice_${S.server.id}_${c.id}`;
     
     // Use Firestore for voice signaling
     const roomRef = doc(db, roomKey, 'users', S.user.uid);
