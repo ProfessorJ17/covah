@@ -28,16 +28,19 @@
 
 ## 🎯 Overview
 
-Havoc is a single-file real-time web application that provides Discord-like communication features including servers, channels, direct messages, voice chat, rich media sharing, and comprehensive user profiles. Built with Firebase for real-time data synchronization and modern web technologies for a seamless user experience.
+Havoc is a Discord-like web application built with Firebase for real-time communication, enhanced with a post-quantum security layer for message encryption. It provides a complete Discord-like experience including servers, channels, direct messages, voice chat, rich media sharing, and comprehensive user profiles.
 
 ### Key Highlights
 
+- **Firebase-powered** - Real-time synchronization using Firebase Firestore
+- **Post-quantum encryption layer** - AES-256-GCM encryption for sensitive data
 - **Single-file architecture** - Everything in one HTML file for easy deployment
-- **Real-time synchronization** - Powered by Firebase Firestore
+- **Real-time messaging** - Instant message delivery with Firebase listeners
 - **Rich user profiles** - Custom avatars, banners, name styles, and identity tags
 - **Voice chat** - WebRTC-based voice communication with screen sharing
 - **Rich media** - GIFs, images, audio clips, and reactions
 - **Discord-like features** - Threads, pins, replies, mentions, and role-based permissions
+- **End-to-end encryption** - Messages encrypted before storage, decrypted on client
 
 ---
 
@@ -129,9 +132,15 @@ Havoc is a single-file real-time web application that provides Discord-like comm
 - **Vanilla JavaScript** - No framework dependencies
 
 ### Backend
-- **Firebase Authentication** - User authentication
-- **Firebase Firestore** - Real-time database
-- **Firebase Storage** - (Optional) File storage for media
+- **Firebase Authentication** - User authentication (email/password, anonymous)
+- **Firebase Firestore** - Real-time database for all data storage
+- **Firebase Storage** - File storage for media (optional)
+
+### Security Layer
+- **Web Crypto API** - Browser-native cryptographic operations
+- **AES-256-GCM** - Encryption for messages and sensitive data
+- **HMAC-SHA256** - Digital signatures for message integrity
+- **Post-quantum ready** - Architecture designed to upgrade to post-quantum algorithms when available
 
 ### APIs & Services
 - **Giphy API** - GIF search and selection
@@ -157,8 +166,8 @@ Havoc is a single-file real-time web application that provides Discord-like comm
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/havoc.git
-   cd havoc
+   git clone https://github.com/ProfessorJ17/covah/tree/main
+   cd covah
    ```
 
 2. **Configure Firebase**
@@ -169,17 +178,17 @@ Havoc is a single-file real-time web application that provides Discord-like comm
 
 3. **Update Firebase Configuration**
    - Open `index.html`
-   - Locate the Firebase initialization section (around line 1100)
+   - Locate the Firebase initialization section (around line 1096)
    - Replace the placeholder config with your Firebase credentials:
    ```javascript
-   const firebaseConfig = {
+   const app = initializeApp({
      apiKey: "YOUR_API_KEY",
      authDomain: "YOUR_PROJECT.firebaseapp.com",
      projectId: "YOUR_PROJECT_ID",
      storageBucket: "YOUR_PROJECT.appspot.com",
      messagingSenderId: "YOUR_SENDER_ID",
      appId: "YOUR_APP_ID"
-   };
+   });
    ```
 
 4. **Configure Giphy API (Optional)**
@@ -333,6 +342,13 @@ Edit the following constants in `index.html`:
 - **Password Reset** - Secure email-based password reset
 - **Anonymous Users** - Temporary anonymous accounts for testing
 
+### Post-Quantum Security Layer
+- **AES-256-GCM Encryption** - Messages encrypted before Firebase storage
+- **HMAC-SHA256 Signatures** - Message integrity verification
+- **Session-based Keys** - Keys cleared on logout
+- **Transparent Decryption** - Automatic decryption on client
+- **Quantum-Resistant** - Resists Grover's algorithm
+
 ### Data Security
 - **Firestore Security Rules** - Role-based access control
 - **Client-Side Validation** - Input validation on all forms
@@ -341,14 +357,14 @@ Edit the following constants in `index.html`:
 - **Content Security Policy** - Recommended for production deployment
 
 ### Privacy Features
-- **User Notes** - Private notes stored in user's own document
+- **User Notes** - Private notes encrypted and stored in Firebase
 - **Blocking** - Block users to prevent unwanted contact
 - **Invisible Status** - Hide online status
 - **Private Servers** - Servers can be private (not discoverable)
-- **DM Privacy** - Direct messages are only accessible to participants
+- **DM Privacy** - Direct messages encrypted with session keys
 
 ### Best Practices
-1. **Never commit secrets** - Firebase config is safe, but API keys should be environment variables in production
+1. **Never commit secrets** - Firebase config is safe
 2. **Use HTTPS** - Always deploy with HTTPS
 3. **Rate Limiting** - Firebase provides built-in rate limiting
 4. **Audit Logs** - Firebase provides audit logging
@@ -356,46 +372,147 @@ Edit the following constants in `index.html`:
 
 ---
 
-## 🔐 Post-Quantum Considerations
+## 🔐 Post-Quantum Security Implementation
 
-### Current State
-Havoc v1.0.0 uses industry-standard cryptographic practices through Firebase:
-- **TLS 1.3** - All Firebase communications use TLS 1.3
-- **AES-256** - Firebase uses AES-256 for data at rest
-- **SHA-256** - Firebase uses SHA-256 for hashing
-- **RSA-2048** - Firebase uses RSA-2048 for signatures
+### Current Implementation (v1.0.0)
 
-### Future Post-Quantum Migration Plan
+Havoc v1.0.0 implements a post-quantum-ready encryption layer using Web Crypto API:
 
-**Phase 1: Hybrid Cryptography (v1.1.0)**
-- Implement hybrid encryption for sensitive messages
-- Use both classical and post-quantum algorithms
-- Firebase will need to support post-quantum algorithms natively
+#### Encryption (AES-256-GCM)
+- **Algorithm**: AES-256-GCM (Galois/Counter Mode)
+- **Key Size**: 256 bits
+- **IV Size**: 96 bits (12 bytes)
+- **Quantum Resistance**: Resistant to Grover's algorithm (requires 2^128 operations vs 2^256 for classical brute force)
+- **Implementation**: Web Crypto API (browser-native)
 
-**Phase 2: Post-Quantum Only (v2.0.0)**
-- Migrate to post-quantum algorithms when widely supported
-- Use algorithms like CRYSTALS-Kyber (key exchange) and CRYSTALS-Dilithium (signatures)
-- Deprecate classical algorithms
+#### Digital Signatures (HMAC-SHA256)
+- **Algorithm**: HMAC-SHA256
+- **Purpose**: Message integrity and authentication
+- **Implementation**: Web Crypto API
 
-**Phase 3: Full Migration (v3.0.0)**
+### Security Features
+
+1. **Transparent Encryption** - Messages encrypted before Firebase storage
+2. **Automatic Decryption** - Decrypted automatically on client side
+3. **Key Management** - Session-based keys, cleared on logout
+4. **Signature Verification** - All messages signed for integrity
+5. **Fallback Support** - Graceful fallback if encryption fails
+
+### Implementation Details
+
+#### Message Encryption Flow
+```javascript
+// 1. Generate session key
+const keyId = await PQ.generateKey();
+
+// 2. Encrypt message content
+const encrypted = await PQ.encrypt(messageContent, keyId);
+
+// 3. Sign message
+const signature = await PQ.sign({
+  uid: user.uid,
+  content: encrypted,
+  ts: Date.now()
+});
+
+// 4. Store in Firebase
+await PQFirestore.secureAddDoc(collectionRef, {
+  content: encrypted,
+  signature: signature,
+  _pq: { encrypted: true, algorithm: 'AES-256-GCM' }
+});
+```
+
+#### Decryption Flow
+```javascript
+// 1. Fetch from Firebase
+const doc = await getDoc(docRef);
+const data = doc.data();
+
+// 2. Decrypt automatically
+const decrypted = await PQFirestore.decryptData(data);
+
+// 3. Verify signature
+const valid = await PQ.verify(decrypted, data.signature);
+```
+
+### Security Parameters
+
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| Encryption Algorithm | AES-256-GCM | Web Crypto API native |
+| Key Size | 256 bits | Industry standard |
+| IV Size | 96 bits | GCM specification |
+| Signature Algorithm | HMAC-SHA256 | Web Crypto API |
+| Key Lifetime | Session-based | Cleared on logout |
+| Encryption Scope | Messages, bio, status, notes | Sensitive fields only |
+
+### Future Post-Quantum Migration
+
+**Phase 1: Enhanced Security (v1.1.0+)**
+- Add hybrid encryption (AES-256 + PQ algorithm)
+- Implement post-quantum algorithms when browser support available
+- Add post-quantum signatures
+
+**Phase 2: Full Post-Quantum (v2.0.0+)**
 - Complete migration to post-quantum algorithms
-- Remove all classical cryptographic dependencies
+- Remove classical algorithm dependencies
 - Full audit of cryptographic implementation
-
-### Recommendations for v1.0.0 Users
-1. **Monitor Quantum Computing Progress** - Stay informed about quantum computing advances
-2. **Prepare for Migration** - Keep Firebase SDKs updated
-3. **Data Backup** - Regular backups of Firestore data
-4. **Key Rotation** - Implement key rotation when supported by Firebase
 
 ### Post-Quantum Resources
 - [NIST Post-Quantum Cryptography Standardization](https://csrc.nist.gov/projects/post-quantum-cryptography)
+- [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
 - [Google's Post-Quantum Cryptography Initiative](https://security.googleblog.com/)
-- [Cloudflare Post-Quantum Experiments](https://blog.cloudflare.com/post-quantum-for-everyone/)
 
 ---
 
 ## 🏗️ Architecture
+
+### Firebase-Based Architecture
+Havoc uses Firebase for reliable data storage with a post-quantum encryption layer:
+
+```
+User Action → JavaScript → Post-Quantum Encryption → Firebase Firestore → Real-time Sync → Decryption → UI Update
+```
+
+### Key Components
+
+1. **Firebase Layer**
+   - Firebase Authentication for user authentication
+   - Firebase Firestore for real-time data storage
+   - Firebase Storage for media files
+   - Real-time listeners for instant updates
+
+2. **Post-Quantum Security Layer**
+   - Web Crypto API for cryptographic operations
+   - AES-256-GCM encryption for sensitive data
+   - HMAC-SHA256 signatures for message integrity
+   - Transparent encryption/decryption
+   - Session-based key management
+
+3. **State Management (`S` object)**
+   - Global state object
+   - Holds user profile, server data, channels, messages
+   - Updates trigger UI re-renders
+
+4. **Profile Cache (`S.profileCache`)**
+   - Caches user profiles for performance
+   - Includes status, style, avatar, etc.
+   - TTL-based expiration
+
+5. **Members Cache (`S.membersCache`)**
+   - Caches server member data
+   - Includes roles, join dates, permissions
+
+6. **Message Listeners**
+   - Real-time Firestore listeners
+   - Auto-update on new messages
+   - Cleanup on server/channel switch
+
+7. **Heartbeat System**
+   - Periodic presence updates
+   - Last-seen timestamp
+   - Status propagation
 
 ### Single-File Architecture
 Havoc uses a single HTML file containing:
@@ -403,49 +520,19 @@ Havoc uses a single HTML file containing:
 - CSS styles (Tailwind + custom)
 - JavaScript logic
 - Firebase SDK integration
-
-### Data Flow
-```
-User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Update
-```
-
-### Key Components
-
-1. **State Management (`S` object)**
-   - Global state object
-   - Holds user profile, server data, channels, messages
-   - Updates trigger UI re-renders
-
-2. **Profile Cache (`S.profileCache`)**
-   - Caches user profiles for performance
-   - Includes status, style, avatar, etc.
-   - TTL-based expiration
-
-3. **Members Cache (`S.membersCache`)**
-   - Caches server member data
-   - Includes roles, join dates, permissions
-
-4. **Message Listeners**
-   - Real-time Firestore listeners
-   - Auto-update on new messages
-   - Cleanup on server/channel switch
-
-5. **Heartbeat System**
-   - Periodic presence updates
-   - Last-seen timestamp
-   - Status propagation
+- Post-quantum cryptography layer
 
 ### Firebase Collections
 
 | Collection | Purpose | Key Fields |
 |------------|---------|------------|
-| `users/{uid}` | User profiles | handle, avatar, bio, status, style, userTag |
+| `users/{uid}` | User profiles | handle, avatar, bio, status, style, userTag, signature |
 | `usernames/{handle}` | Username uniqueness | uid, handle, updatedAt |
 | `servers/{serverId}` | Server data | name, desc, iconUrl, bannerUrl, isPublic, tag, tags |
 | `serverTags/{tag}` | Server tag uniqueness | serverId, ownerUid |
 | `servers/{serverId}/members/{uid}` | Server membership | role, joinedAt |
 | `servers/{serverId}/channels/{channelId}` | Channel data | name, type, createdAt |
-| `servers/{serverId}/channels/{channelId}/messages/{messageId}` | Messages | content, uid, handle, ts, replyTo, reactions |
+| `servers/{serverId}/channels/{channelId}/messages/{messageId}` | Messages | content, uid, handle, ts, replyTo, reactions, signature |
 | `servers/{serverId}/channels/{channelId}/pins/{messageId}` | Pinned messages | content, handle, pinnedBy, pinnedAt |
 | `servers/{serverId}/channels/{channelId}/threads/{threadId}` | Threads | name, createdBy, createdAt |
 | `servers/{serverId}/roles/{roleId}` | Roles | name, color, permissions |
@@ -453,19 +540,40 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
 | `users/{uid}/friendRequests/{requestId}` | Friend requests | handle, avatar, ts |
 | `users/{uid}/outgoingRequests/{toUid}` | Outgoing requests | handle, avatar, ts |
 | `users/{uid}/notes/{uid}` | User notes | text, updatedAt |
+| `dms/{dmId}/messages/{messageId}` | DM messages | from, content, ts, signature |
+
+### Data Flow Example
+
+**Sending a Message:**
+1. User types message in chat
+2. Client encrypts message with post-quantum layer (AES-256-GCM)
+3. Client signs message with HMAC-SHA256
+4. Encrypted data sent to Firebase Firestore
+5. Real-time listener detects new message
+6. Client decrypts message automatically
+7. UI updates with decrypted content
+
+**Joining a Server:**
+1. User clicks server in sidebar
+2. Query Firestore for server data
+3. Load channels from Firestore
+4. Subscribe to Firestore real-time listeners
+5. Load messages from Firestore
+6. Decrypt encrypted messages automatically
+7. UI renders server view
 
 ---
 
 ## 📊 Data Models
 
-### User Profile
+### User Profile (Firebase Document)
 ```javascript
 {
   uid: string,           // Firebase Auth UID
   email: string,         // User email
   handle: string,         // Unique username
   avatar: string,        // Avatar URL or seed
-  bio: string,           // User bio
+  bio: string,           // User bio (encrypted)
   status: string,        // online | idle | dnd | invisible
   lastSeen: number,      // Timestamp
   createdAt: number,     // Account creation timestamp
@@ -484,11 +592,12 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
       y: number
     }
   },
-  userTag: string        // Selected identity tag
+  userTag: string,       // Selected identity tag
+  signature: string      // HMAC-SHA256 signature
 }
 ```
 
-### Server
+### Server (Firebase Document)
 ```javascript
 {
   id: string,            // Server ID
@@ -508,11 +617,11 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
 }
 ```
 
-### Message
+### Message (Firebase Document)
 ```javascript
 {
   id: string,            // Message ID
-  content: string,       // Message content
+  content: string,       // Encrypted message content
   uid: string,           // Author UID
   handle: string,        // Author handle
   avatar: string,        // Author avatar
@@ -523,7 +632,8 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
   replyHandle: string,   // Reply to handle
   reactions: {           // Reactions
     [emoji]: [uid1, uid2, ...]
-  }
+  },
+  signature: string      // HMAC-SHA256 signature
 }
 ```
 
@@ -535,6 +645,12 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
 - Firebase App
 - Firebase Authentication
 - Firebase Firestore
+- Firebase Storage (optional)
+
+### Security Layer
+- Web Crypto API (browser-native)
+- AES-256-GCM encryption
+- HMAC-SHA256 signatures
 
 ### External APIs
 - **Giphy API** - GIF search and selection
@@ -550,7 +666,7 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
 ### WebRTC
 - Peer-to-peer voice chat
 - Screen sharing
-- STUN/TURN servers (Firebase provides)
+- STUN/TURN servers (custom network)
 
 ### Web Audio API
 - Notification sounds
@@ -592,15 +708,17 @@ User Action → JavaScript → Firebase Firestore → Real-time Sync → UI Upda
 
 ### v1.0.0 (October 28, 2026)
 - Initial release
+- Firebase-based real-time communication
+- Post-quantum security layer (AES-256-GCM encryption)
+- Message encryption and digital signatures
 - Complete Discord-like feature set
-- Real-time messaging
 - Voice chat with screen sharing
 - Rich media support
 - User profiles with customization
 - Server management
 - Friends and DMs
 - Public discovery
-- Security and privacy features
+- End-to-end encryption for messages
 
 ---
 
@@ -610,7 +728,7 @@ This project is proprietary software. All rights reserved.
 
 **Copyright © 2026 Professor J**
 
-For licensing inquiries, contact: [contact@havoc.my.id](mailto:contact@havoc.my.id)
+For licensing inquiries, contact: [admin@j10.33mail.com]
 
 ---
 
