@@ -1632,6 +1632,10 @@ onAuthStateChanged(auth, async user => {
     startPresenceHeartbeat();
     loadFriends();
 
+    // Update UI first before loading server (so user sees they're logged in)
+    updateUserUI();
+    loadMyServers();
+
     // Restore last visited server if available
     const lastServerId = localStorage.getItem('havoc_last_server');
     if(lastServerId) {
@@ -1667,7 +1671,9 @@ window.doLogin = async e => { e.preventDefault(); clearAuthErr(); const email=$(
   const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
   if(ban1.exists()) return showAuthErr('This account is banned');
   await signInWithEmailAndPassword(auth,email,pass);
-  saveRemember(email,pass); closeModal('auth');
+  saveRemember(email,pass);
+  closeModal('auth');
+  // Auth state handler will update UI automatically
 }catch(err){ showAuthErr(err.message); } };
 window.doRegister = async e => {
   e.preventDefault(); clearAuthErr();
