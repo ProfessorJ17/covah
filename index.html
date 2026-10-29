@@ -25,6 +25,16 @@
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Orbitron:wght@400;700&family=Press+Start+2P&family=UnifrakturMaguntia&family=Monoton&family=Playfair+Display:wght@700&family=Pacifico&family=Anton&family=Quicksand:wght@700&family=Exo+2:wght@700&family=Bubblegum+Sans&family=Montserrat:wght@800&family=Righteous&family=Kanit:wght@800&family=Raleway:wght@300&family=Oswald:wght@700&family=Varela+Round&family=Comfortaa:wght@700&display=swap');
     body{font-family:'Plus Jakarta Sans',sans-serif}
     .mono{font-family:'JetBrains Mono',monospace}
+    /* Text size scaling - applies to all text elements */
+    :root {
+      --text-scale: 1.1;
+    }
+    body, button, input, textarea, select, span, div, p, h1, h2, h3, h4, h5, h6, label {
+      font-size: calc(1em * var(--text-scale));
+    }
+    /* Reset sizes for specific elements that should not scale */
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#090b0e}
+    ::-webkit-scrollbar-thumb{background:#242b3b;border-radius:3px}
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#090b0e}
     ::-webkit-scrollbar-thumb{background:#242b3b;border-radius:3px}
     .badge-admin{background:linear-gradient(135deg,#7C3AED,#0AC18E);color:#fff;font-size:9px;padding:1px 6px;border-radius:3px;font-family:monospace;font-weight:700}
@@ -1527,11 +1537,8 @@ S.textSize = parseFloat(localStorage.getItem('havoc_text_size')) || 1.1; // Defa
 window.updateTextSize = (size) => {
   S.textSize = parseFloat(size);
   localStorage.setItem('havoc_text_size', size);
-  // Apply scale transform to body for more reliable text sizing
-  document.body.style.transform = `scale(${S.textSize})`;
-  document.body.style.transformOrigin = 'top left';
-  // Adjust body width to prevent overflow when scaling up
-  document.body.style.width = `${100 / S.textSize}%`;
+  // Set CSS variable that controls text scaling
+  document.documentElement.style.setProperty('--text-scale', S.textSize);
 };
 // Apply text size on load
 window.updateTextSize(S.textSize);
@@ -3807,6 +3814,8 @@ async function renderMsgs(msgs){
       // If decryption returned an object with content field, use that
       content = (typeof decrypted === 'object' && decrypted.content) ? decrypted.content : decrypted;
     }
+    // Ensure content is a string
+    if (typeof content !== 'string') content = String(content || '');
     
     let contentHtml = parseMentions(esc(parseEmojis(content)));
     if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-xs max-h-64 rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
@@ -3856,7 +3865,7 @@ async function renderMsgs(msgs){
     div.innerHTML = `
       <div class="relative shrink-0 avatar-wrapper msg-avatar-wrap cursor-pointer"
            onclick="showUserProfile(event,'${esc(m.uid)}','${esc(displayHandle)}','${esc(displayAvatar)}')"
-           oncontextmenu="showMessageContext(event,'${esc(m.id)}','${esc(displayHandle)}','${esc((m.content||'').replace(/'/g,"").slice(0,80))}')">
+           oncontextmenu="showMessageContext(event,'${esc(m.id)}','${esc(displayHandle)}','${esc(contentStr.replace(/'/g,"").slice(0,80))}')">
         <img src="${esc(displayAvatar)}" class="rounded-full object-cover" style="${avatarStyle}">
         ${renderStatusDot(live)}
       </div>
@@ -3868,9 +3877,9 @@ async function renderMsgs(msgs){
           ${isNewMember(m.uid)?'<span class="new-member-leaf" title="New member (joined within the last week)"><i class="fa-solid fa-seedling"></i></span>':''}
           ${isOwner?'<span class="badge-owner">OWNER</span>':''}
           <span class="text-[10px] text-slate-600 mono">${shortTime(m.ts)}</span>
-          <button onclick="startReply('${esc(m.id)}','${esc(displayHandle)}','${esc((m.content||'').slice(0,80))}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Reply"><i class="fa-solid fa-reply"></i></button>
+          <button onclick="startReply('${esc(m.id)}','${esc(displayHandle)}','${esc(contentStr.slice(0,80))}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Reply"><i class="fa-solid fa-reply"></i></button>
           <button onclick="showReactionPicker(event,'${esc(m.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Add reaction"><i class="fa-regular fa-face-smile"></i></button>
-          <button onclick="pinMessage('${esc(m.id)}','${esc((m.content||'').replace(/'/g,"").slice(0,150))}','${esc(displayHandle)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Pin Message"><i class="fa-solid fa-thumbtack"></i></button>
+          <button onclick="pinMessage('${esc(m.id)}','${esc(contentStr.replace(/'/g,"").slice(0,150))}','${esc(displayHandle)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Pin Message"><i class="fa-solid fa-thumbtack"></i></button>
           ${S.canManage?`<button onclick="deleteMsg('${esc(m.id)}')" class="hidden group-hover:inline text-red-500 text-[10px] ml-auto"><i class="fa-solid fa-trash"></i></button>`:''}
         </div>
         ${m.replyTo ? `<div class="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
@@ -4560,6 +4569,8 @@ function loadDms(targetUid){
         // If decryption returned an object with content field, use that
         content = (typeof decrypted === 'object' && decrypted.content) ? decrypted.content : decrypted;
       }
+      // Ensure content is a string
+      if (typeof content !== 'string') content = String(content || '');
 
       let contentHtml = esc(parseEmojis(content));
       if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-full rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
@@ -5850,10 +5861,11 @@ function getChanNotifMode(){
 
 function handleIncomingMessageNotif(m){
   if(!m || !S.user || m.uid === S.user.uid) return;
-  const content = (m.content || '').toLowerCase();
+  const contentStr = typeof m.content === 'string' ? m.content : '';
+  const content = contentStr.toLowerCase();
   const myHandle = (S.profile?.handle || '').toLowerCase();
-  const isEveryone = /@everyone\b/i.test(m.content||'');
-  const isHere = /@here\b/i.test(m.content||'');
+  const isEveryone = /@everyone\b/i.test(contentStr);
+  const isHere = /@here\b/i.test(contentStr);
   const isMention = myHandle && content.includes('@' + myHandle);
 
   if(isEveryone && S.suppress.everyone) return;
@@ -5866,7 +5878,7 @@ function handleIncomingMessageNotif(m){
   if(isEveryone || isHere || isMention){
     playNotifSound('mention');
     if(document.hidden && Notification.permission === 'granted'){
-      new Notification(m.handle || 'havoc', { body: (m.content||'').slice(0,80), silent: true });
+      new Notification(m.handle || 'havoc', { body: contentStr.slice(0,80), silent: true });
     }
   } else if(mode === 'all'){
     playNotifSound('message');
