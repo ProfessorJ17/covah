@@ -705,7 +705,7 @@ Havoc uses a single HTML file containing:
 
 ## 📝 Version History
 
-### v1.0.0 (October 28, 2025)
+### v1.0.0 (October 28, 2026)
 - Initial release
 - Firebase-based real-time communication
 - Post-quantum security layer (AES-256-GCM encryption)
@@ -726,7 +726,7 @@ Havoc uses a single HTML file containing:
 
 This project is proprietary software. All rights reserved.
 
-**Copyright © 2025 Professor J**
+**Copyright © 2026 Professor J**
 
 For licensing inquiries, contact: [contact@havoc.my.id](mailto:contact@havoc.my.id)
 
