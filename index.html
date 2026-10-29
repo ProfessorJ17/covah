@@ -1574,9 +1574,9 @@ onAuthStateChanged(auth, async user => {
         await setDoc(doc(db,'users',user.uid), S.profile);
         console.log('Profile created:', S.profile);
       }
-    }catch(e){ 
+    }catch(e){
       console.error('Profile load error:', e);
-      S.profile = { uid:user.uid, email:user.email||null, handle: user.isAnonymous?`Anon_${user.uid.slice(0,6)}`:(user.email?.split('@')[0]||'User'), avatar:userAvatar(user.uid), bio:'', status:'', createdAt:Date.now() }; 
+      S.profile = { uid:user.uid, email:user.email||null, handle: user.isAnonymous?`Anon_${user.uid.slice(0,6)}`:(user.email?.split('@')[0]||'User'), avatar:userAvatar(user.uid), bio:'', status:'', createdAt:Date.now() };
     }
     S.isAdmin = (user.email === ADMIN_EMAIL);
     $('adminBtn').classList.toggle('hidden', !S.isAdmin);
@@ -1588,7 +1588,7 @@ onAuthStateChanged(auth, async user => {
     updateStatusDot();
     startPresenceHeartbeat();
     loadFriends();
-    
+
     // Restore last visited server if available
     const lastServerId = localStorage.getItem('havoc_last_server');
     if(lastServerId) {
@@ -1605,7 +1605,7 @@ onAuthStateChanged(auth, async user => {
         console.warn('Failed to restore last server', e);
       }
     }
-    
+
     if(!S.server) openDMs();
   } else {
     S.profile=null; S.isAdmin=false;
@@ -1613,6 +1613,16 @@ onAuthStateChanged(auth, async user => {
     $('imgUploadBtn').classList.add('hidden');
     $('gifBtn') && $('gifBtn').classList.add('hidden');
     $('audioClipBtn').classList.add('hidden');
+    // Auto-login if remember me is checked
+    try{
+      const remembered = JSON.parse(localStorage.getItem('havoc_remember')||'null');
+      if(remembered?.email && remembered?.pass){
+        console.log('Auto-login with saved credentials');
+        await signInWithEmailAndPassword(auth, remembered.email, remembered.pass);
+      }
+    }catch(e){
+      console.warn('Auto-login failed:', e);
+    }
   }
   updateUserUI();
   loadMyServers();
@@ -3339,6 +3349,11 @@ function switchChannel(c){
   renderChannels();
   if(S.server) listenMessages(S.server.id, c.id);
   listenForTyping();
+  // Auto-scroll to bottom after messages load
+  setTimeout(() => {
+    const c = $('msgContainer');
+    if(c) c.scrollTop = c.scrollHeight;
+  }, 100);
 }
 window.createChan = async () => {
   if(!S.canManage || !S.server) return;
@@ -3524,7 +3539,11 @@ function listenMessages(serverId, channelId){
         S._seenMsgIds = new Set([...S._seenMsgIds].slice(-300));
       }
       if(S.inDMs) return;
-      await renderMsgs(msgs);
+      // Only render if message count changed (new messages)
+      const currentCount = document.querySelectorAll('#msgFeed > div').length;
+      if(currentCount !== msgs.length || currentCount === 0){
+        await renderMsgs(msgs);
+      }
     }catch(e){}
   };
   load();
@@ -3680,7 +3699,12 @@ async function renderMsgs(msgs){
     const nameEl = div.querySelector('.msg-handle');
     if (nameEl) styleName(nameEl, S.profileCache?.[m.uid] || { handle: m.handle });
   }
-  const c = $('msgContainer'); c.scrollTop = c.scrollHeight;
+  // Auto-scroll to bottom if user is already near the bottom (within 100px)
+  const c = $('msgContainer');
+  const isNearBottom = c.scrollHeight - c.scrollTop - c.clientHeight < 100;
+  if (isNearBottom) {
+    c.scrollTop = c.scrollHeight;
+  }
 }
 function getEmojiFreq(){
   try{ return JSON.parse(localStorage.getItem('havoc_emoji_freq')||'{}'); }catch{ return {}; }
