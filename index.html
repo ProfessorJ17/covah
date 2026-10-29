@@ -1107,25 +1107,35 @@ import {
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, addDoc, getDocs, query, where, writeBatch,
-  orderBy, startAfter, limit
+  orderBy, startAfter, limit, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js';
 
 const ADMIN_EMAIL = 'moddarkrevolt@gmail.com';
 const MAX_SERVERS = 100;
-const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+const ICE = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' }
+    // TODO: Add TURN server for better connectivity (requires account setup)
+    // Example: { urls: 'turn:your-turn-server.com:3478', username: 'user', credential: 'pass' }
+  ]
+};
 
 // Different styles so servers look distinct from user avatars
 const USER_AVATAR_STYLE = 'bottts';      // robots for users
 const SERVER_ICON_STYLE = 'shapes';     // geometric shapes for servers
 
 // ========== POST-QUANTUM SECURITY LAYER ==========
-// This layer provides quantum-resistant encryption on top of Firebase
-// Currently uses Web Crypto API (AES-256-GCM) with hooks for future post-quantum algorithms
+// NOTE: Currently disabled. Requires proper key exchange (X3DH or similar) for multi-user support.
+// Keys live in memory only, so other parties cannot decrypt. AES-256-GCM is not post-quantum.
+// Future implementation needs: per-conversation key storage + key exchange protocol.
 const PQ = {
-  enabled: false, // Disabled until key persistence is implemented
-  algorithm: 'AES-256-GCM', // Current: AES-256-GCM (quantum-resistant for near-term)
-  // Future: Can swap to CRYSTALS-Kyber when browser support is available
+  enabled: false, // Disabled - keys not shared between users
+  algorithm: 'AES-256-GCM', // NOTE: Not actually post-quantum; needs CRYSTALS-Kyber or similar
   
   // Crypto key storage (in memory for session)
   keys: new Map(),
@@ -1467,7 +1477,8 @@ const S = {
   peers: {}, localStream: null,
   avatarMode: 'seed', serverIconMode: 'seed', ssIconMode: 'seed',
   typing: {}, // { channelId: { uid: timestamp } }
-  typingTimeout: null
+  typingTimeout: null,
+  processedSignals: new Set()
 };
 
 // Text size management
@@ -3212,7 +3223,7 @@ window.createServer = async () => {
       userTag: S.profile?.userTag || ''
     });
     await setDoc(doc(db,'servers',ref.id,'channels','general'), {name:'general',type:'text',createdAt:Date.now()});
-    await setDoc(doc(db,'servers',ref.id,'channels','General'), {name:'General',type:'voice',createdAt:Date.now()});
+    await setDoc(doc(db,'servers',ref.id,'channels','voice'), {name:'Voice',type:'voice',createdAt:Date.now()});
     await setDoc(doc(db,'servers',ref.id,'roles','everyone'), {name:'@everyone',color:'#99aab5',position:0});
     const code = `HAVOC-${rand()}`;
     await setDoc(doc(db,'invites',code), {code,serverId:ref.id,serverName:name,createdBy:S.user.uid,createdByHandle:safe(S.profile.handle,'Owner'),maxUses:10,uses:0,active:true,createdAt:Date.now()});
@@ -3857,13 +3868,12 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
     serverId: S.server.id,
     channelId: S.channel
   });
-  
+
   S.replyingTo = null;
   cancelReply();
-  
+
   // Send using secure wrapper
   await PQFirestore.secureAddDoc(collection(db,'servers',S.server.id,'channels',S.channel,'messages'), data);
-  await addDoc(collection(db,'servers',S.server.id,'channels',S.channel,'messages'), data);
 }
 window.playAudioMsg = (url, aid) => {
   const icon = $(`icon-${aid}`);
@@ -4503,9 +4513,14 @@ async function joinVoice(c){
     // Listen for signaling messages
     const signalRef = collection(db, roomKey, 'signals');
     S.signalUnsub = onSnapshot(signalRef, (snap) => {
-      snap.forEach(doc => {
-        const sig = doc.data();
-        if(!sig || sig.to !== S.user.uid) return;
+      snap.docChanges().forEach(change => {
+        if (change.type !== 'added') return;
+        const sigDoc = change.doc;
+        if (S.processedSignals.has(sigDoc.id)) return;
+        S.processedSignals.add(sigDoc.id);
+
+        const sig = sigDoc.data();
+        if (!sig || sig.to !== S.user.uid) return;
         const from = sig.from;
         if(sig.type === 'offer'){
           if(!S.peers[from]) createPeer(from, {}, false);
@@ -4527,6 +4542,9 @@ async function joinVoice(c){
           const pc = S.peers[from];
           if(pc && sig.candidate) pc.addIceCandidate(new RTCIceCandidate(sig.candidate)).catch(e => {});
         }
+
+        // Delete the signal after processing
+        deleteDoc(sigDoc.ref).catch(() => {});
       });
     });
     
@@ -4603,6 +4621,11 @@ window.leaveVoice = () => {
   if(window._voiceKeep) clearInterval(window._voiceKeep);
   if(S.voiceUnsub) { S.voiceUnsub(); S.voiceUnsub = null; }
   if(S.signalUnsub) { S.signalUnsub(); S.signalUnsub = null; }
+  // Clean up voice room presence
+  if (S.server && S.channel) {
+    const roomKey = `voice/${S.server.id}/${S.channel}`;
+    deleteDoc(doc(db, roomKey, 'users', S.user.uid)).catch(() => {});
+  }
   volMonitors.forEach((m, id) => stopVolumeMonitor(id));
   Object.values(S.peers).forEach(pc => pc.close());
   S.peers = {};
@@ -5146,49 +5169,56 @@ const TYPING_TIMEOUT = 3000; // 3 seconds of no typing = stopped typing
 
 function sendTypingEvent() {
   if (!S.user) return;
-  const targetId = S.inDMs ? (S.dmTarget?.uid) : S.channel.id;
-  if (!targetId) return;
+  let typingRef;
+  if (S.inDMs && S.dmTarget) {
+    const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+    const dmId = [S.user.uid, targetUid].sort().join('_');
+    typingRef = doc(db, 'dms', dmId, 'typing', S.user.uid);
+  } else if (S.server && S.channel) {
+    typingRef = doc(db, 'servers', S.server.id, 'channels', S.channel, 'typing', S.user.uid);
+  } else {
+    return;
+  }
 
-  // Send typing event to Firestore
-  const typingRef = doc(db, S.inDMs ? 'dms' : 'servers', targetId, 'typing', S.user.uid);
   setDoc(typingRef, {
     uid: S.user.uid,
-    handle: S.profile.handle,
+    handle: S.profile?.handle || 'User',
     timestamp: Date.now()
   }).catch(e => console.warn('Typing event error:', e));
 
-  // Clear previous timer and set new one
   if (typingTimer) clearTimeout(typingTimer);
   typingTimer = setTimeout(() => {
-    // User stopped typing - remove typing event
-    deleteDoc(typingRef).catch(e => {});
+    deleteDoc(typingRef).catch(() => {});
   }, TYPING_TIMEOUT);
 }
 
 function listenForTyping() {
   if (!S.user) return;
-  const targetId = S.inDMs ? (S.dmTarget?.uid) : S.channel.id;
-  if (!targetId) return;
-
-  // Clear previous listener
   if (S.unsubTyping) {
     S.unsubTyping();
+    S.unsubTyping = null;
   }
 
-  // Listen for typing events
-  const typingRef = collection(db, S.inDMs ? 'dms' : 'servers', targetId, 'typing');
-  S.unsubTyping = onSnapshot(typingRef, (snap) => {
+  let typingCol;
+  if (S.inDMs && S.dmTarget) {
+    const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+    const dmId = [S.user.uid, targetUid].sort().join('_');
+    typingCol = collection(db, 'dms', dmId, 'typing');
+  } else if (S.server && S.channel) {
+    typingCol = collection(db, 'servers', S.server.id, 'channels', S.channel, 'typing');
+  } else {
+    return;
+  }
+
+  S.unsubTyping = onSnapshot(typingCol, (snap) => {
     const now = Date.now();
     const typers = {};
-
-    snap.forEach(doc => {
-      const data = doc.data();
-      // Don't show own typing, and only show typing from last 5 seconds
-      if (data.uid !== S.user.uid && (now - data.timestamp) < 5000) {
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.uid !== S.user.uid && (now - (data.timestamp || 0)) < 5000) {
         typers[data.uid] = data.handle;
       }
     });
-
     updateTypingIndicator(typers);
   });
 }
@@ -5231,9 +5261,15 @@ function setupTypingInput() {
   const form = $('msgForm');
   if (form) {
     form.addEventListener('submit', () => {
-      const targetId = S.inDMs ? (S.dmTarget?.uid) : S.channel.id;
-      if (targetId) {
-        const typingRef = doc(db, S.inDMs ? 'dms' : 'servers', targetId, 'typing', S.user.uid);
+      let typingRef;
+      if (S.inDMs && S.dmTarget) {
+        const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+        const dmId = [S.user.uid, targetUid].sort().join('_');
+        typingRef = doc(db, 'dms', dmId, 'typing', S.user.uid);
+      } else if (S.server && S.channel) {
+        typingRef = doc(db, 'servers', S.server.id, 'channels', S.channel, 'typing', S.user.uid);
+      }
+      if (typingRef) {
         deleteDoc(typingRef).catch(e => {});
       }
     });
