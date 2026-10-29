@@ -1098,7 +1098,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
 import {
@@ -1382,13 +1381,6 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-const gun = Gun({ peers: [
-  'https://gun-rs.iris.to/gun',
-  'https://gun-relay.us-east-1.elasticbeanstalk.com/gun',
-  'https://gun-manhattan.herokuapp.com/gun',
-  'https://gun-us.herokuapp.com/gun',
-  'https://gundb.dletta.com/gun'
-], localStorage: false });
 
 const $ = s => document.getElementById(s);
 const esc = s => String(s||'').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -1564,6 +1556,7 @@ onAuthStateChanged(auth, async user => {
       const snap = await getDoc(doc(db,'users',user.uid));
       if(snap.exists()){
         S.profile = snap.data();
+        console.log('Profile loaded:', S.profile);
         if(!S.profile.handle) S.profile.handle = user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User');
         if(!S.profile.avatar) S.profile.avatar = userAvatar(user.uid);
         // Load text size preference
@@ -1579,8 +1572,10 @@ onAuthStateChanged(auth, async user => {
       } else {
         S.profile = { uid:user.uid, email:user.email||null, handle: user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User'), avatar:userAvatar(user.uid), bio:'', status:'', createdAt:Date.now() };
         await setDoc(doc(db,'users',user.uid), S.profile);
+        console.log('Profile created:', S.profile);
       }
     }catch(e){ 
+      console.error('Profile load error:', e);
       S.profile = { uid:user.uid, email:user.email||null, handle: user.isAnonymous?`Anon_${user.uid.slice(0,6)}`:(user.email?.split('@')[0]||'User'), avatar:userAvatar(user.uid), bio:'', status:'', createdAt:Date.now() }; 
     }
     S.isAdmin = (user.email === ADMIN_EMAIL);
@@ -4437,37 +4432,65 @@ async function joinVoice(c){
     S.localStream.getAudioTracks().forEach(t => t.enabled = !S.micMuted && !S.deafened);
     startVolumeMonitor(S.user.uid, S.localStream);
     $('voiceStatus').textContent = 'Connected — waiting for peers';
-    const roomKey = `havoc/voice/${S.server.id}/${c.id}`;
-    const room = gun.get(roomKey);
-    room.get(S.user.uid).put({ handle:safe(S.profile?.handle,'User'), avatar:safe(S.profile?.avatar,''), ts:Date.now(), hasVideo:false });
-    S.voiceUsers[S.user.uid] = { handle:S.profile?.handle, avatar:S.profile?.avatar };
-    room.map().on(async (data, key) => {
-      if(!data || key === S.user.uid) return;
-      if(Date.now() - (data.ts||0) > 25000) return;
-      S.voiceUsers[key] = { handle:data.handle, avatar:data.avatar };
-      renderChannels();
-      if(!S.peers[key]) await createPeer(key, data, true);
+    const roomKey = `voice/${S.server.id}/${c.id}`;
+    
+    // Use Firestore for voice signaling
+    const roomRef = doc(db, roomKey, 'users', S.user.uid);
+    await setDoc(roomRef, { 
+      handle: safe(S.profile?.handle,'User'), 
+      avatar: safe(S.profile?.avatar,''), 
+      ts: Date.now(), 
+      hasVideo: false 
     });
-    gun.get(roomKey + '/signal').map().on(async (sig, id) => {
-      if(!sig || sig.to !== S.user.uid) return;
-      const from = sig.from;
-      if(sig.type === 'offer'){
-        if(!S.peers[from]) await createPeer(from, {}, false);
-        const pc = S.peers[from];
-        await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        gun.get(roomKey + '/signal').get(rand(8)).put({ type:'answer', from:S.user.uid, to:from, sdp:pc.localDescription });
-      } else if(sig.type === 'answer'){
-        const pc = S.peers[from];
-        if(pc) await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
-      } else if(sig.type === 'ice'){
-        const pc = S.peers[from];
-        if(pc && sig.candidate) try{ await pc.addIceCandidate(new RTCIceCandidate(sig.candidate)); }catch(e){}
-      }
+    S.voiceUsers[S.user.uid] = { handle: S.profile?.handle, avatar: S.profile?.avatar };
+    
+    // Listen for other users in the voice room
+    const usersRef = collection(db, roomKey, 'users');
+    S.voiceUnsub = onSnapshot(usersRef, (snap) => {
+      const now = Date.now();
+      snap.forEach(doc => {
+        const uid = doc.id;
+        if(uid === S.user.uid) return;
+        const data = doc.data();
+        if(!data || (now - (data.ts||0) > 30000)) return;
+        S.voiceUsers[uid] = { handle: data.handle, avatar: data.avatar };
+        renderChannels();
+        if(!S.peers[uid]) createPeer(uid, data, true);
+      });
     });
+    
+    // Listen for signaling messages
+    const signalRef = collection(db, roomKey, 'signals');
+    S.signalUnsub = onSnapshot(signalRef, (snap) => {
+      snap.forEach(doc => {
+        const sig = doc.data();
+        if(!sig || sig.to !== S.user.uid) return;
+        const from = sig.from;
+        if(sig.type === 'offer'){
+          if(!S.peers[from]) createPeer(from, {}, false);
+          const pc = S.peers[from];
+          (async () => {
+            try {
+              await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              addDoc(signalRef, { type:'answer', from:S.user.uid, to:from, sdp: pc.localDescription, ts: Date.now() });
+            } catch(e) {
+              console.error('Error handling offer:', e);
+            }
+          })();
+        } else if(sig.type === 'answer'){
+          const pc = S.peers[from];
+          if(pc) pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+        } else if(sig.type === 'ice'){
+          const pc = S.peers[from];
+          if(pc && sig.candidate) pc.addIceCandidate(new RTCIceCandidate(sig.candidate)).catch(e => {});
+        }
+      });
+    });
+    
     window._voiceKeep = setInterval(() => {
-      room.get(S.user.uid).put({ handle:safe(S.profile?.handle,'User'), avatar:safe(S.profile?.avatar,''), ts:Date.now(), hasVideo:S.camOn });
+      updateDoc(roomRef, { handle: safe(S.profile?.handle,'User'), avatar: safe(S.profile?.avatar,''), ts: Date.now(), hasVideo: S.camOn });
     }, 6000);
     renderChannels();
   }catch(err){ console.error(err); $('voiceStatus').textContent = 'Media access denied'; }
@@ -4500,12 +4523,16 @@ async function createPeer(remoteUid, meta, initiator){
     }
   };
   pc.onicecandidate = (ev) => {
-    if(ev.candidate) gun.get(`havoc/voice/${S.server.id}/${S.channel}/signal`).get(rand(8)).put({ type:'ice', from:S.user.uid, to:remoteUid, candidate:ev.candidate });
+    if(ev.candidate) {
+      const signalRef = collection(db, `voice/${S.server.id}/${S.channel}/signals`);
+      addDoc(signalRef, { type:'ice', from:S.user.uid, to:remoteUid, candidate: ev.candidate, ts: Date.now() });
+    }
   };
   if(initiator){
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    gun.get(`havoc/voice/${S.server.id}/${S.channel}/signal`).get(rand(8)).put({ type:'offer', from:S.user.uid, to:remoteUid, sdp:pc.localDescription });
+    const signalRef = collection(db, `voice/${S.server.id}/${S.channel}/signals`);
+    addDoc(signalRef, { type:'offer', from:S.user.uid, to:remoteUid, sdp: pc.localDescription, ts: Date.now() });
   }
   return pc;
 }
@@ -4533,6 +4560,8 @@ window.toggleCamera = async () => {
 };
 window.leaveVoice = () => {
   if(window._voiceKeep) clearInterval(window._voiceKeep);
+  if(S.voiceUnsub) { S.voiceUnsub(); S.voiceUnsub = null; }
+  if(S.signalUnsub) { S.signalUnsub(); S.signalUnsub = null; }
   volMonitors.forEach((m, id) => stopVolumeMonitor(id));
   Object.values(S.peers).forEach(pc => pc.close());
   S.peers = {};
