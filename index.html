@@ -2287,7 +2287,9 @@ window.joinPublicServer = async (id) => {
   try {
     const mRef = doc(db, 'servers', id, 'members', S.user.uid);
     const mSnap = await getDoc(mRef);
-    if(!mSnap.exists()){
+    const isMember = mSnap.exists();
+    
+    if(!isMember){
       await setDoc(mRef, {
         handle: S.profile.handle,
         avatar: S.profile.avatar,
@@ -2300,7 +2302,11 @@ window.joinPublicServer = async (id) => {
       await updateDoc(sRef, { memberCount: (sSnap.data().memberCount || 0) + 1 });
     }
     closeModal('discover');
-    selectServer(id);
+    // Switch to the server (whether just joined or already a member)
+    const serverSnap = await getDoc(doc(db, 'servers', id));
+    if(serverSnap.exists()) {
+      await switchServer({ id, ...serverSnap.data() });
+    }
   } catch(e) {
     alert('Failed to join server: ' + e.message);
   }
