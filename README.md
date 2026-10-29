@@ -748,33 +748,6 @@ For licensing inquiries, contact: [contact@havoc.my.id](mailto:contact@havoc.my.
 - **Website:** https://www.havoc.my.id
 - **Email:** admin@j10.33mail.com
 
-
----
-
-## 🚀 Roadmap
-
-### v1.1.0 (Planned)
-- [ ] Mobile app (React Native)
-- [ ] Desktop app (Electron)
-- [ ] File upload support
-- [ ] Advanced moderation tools
-- [ ] Server boosts
-- [ ] Custom emojis
-
-### v1.2.0 (Planned)
-- [ ] Video chat
-- [ ] Streaming integration
-- [ ] Bot API
-- [ ] Webhooks
-- [ ] Server templates
-
-### v2.0.0 (Future)
-- [ ] Post-quantum cryptography
-- [ ] End-to-end encryption
-- [ ] Self-hosted option
-- [ ] Enterprise features
-- [ ] API v2
-
 ---
 
 **Built with ❤️ by Professor J**
