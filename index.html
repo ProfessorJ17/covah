@@ -4676,15 +4676,15 @@ async function joinVoice(c){
     S.localStream.getAudioTracks().forEach(t => t.enabled = !S.micMuted && !S.deafened);
     startVolumeMonitor(S.user.uid, S.localStream);
     $('voiceStatus').textContent = 'Connected — waiting for peers';
-    const roomKey = `voice/${S.server.id}/${c.id}`;
+    const roomKey = `voice/${S.server.id}_${c.id}`;
     
     // Use Firestore for voice signaling
     const roomRef = doc(db, roomKey, 'users', S.user.uid);
-    await setDoc(roomRef, { 
-      handle: safe(S.profile?.handle,'User'), 
-      avatar: safe(S.profile?.avatar,''), 
-      ts: Date.now(), 
-      hasVideo: false 
+    await setDoc(roomRef, {
+      handle: safe(S.profile?.handle,'User'),
+      avatar: safe(S.profile?.avatar,''),
+      ts: Date.now(),
+      hasVideo: false
     });
     S.voiceUsers[S.user.uid] = { handle: S.profile?.handle, avatar: S.profile?.avatar };
     
@@ -4702,7 +4702,7 @@ async function joinVoice(c){
         if(!S.peers[uid]) createPeer(uid, data, true);
       });
     });
-    
+
     // Listen for signaling messages
     const signalRef = collection(db, roomKey, 'signals');
     S.signalUnsub = onSnapshot(signalRef, (snap) => {
@@ -4776,14 +4776,14 @@ async function createPeer(remoteUid, meta, initiator){
   };
   pc.onicecandidate = (ev) => {
     if(ev.candidate) {
-      const signalRef = collection(db, `voice/${S.server.id}/${S.channel}/signals`);
+      const signalRef = collection(db, `voice_${S.server.id}_${S.channel}`, 'signals');
       addDoc(signalRef, { type:'ice', from:S.user.uid, to:remoteUid, candidate: ev.candidate, ts: Date.now() });
     }
   };
   if(initiator){
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    const signalRef = collection(db, `voice/${S.server.id}/${S.channel}/signals`);
+    const signalRef = collection(db, `voice_${S.server.id}_${S.channel}`, 'signals');
     addDoc(signalRef, { type:'offer', from:S.user.uid, to:remoteUid, sdp: pc.localDescription, ts: Date.now() });
   }
   return pc;
@@ -4816,7 +4816,7 @@ window.leaveVoice = () => {
   if(S.signalUnsub) { S.signalUnsub(); S.signalUnsub = null; }
   // Clean up voice room presence
   if (S.server && S.channel) {
-    const roomKey = `voice/${S.server.id}/${S.channel}`;
+    const roomKey = `voice_${S.server.id}_${S.channel}`;
     deleteDoc(doc(db, roomKey, 'users', S.user.uid)).catch(() => {});
   }
   // Clear processed signals to prevent memory leak
