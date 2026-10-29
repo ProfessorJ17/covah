@@ -805,18 +805,6 @@
         </select>
         <p class="text-[9px] text-slate-500 italic">Select a server tag from servers you're in to display next to your name.</p>
       </div>
-
-      <!-- TEXT SIZE -->
-      <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
-        <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Text Size</label>
-        <div class="space-y-2">
-          <div class="flex items-center gap-2">
-            <input type="number" id="textSizeSlider" min="0.7" max="2.0" step="0.05" value="1.1" class="field text-xs w-20" oninput="updateTextSize(this.value)">
-            <span class="text-[9px] text-slate-500">Default: 1.1 (rem)</span>
-          </div>
-          <p class="text-[9px] text-slate-500 italic">Adjust text size across the entire app. Range: 0.7 - 2.0</p>
-        </div>
-      </div>
     </div>
 
     <div class="flex gap-2 mt-6">
@@ -1541,17 +1529,6 @@ const S = {
   processedSignals: new Set()
 };
 
-// Text size management
-S.textSize = parseFloat(localStorage.getItem('havoc_text_size')) || 1.1; // Default to 1.1 (larger)
-window.updateTextSize = (size) => {
-  S.textSize = parseFloat(size);
-  localStorage.setItem('havoc_text_size', size);
-  // Set CSS variable that controls text scaling
-  document.documentElement.style.setProperty('--text-scale', S.textSize);
-};
-// Apply text size on load
-window.updateTextSize(S.textSize);
-
 // Modal helpers (must be defined early for HTML onclick handlers)
 window.openModal = id => {
   $(`modal-${id}`)?.classList.remove('hidden');
@@ -1587,9 +1564,6 @@ window.openModal = id => {
     $('profileAvatarPreview').style.objectPosition = 'center';
     $('profileAvatarPreview').style.transform = 'none';
     $('profileUserTag').value = S.profile.userTag || '';
-
-    // Set text size input to current value
-    $('textSizeSlider').value = S.textSize || 1.1;
 
     // Load server tags from servers the user is in
     loadServerTagsForProfile();
@@ -2420,7 +2394,7 @@ window.saveProfile = async () => {
       try{ await deleteDoc(doc(db,'usernames', oldHandle)); }catch(e){}
     }
     await setDoc(doc(db,'usernames', handleKey), { uid:S.user.uid, handle, updatedAt:Date.now() });
-    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag, textSize: S.textSize };
+    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag };
     if(!S.profile.createdAt) updates.createdAt = Date.now();
     
     // Sign profile update with post-quantum signature
