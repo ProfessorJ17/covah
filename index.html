@@ -392,6 +392,45 @@
   <div class="ctx-item" onclick="setMyStatus('idle')"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block"></span> Idle</div>
   <div class="ctx-item" onclick="setMyStatus('dnd')"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Do Not Disturb</div>
   <div class="ctx-item" onclick="setMyStatus('invisible')"><span class="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> Invisible</div>
+  <div class="border-t border-dark-700 my-1"></div>
+  <div class="ctx-item" onclick="openCustomStatusModal()"><i class="fa-solid fa-plus w-4"></i> Custom Status</div>
+</div>
+
+<!-- CUSTOM STATUS MODAL -->
+<div id="modal-customStatus" class="fixed inset-0 z-[500] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div class="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+    <div class="p-4 border-b border-dark-700 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-white">Custom Status</h2>
+      <button onclick="closeModal('customStatus')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-4 space-y-4">
+      <div>
+        <label class="field-label">Status Text</label>
+        <input type="text" id="customStatusText" maxlength="40" class="field text-xs" placeholder="e.g., Playing games, Working...">
+      </div>
+      <div>
+        <label class="field-label">Status Color</label>
+        <div class="flex gap-2 flex-wrap">
+          <input type="color" id="customStatusColor" value="#0AC18E" class="w-10 h-10 rounded cursor-pointer border-0">
+          <input type="text" id="customStatusColorText" value="#0AC18E" class="field text-xs w-24" placeholder="#000000">
+        </div>
+      </div>
+      <div>
+        <label class="field-label">Status Gradient (optional)</label>
+        <select id="customStatusGradient" class="field text-xs">
+          <option value="">No Gradient</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="customStatusInvisible" class="w-4 h-4">
+        <label for="customStatusInvisible" class="text-xs text-slate-300">Show as Invisible</label>
+      </div>
+    </div>
+    <div class="p-4 border-t border-dark-700 flex gap-2">
+      <button onclick="saveCustomStatus()" class="flex-1 py-2.5 btn-primary text-sm font-bold">Save Status</button>
+      <button onclick="clearCustomStatus()" class="px-4 py-2.5 bg-dark-800 text-slate-400 font-bold rounded-lg text-sm border border-dark-700">Clear</button>
+    </div>
+  </div>
 </div>
 
 
@@ -1636,6 +1675,12 @@ onAuthStateChanged(auth, async user => {
         if(!S.profile.createdAt){
           S.profile.createdAt = Date.now();
           try{ await updateDoc(doc(db,'users',user.uid), { createdAt: S.profile.createdAt }); }catch(e){}
+        }
+        // Set myStatus from profile or customStatus
+        if(S.profile.customStatus?.invisible) {
+          S.myStatus = 'invisible';
+        } else {
+          S.myStatus = S.profile.status || 'online';
         }
       } else {
         S.profile = { uid:user.uid, email:user.email||null, handle: user.isAnonymous ? `Anon_${user.uid.slice(0,6)}` : (user.email?.split('@')[0]||'User'), avatar:userAvatar(user.uid), bio:'', status:'', createdAt:Date.now() };
@@ -3620,11 +3665,11 @@ function switchChannel(c){
   renderChannels();
   if(S.server) listenMessages(S.server.id, c.id);
   listenForTyping();
-  // Auto-scroll to bottom after messages load (longer delay for async load)
+  // Auto-scroll to bottom after messages load (longer delay for async load + images)
   setTimeout(() => {
     const c = $('msgContainer');
     if(c) c.scrollTop = c.scrollHeight;
-  }, 500);
+  }, 1000);
 }
 window.createChan = async () => {
   if(!S.canManage || !S.server) return;
@@ -3825,6 +3870,12 @@ function listenMessages(serverId, channelId){
     isFirstSnapshot = false;
 
     await renderMsgs(msgs);
+    
+    // Scroll to bottom after messages render
+    setTimeout(() => {
+      const container = $('msgContainer');
+      if(container) container.scrollTop = container.scrollHeight;
+    }, 100);
   }, err => console.error('listenMessages error:', err));
 }
 S.profileCache = S.profileCache || {};
@@ -3851,6 +3902,7 @@ async function resolveProfiles(uids){
           userTag: u.userTag || '',
           status: u.status || 'online',
           lastSeen: u.lastSeen || 0,
+          customStatus: u.customStatus || null,
           _ts: Date.now() 
         };
       } else {
@@ -3883,6 +3935,14 @@ function renderUserTag(profile) {
 function renderStatusDot(profile) {
   if (!profile) return '';
   const st = computePresence(profile);
+  
+  // Use custom status color if available
+  if(profile.customStatus?.color && st !== 'offline') {
+    const custom = profile.customStatus;
+    const bgStyle = custom.gradient ? `background:${esc(custom.gradient)}` : `background:${esc(custom.color)}`;
+    return `<span class="member-status-dot z-20" style="${bgStyle}"></span>`;
+  }
+  
   const dotClass = st === 'online' ? 'status-online' : st === 'idle' ? 'status-idle' : st === 'dnd' ? 'status-dnd' : 'status-offline';
   return `<span class="member-status-dot ${dotClass} z-20"></span>`;
 }
@@ -5425,12 +5485,114 @@ window.setMyStatus = async (status) => {
     updateUserUI();
   }catch(e){ console.warn(e); }
 };
+
+window.openCustomStatusModal = () => {
+  hideCtx();
+  $('statusMenu').classList.add('hidden');
+  openModal('customStatus');
+  
+  // Load current custom status if exists
+  if(S.profile?.customStatus) {
+    $('customStatusText').value = S.profile.customStatus.text || '';
+    $('customStatusColor').value = S.profile.customStatus.color || '#0AC18E';
+    $('customStatusColorText').value = S.profile.customStatus.color || '#0AC18E';
+    $('customStatusGradient').value = S.profile.customStatus.gradient || '';
+    $('customStatusInvisible').checked = S.profile.customStatus.invisible || false;
+  } else {
+    $('customStatusText').value = '';
+    $('customStatusColor').value = '#0AC18E';
+    $('customStatusColorText').value = '#0AC18E';
+    $('customStatusGradient').value = '';
+    $('customStatusInvisible').checked = false;
+  }
+  
+  // Populate gradient options
+  const gradientSelect = $('customStatusGradient');
+  gradientSelect.innerHTML = '<option value="">No Gradient</option>';
+  NAME_GRADIENTS.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = g.substring(0, 30) + '...';
+    gradientSelect.appendChild(opt);
+  });
+};
+
+window.saveCustomStatus = async () => {
+  if(!S.user) return;
+  
+  const text = $('customStatusText').value.trim();
+  const color = $('customStatusColor').value;
+  const gradient = $('customStatusGradient').value;
+  const invisible = $('customStatusInvisible').checked;
+  
+  const customStatus = { text, color, gradient, invisible };
+  
+  try{
+    await updateDoc(doc(db,'users',S.user.uid), { customStatus, status: invisible ? 'invisible' : 'online', lastSeen: Date.now() });
+    if(S.profile) {
+      S.profile.customStatus = customStatus;
+      S.profile.status = invisible ? 'invisible' : 'online';
+    }
+    S.myStatus = invisible ? 'invisible' : 'online';
+    updateUserUI();
+    updateStatusDot();
+    closeModal('customStatus');
+  }catch(e){ console.warn(e); }
+};
+
+window.clearCustomStatus = async () => {
+  if(!S.user) return;
+  
+  try{
+    await updateDoc(doc(db,'users',S.user.uid), { customStatus: null, status: 'online', lastSeen: Date.now() });
+    if(S.profile) {
+      S.profile.customStatus = null;
+      S.profile.status = 'online';
+    }
+    S.myStatus = 'online';
+    updateUserUI();
+    updateStatusDot();
+    closeModal('customStatus');
+  }catch(e){ console.warn(e); }
+};
+
+// Sync color picker and text input
+document.addEventListener('DOMContentLoaded', () => {
+  loadFullTgifDataset();
+  loadRemember();
+  setupTypingInput();
+  
+  // Custom status color sync
+  const colorPicker = $('customStatusColor');
+  const colorText = $('customStatusColorText');
+  if(colorPicker && colorText) {
+    colorPicker.addEventListener('input', (e) => {
+      colorText.value = e.target.value;
+    });
+    colorText.addEventListener('input', (e) => {
+      colorPicker.value = e.target.value;
+    });
+  }
+});
 function updateStatusDot(){
   const dot = $('ucStatusDot');
   if(!dot) return;
   const st = S.myStatus || 'offline';
-  dot.className = 'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 ' +
-    (st==='online'?'status-online':st==='idle'?'status-idle':st==='dnd'?'status-dnd':'status-offline');
+  
+  // Use custom status color if available
+  if(S.profile?.customStatus?.color && st !== 'offline') {
+    const custom = S.profile.customStatus;
+    if(custom.gradient) {
+      dot.style.background = custom.gradient;
+    } else {
+      dot.style.background = custom.color;
+    }
+    dot.className = 'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950';
+  } else {
+    dot.style.background = '';
+    dot.className = 'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 ' +
+      (st==='online'?'status-online':st==='idle'?'status-idle':st==='dnd'?'status-dnd':'status-offline');
+  }
 }
 function startPresenceHeartbeat(){
   if(window._presenceIv) clearInterval(window._presenceIv);
@@ -5682,7 +5844,11 @@ function updateUserUI(){
     handleEl.textContent = safe(S.profile?.handle,'User');
     applyUserStyle(handleEl, S.profile);
     
-    const stLabel = {online:'Online',idle:'Idle',dnd:'Do Not Disturb',invisible:'Invisible'}[S.myStatus] || 'Online';
+    // Use custom status text if available, otherwise use standard status label
+    let stLabel = {online:'Online',idle:'Idle',dnd:'Do Not Disturb',invisible:'Invisible'}[S.myStatus] || 'Online';
+    if(S.profile?.customStatus?.text) {
+      stLabel = S.profile.customStatus.text;
+    }
     $('ucRole').textContent = S.isAdmin ? ('⚡ ADMIN · ' + stLabel) : (S.user.isAnonymous ? 'Anonymous' : stLabel);
     updateStatusDot();
     
