@@ -1396,14 +1396,6 @@ const rand = (n=6) => Math.random().toString(36).slice(2,2+n).toUpperCase();
 const shortTime = ts => ts ? new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
 const safe = (v, f='') => (v===undefined||v===null) ? f : String(v);
 
-// Text size management
-S.textSize = parseFloat(localStorage.getItem('havoc_text_size')) || 1.1; // Default to 1.1 (larger)
-window.updateTextSize = (size) => {
-  S.textSize = parseFloat(size);
-  localStorage.setItem('havoc_text_size', size);
-  document.body.style.fontSize = `${S.textSize}rem`;
-};
-
 function userAvatar(seed){ return `https://api.dicebear.com/7.x/${USER_AVATAR_STYLE}/svg?seed=${encodeURIComponent(seed||'Guest')}`; }
 function serverIcon(seed){ return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}`; }
 
@@ -1480,6 +1472,89 @@ const S = {
   typing: {}, // { channelId: { uid: timestamp } }
   typingTimeout: null
 };
+
+// Text size management
+S.textSize = parseFloat(localStorage.getItem('havoc_text_size')) || 1.1; // Default to 1.1 (larger)
+window.updateTextSize = (size) => {
+  S.textSize = parseFloat(size);
+  localStorage.setItem('havoc_text_size', size);
+  document.body.style.fontSize = `${S.textSize}rem`;
+};
+
+// Modal helpers (must be defined early for HTML onclick handlers)
+window.openModal = id => {
+  $(`modal-${id}`)?.classList.remove('hidden');
+  
+  // Initialize modal content based on type
+  if(id === 'serverSettings' && S.canManage && typeof ssIconMethod === 'function'){
+    $('ssName').value = safe(S.server?.name,'');
+    $('ssDesc').value = safe(S.server?.desc,'');
+    $('ssSeed').value = '';
+    $('ssIconUrl').value = '';
+    $('ssIconPreview').src = S.server?.iconUrl || serverIcon('server');
+    $('ssIsPublic').checked = !!S.server?.isPublic;
+    $('ssTags').value = (S.server?.tags || []).join(', ');
+    $('ssBannerUrl').value = S.server?.bannerUrl || '';
+    
+    $('ssTag').value = S.server?.tag || '';
+    $('ssTagEmoji').value = S.server?.tagEmoji || '⚡';
+    $('ssTagBgColor').value = S.server?.tagBgColor || '#0AC18E';
+    $('ssTagEmojiColor').value = S.server?.tagEmojiColor || '#ffffff';
+
+    S.ssIconMode = 'seed';
+    ssIconMethod('seed');
+    sSettingsTab('overview');
+  }
+  if(id === 'discover' && typeof loadDiscovery === 'function') loadDiscovery();
+  if(id === 'admin' && S.isAdmin && typeof adminTab === 'function') adminTab('servers');
+  if(id === 'profile' && S.profile && typeof loadServerTagsForProfile === 'function'){
+    $('profileHandle').value = safe(S.profile.handle,'');
+    $('profileBio').value = safe(S.profile.bio,'');
+    $('profileStatus').value = safe(S.profile.status,'');
+    const avatarUrl = safe(S.profile.avatar, userAvatar('Guest'));
+    $('profileAvatarPreview').src = avatarUrl;
+    $('profileAvatarPreview').style.objectPosition = 'center';
+    $('profileAvatarPreview').style.transform = 'none';
+    $('profileUserTag').value = S.profile.userTag || '';
+
+    // Set text size slider to current value
+    $('textSizeSlider').value = S.textSize;
+
+    // Load server tags from servers the user is in
+    loadServerTagsForProfile();
+
+    // Set initial avatar mode
+    const av = S.profile.avatar || '';
+    if(av.includes('dicebear.com')){
+      S.avatarMode = 'seed';
+      const seedMatch = av.match(/seed=([^&]+)/);
+      $('profileSeed').value = seedMatch ? seedMatch[1] : '';
+    } else if(av.includes('.gif') || av.includes('giphy') || av.includes('tenor')) {
+      S.avatarMode = 'gif';
+    } else {
+      S.avatarMode = 'url';
+      $('profileAvatarUrl').value = av;
+    }
+    if(typeof avatarMethod === 'function') avatarMethod(S.avatarMode);
+
+    if(typeof initProfileEditor === 'function') initProfileEditor();
+  }
+  if(id === 'auth' && typeof loadRemember === 'function') loadRemember();
+  if(id === 'createServer' && !S.user){ openModal('auth'); return; }
+  if(id === 'createServer' && typeof serverIconMethod === 'function'){
+    S.serverIconMode = 'seed';
+    serverIconMethod('seed');
+    $('newServerSeed').value = '';
+    $('newServerIconUrl').value = '';
+    $('newServerIconPreview').src = serverIcon('server');
+    
+    $('newServerTag').value = '';
+    $('newServerTagEmoji').value = '⚡';
+    $('newServerTagBgColor').value = '#0AC18E';
+    $('newServerTagEmojiColor').value = '#ffffff';
+  }
+};
+window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
 // ========== AUTH ==========
 onAuthStateChanged(auth, async user => {
@@ -4468,79 +4543,6 @@ window.leaveVoice = () => {
   $('voiceArea').classList.add('hidden'); $('textArea').classList.remove('hidden');
   renderChannels();
 };
-
-// ========== SETTINGS / ADMIN ==========
-window.openModal = id => {
-  if(id === 'serverSettings' && S.canManage){
-    $('ssName').value = safe(S.server?.name,'');
-    $('ssDesc').value = safe(S.server?.desc,'');
-    $('ssSeed').value = '';
-    $('ssIconUrl').value = '';
-    $('ssIconPreview').src = S.server?.iconUrl || serverIcon('server');
-    $('ssIsPublic').checked = !!S.server?.isPublic;
-    $('ssTags').value = (S.server?.tags || []).join(', ');
-    $('ssBannerUrl').value = S.server?.bannerUrl || '';
-    
-    $('ssTag').value = S.server?.tag || '';
-    $('ssTagEmoji').value = S.server?.tagEmoji || '⚡';
-    $('ssTagBgColor').value = S.server?.tagBgColor || '#0AC18E';
-    $('ssTagEmojiColor').value = S.server?.tagEmojiColor || '#ffffff';
-
-    S.ssIconMode = 'seed';
-    ssIconMethod('seed');
-    sSettingsTab('overview');
-  }
-  if(id === 'discover') loadDiscovery();
-  if(id === 'admin' && S.isAdmin) adminTab('servers');
-  if(id === 'profile' && S.profile){
-    $('profileHandle').value = safe(S.profile.handle,'');
-    $('profileBio').value = safe(S.profile.bio,'');
-    $('profileStatus').value = safe(S.profile.status,'');
-    const avatarUrl = safe(S.profile.avatar, userAvatar('Guest'));
-    $('profileAvatarPreview').src = avatarUrl;
-    $('profileAvatarPreview').style.objectPosition = 'center';
-    $('profileAvatarPreview').style.transform = 'none';
-    $('profileUserTag').value = S.profile.userTag || '';
-
-    // Set text size slider to current value
-    $('textSizeSlider').value = S.textSize;
-
-    // Load server tags from servers the user is in
-    loadServerTagsForProfile();
-
-    // Set initial avatar mode
-    const av = S.profile.avatar || '';
-    if(av.includes('dicebear.com')){
-      S.avatarMode = 'seed';
-      const seedMatch = av.match(/seed=([^&]+)/);
-      $('profileSeed').value = seedMatch ? seedMatch[1] : '';
-    } else if(av.includes('.gif') || av.includes('giphy') || av.includes('tenor')) {
-      S.avatarMode = 'gif';
-    } else {
-      S.avatarMode = 'url';
-      $('profileAvatarUrl').value = av;
-    }
-    avatarMethod(S.avatarMode);
-
-    initProfileEditor();
-  }
-  if(id === 'auth') loadRemember();
-  if(id === 'createServer' && !S.user){ openModal('auth'); return; }
-  if(id === 'createServer'){
-    S.serverIconMode = 'seed';
-    serverIconMethod('seed');
-    $('newServerSeed').value = '';
-    $('newServerIconUrl').value = '';
-    $('newServerIconPreview').src = serverIcon('server');
-    
-    $('newServerTag').value = '';
-    $('newServerTagEmoji').value = '⚡';
-    $('newServerTagBgColor').value = '#0AC18E';
-    $('newServerTagEmojiColor').value = '#ffffff';
-  }
-  $(`modal-${id}`)?.classList.remove('hidden');
-};
-window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
 // Load server tags from servers the user is in for the Identity Tag dropdown
 window.loadServerTagsForProfile = async () => {
