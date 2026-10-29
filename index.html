@@ -1103,7 +1103,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInAnonymously, onAuthStateChanged, signOut, sendPasswordResetEmail,
-  inMemoryPersistence
+  setPersistence, inMemoryPersistence
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
@@ -1484,6 +1484,12 @@ function isServerMuted(sid, type){ return !!(getMutes()[sid]?.[type]); }
 function saveRemember(email, pass){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email,pass})); else localStorage.removeItem('havoc_remember'); }
 function loadRemember(){ try{ const d=JSON.parse(localStorage.getItem('havoc_remember')||'null'); if(d?.email){ $('lEmail').value=d.email; $('lPass').value=d.pass||''; $('rememberMe').checked=true; } }catch{} }
 
+// Modal helpers (must be defined early for HTML onclick handlers)
+window.openModal = id => {
+  $(`modal-${id}`)?.classList.remove('hidden');
+};
+window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
+
 const S = {
   user:null, profile:null, isAdmin:false,
   server:null, channel:null, channelType:'text',
@@ -1583,7 +1589,6 @@ window.openModal = id => {
     $('newServerTagEmojiColor').value = '#ffffff';
   }
 };
-window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
 // ========== AUTH ==========
 onAuthStateChanged(auth, async user => {
