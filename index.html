@@ -5852,14 +5852,20 @@ function updateTypingIndicator(typers) {
   if (!indicator || !text) return;
 
   const typersList = Object.values(typers);
-  if (typersList.length === 0) {
+  
+  // Only hide if no typers AND user is not currently typing themselves
+  const isSelfTyping = typingTimer !== null;
+  if (typersList.length === 0 && !isSelfTyping) {
     indicator.classList.add('hidden');
     return;
   }
 
   indicator.classList.remove('hidden');
 
-  if (typersList.length === 1) {
+  if (typersList.length === 0 && isSelfTyping) {
+    // Only show self-typing
+    text.textContent = `${safe(S.profile?.handle, 'You')} is typing...`;
+  } else if (typersList.length === 1) {
     text.textContent = `${typersList[0]} is typing...`;
   } else if (typersList.length === 2) {
     text.textContent = `${typersList[0]} and ${typersList[1]} are typing...`;
@@ -5871,7 +5877,7 @@ function updateTypingIndicator(typers) {
 }
 
 // Show self-typing indicator when user is typing
-function showSelfTyping(isTyping) {
+function showSelfTyping(isTyping, forceHide = false) {
   const indicator = $('typingIndicator');
   const text = $('typingText');
   if (!indicator || !text) return;
@@ -5880,9 +5886,14 @@ function showSelfTyping(isTyping) {
     indicator.classList.remove('hidden');
     text.textContent = `${safe(S.profile?.handle, 'You')} is typing...`;
   } else {
-    // Hide if no other typers
-    if (Object.keys(S.typing || {}).length === 0) {
+    // Always hide if forceHide is true (e.g., when sending a message)
+    if (forceHide) {
       indicator.classList.add('hidden');
+    } else {
+      // Otherwise only hide if no other typers
+      if (Object.keys(S.typing || {}).length === 0) {
+        indicator.classList.add('hidden');
+      }
     }
   }
 }
@@ -5914,7 +5925,7 @@ function setupTypingInput() {
     form.addEventListener('submit', () => {
       // Clear the self-typing timer
       if (typingTimer) clearTimeout(typingTimer);
-      showSelfTyping(false);
+      showSelfTyping(false, true); // Force hide the typing indicator
       
       let typingRef;
       if (S.inDMs && S.dmTarget) {
