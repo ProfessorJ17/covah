@@ -925,7 +925,10 @@
     <button onclick="closeModal('joinInvite')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
     <h2 class="font-bold text-white mb-1"><i class="fa-solid fa-ticket text-bch"></i> Join via Invite</h2>
     <label for="inviteCodeInput" class="hidden">Invite Code</label>
-    <input type="text" id="inviteCodeInput" placeholder="HAVOC-XXXXXX" maxlength="20" class="field uppercase tracking-widest text-center font-bold mono mb-3 mt-3">
+    <div class="flex items-center gap-0 mb-3 mt-3">
+      <span class="bg-dark-950 border border-dark-700 border-r-0 rounded-l-lg px-3 py-2.5 text-bch font-bold mono text-sm">HAVOC-</span>
+      <input type="text" id="inviteCodeInput" placeholder="XXXXXX" maxlength="6" class="field uppercase tracking-widest text-center font-bold mono rounded-r-l flex-1">
+    </div>
     <div id="invitePuzzleText" class="text-[9px] text-red-500 mono mt-2 text-center leading-tight opacity-70">
       CRITICAL EXCEPTION AT SECTOR: [KEY_BYTE: 0x4D]<br>
       FAULT REGISTER DUMP:<br>
@@ -3938,10 +3941,11 @@ function getMemberColor(member){
 window.joinViaInvite = async () => {
   if(!S.user){ closeModal('joinInvite'); openModal('auth'); return; }
   if(!S.isAdmin && S.myServerCount >= MAX_SERVERS) return showInviteMsg(`Max ${MAX_SERVERS} servers.`, true);
-  const code = $('inviteCodeInput').value.trim().toUpperCase();
-  if(!code) return showInviteMsg('Enter a code', true);
+  const codePart = $('inviteCodeInput').value.trim().toUpperCase();
+  const fullCode = 'HAVOC-' + codePart;
+  if(!codePart) return showInviteMsg('Enter a code', true);
   try{
-    const snap = await getDoc(doc(db,'invites',code));
+    const snap = await getDoc(doc(db,'invites',fullCode));
     if(!snap.exists() || !snap.data().active) return showInviteMsg('Invalid or expired', true);
     const inv = snap.data();
     if(inv.uses >= inv.maxUses) return showInviteMsg('Max uses reached', true);
@@ -3957,12 +3961,12 @@ window.joinViaInvite = async () => {
         style: S.profile?.style || null,
         userTag: S.profile?.userTag || ''
       });
-      await updateDoc(doc(db,'invites',code), {uses:(inv.uses||0)+1});
+      await updateDoc(doc(db,'invites',fullCode), {uses:(inv.uses||0)+1});
       
       // Check if they solved the puzzle (joined 9609TX)
-      if(code === '9609TX') {
+      if(fullCode === 'HAVOC-9609TX') {
         localStorage.setItem('havoc_puzzle_solved', 'true');
-        localStorage.setItem('havoc_puzzle_code', code);
+        localStorage.setItem('havoc_puzzle_code', fullCode);
       }
     }
     showInviteMsg(`Joined "${inv.serverName}"!`, false);
