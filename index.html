@@ -142,6 +142,25 @@
       width: 40px !important;
       height: 40px !important;
     }
+
+    /* Gold glowing pulsing ticket button */
+    .ticket-glow {
+      background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+      color: #000 !important;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4), 0 0 45px rgba(255, 215, 0, 0.2);
+      animation: pulse-gold 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-gold {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4), 0 0 45px rgba(255, 215, 0, 0.2);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.4);
+      }
+    }
     .bg-dark-950.border-t .avatar-wrapper {
       width: 40px !important;
       height: 40px !important;
@@ -184,7 +203,7 @@
     <div class="w-8 h-0.5 bg-dark-700 rounded-full my-1"></div>
     <div id="serverList" class="flex flex-col items-center gap-2 w-full px-2 flex-1"></div>
     <div class="flex flex-col items-center gap-2 pb-2 w-full px-2">
-      <button onclick="openModal('joinInvite')" title="Join Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center"><i class="fa-solid fa-ticket"></i></button>
+      <button id="ticketBtn" onclick="openModal('joinInvite')" title="Join Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center"><i class="fa-solid fa-ticket"></i></button>
       <button onclick="openModal('createServer')" title="Create Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg font-bold"><i class="fa-solid fa-plus"></i></button>
       <button onclick="openModal('discover')" title="Discover Servers" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg"><i class="fa-solid fa-compass"></i></button>
       <button id="adminBtn" onclick="openModal('admin')" title="Global Admin" class="hidden w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-kiro/20 hover:bg-kiro text-kiro-bright hover:text-white transition-all flex items-center justify-center"><i class="fa-solid fa-shield-halved"></i></button>
@@ -893,7 +912,13 @@
     <h2 class="font-bold text-white mb-1"><i class="fa-solid fa-ticket text-bch"></i> Join via Invite</h2>
     <label for="inviteCodeInput" class="hidden">Invite Code</label>
     <input type="text" id="inviteCodeInput" placeholder="HAVOC-XXXXXX" maxlength="20" class="field uppercase tracking-widest text-center font-bold mono mb-3 mt-3">
-    <button onclick="joinViaInvite()" class="w-full py-2.5 btn-primary text-sm">Join Server</button>
+    <div class="text-[9px] text-red-500 mono mt-2 text-center leading-tight opacity-70">
+      CRITICAL EXCEPTION AT SECTOR: [KEY_BYTE: 0x4D]<br>
+      FAULT REGISTER DUMP:<br>
+      0x74 0x7B 0x7D 0x74 0x19 0x15<br>
+      [LOCATE CONTAINMENT UNIT]
+    </div>
+    <button onclick="joinViaInvite()" class="w-full py-2.5 btn-primary text-sm mt-3">Join Server</button>
     <div id="inviteMsg" class="mt-3 text-xs mono text-center hidden"></div>
   </div>
 </div>
@@ -1705,7 +1730,7 @@ onAuthStateChanged(auth, async user => {
 
     // Update UI first before loading server (so user sees they're logged in)
     updateUserUI();
-    loadMyServers();
+    await loadMyServers();
 
     // Restore last visited server if available
     const lastServerId = localStorage.getItem('havoc_last_server');
@@ -3121,6 +3146,16 @@ function renderServerRail(servers){
     btn.oncontextmenu = e => { e.preventDefault(); showServerContext(e,s); };
     list.appendChild(btn);
   });
+  
+  // Update ticket button glow based on server count
+  const ticketBtn = $('ticketBtn');
+  if(ticketBtn) {
+    if(servers.length === 0) {
+      ticketBtn.classList.add('ticket-glow');
+    } else {
+      ticketBtn.classList.remove('ticket-glow');
+    }
+  }
 }
 function showServerContext(e, server){
   const menu = $('ctxMenu');
@@ -4302,93 +4337,100 @@ window.deleteMsg = async id => { if(!S.canManage) return; if(!confirm('Delete?')
 
 // ========== MEMBERS ==========
 function listenMembers(serverId){
-  if(S.unsubMembers) S.unsubMembers();
-  const load = async () => {
-    try{
-      const snap = await getDocs(collection(db,'servers',serverId,'members'));
-      S.membersCache = [];
-      const list = $('membersList'); 
-      if(!list) return;
+  if(S.unsubMembers) { try { S.unsubMembers(); } catch(e) {} S.unsubMembers = null; }
+  
+  const membersCol = collection(db, 'servers', serverId, 'members');
+  
+  S.unsubMembers = onSnapshot(membersCol, async (snap) => {
+    const list = $('membersList');
+    if(!list) return;
+    
+    // Clear only if this is the first snapshot or complete reload needed
+    if(!S.membersRendered) {
       list.innerHTML = '';
-      const members = [];
-      snap.forEach(d => { const m = {uid:d.id, ...d.data()}; members.push(m); S.membersCache.push(m); });
+      S.membersRendered = true;
+    }
+    
+    S.membersCache = [];
+    const members = [];
+    snap.forEach(d => { const m = {uid:d.id, ...d.data()}; members.push(m); S.membersCache.push(m); });
 
-      const online = [];
-      const offline = [];
+    const online = [];
+    const offline = [];
 
-      for(const m of members){
-        let handle = m.handle || 'User';
-        let avatar = m.avatar || userAvatar(m.uid||'x');
-        let presence = 'offline';
-        let createdAt = 0;
-        let style = null;
-        try{
-          const uSnap = await getDoc(doc(db,'users', m.uid));
-          if(uSnap.exists()){
-            const u = uSnap.data();
-            if(u.handle) handle = u.handle;
-            if(u.avatar) avatar = u.avatar;
-            presence = computePresence(u);
-            createdAt = u.createdAt || 0;
-            style = u.style || null;
-            const userTag = u.userTag || '';
-            // Update cache while we have the data
-            if(!S.profileCache) S.profileCache = {};
-            S.profileCache[m.uid] = { handle, avatar, presence, createdAt, style, userTag, _ts: Date.now() };
-          }
-        }catch(e){}
-        const row = { ...m, handle, avatar, presence, createdAt, joinedAt: m.joinedAt || 0 };
-        if(presence === 'offline' || presence === 'invisible') offline.push(row);
-        else online.push(row);
-      }
+    for(const m of members){
+      let handle = m.handle || 'User';
+      let avatar = m.avatar || userAvatar(m.uid||'x');
+      let presence = 'offline';
+      let createdAt = 0;
+      let style = null;
+      let userTag = '';
+      try{
+        const uSnap = await getDoc(doc(db,'users', m.uid));
+        if(uSnap.exists()){
+          const u = uSnap.data();
+          if(u.handle) handle = u.handle;
+          if(u.avatar) avatar = u.avatar;
+          presence = computePresence(u);
+          createdAt = u.createdAt || 0;
+          style = u.style || null;
+          userTag = u.userTag || '';
+          // Update cache while we have the data
+          if(!S.profileCache) S.profileCache = {};
+          S.profileCache[m.uid] = { handle, avatar, presence, createdAt, style, userTag, _ts: Date.now() };
+        }
+      }catch(e){}
+      const row = { ...m, handle, avatar, presence, createdAt, joinedAt: m.joinedAt || 0, userTag };
+      if(presence === 'offline' || presence === 'invisible') offline.push(row);
+      else online.push(row);
+    }
 
-      const renderGroup = (title, arr) => {
-        if(!arr.length) return;
-        const hdr = document.createElement('div');
-        hdr.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-wider mono px-1 pt-2 pb-1';
-        hdr.textContent = `${title} — ${arr.length}`;
-        list.appendChild(hdr);
-        arr.forEach(m => {
-          const isOwner = m.role === 'owner';
-          const profile = S.profileCache[m.uid] || {};
-          const style = profile.style || m.style || null;
-          const nameStyle = getUserStyleString({ style });
-          const avatarStyle = getAvatarStyleString({ style });
-          const dotClass = m.presence === 'online' ? 'status-online' : m.presence === 'idle' ? 'status-idle' : m.presence === 'dnd' ? 'status-dnd' : 'status-offline';
-          const statusLabel = m.presence === 'online' ? 'Online' : m.presence === 'idle' ? 'Idle' : m.presence === 'dnd' ? 'Do Not Disturb' : 'Offline';
-          
-          const div = document.createElement('div');
-          div.className = 'flex items-center gap-1.5 px-1.5 py-1.5 rounded hover:bg-dark-800 cursor-pointer';
-          div.onclick = e => { showUserProfile(e, m.uid, m.handle, m.avatar); };
-          div.oncontextmenu = e => { e.preventDefault(); showUserContext(e, m.uid, m.handle, m.avatar); };
-          // Don't apply avatarStyle transforms in members list to prevent scaling issues
-          div.innerHTML = `
-            <div class="relative shrink-0 avatar-wrapper" style="width:40px;height:40px">
-              <img src="${esc(m.avatar)}" class="rounded-full border border-dark-600">
-              <span class="member-status-dot ${dotClass}"></span>
+    // Re-render entire list (simple approach to prevent duplicates)
+    list.innerHTML = '';
+    
+    const renderGroup = (title, arr) => {
+      if(!arr.length) return;
+      const hdr = document.createElement('div');
+      hdr.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-wider mono px-1 pt-2 pb-1';
+      hdr.textContent = `${title} — ${arr.length}`;
+      list.appendChild(hdr);
+      arr.forEach(m => {
+        const isOwner = m.role === 'owner';
+        const profile = S.profileCache[m.uid] || {};
+        const style = profile.style || m.style || null;
+        const nameStyle = getUserStyleString({ style });
+        const avatarStyle = getAvatarStyleString({ style });
+        const dotClass = m.presence === 'online' ? 'status-online' : m.presence === 'idle' ? 'status-idle' : m.presence === 'dnd' ? 'status-dnd' : 'status-offline';
+        const statusLabel = m.presence === 'online' ? 'Online' : m.presence === 'idle' ? 'Idle' : m.presence === 'dnd' ? 'Do Not Disturb' : 'Offline';
+        
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-1.5 px-1.5 py-1.5 rounded hover:bg-dark-800 cursor-pointer';
+        div.onclick = e => { showUserProfile(e, m.uid, m.handle, m.avatar); };
+        div.oncontextmenu = e => { e.preventDefault(); showUserContext(e, m.uid, m.handle, m.avatar); };
+        // Don't apply avatarStyle transforms in members list to prevent scaling issues
+        div.innerHTML = `
+          <div class="relative shrink-0 avatar-wrapper" style="width:40px;height:40px">
+            <img src="${esc(m.avatar)}" class="rounded-full border border-dark-600">
+            <span class="member-status-dot ${dotClass}"></span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-xs truncate flex items-center member-name" style="${nameStyle}">
+              <span>${esc(m.handle)}</span>
+              ${renderUserTag(S.profileCache[m.uid])}
+              ${isNewMember(m.uid)?' <i class="fa-solid fa-seedling new-member-leaf ml-1" title="New member"></i>':''}
             </div>
-            <div class="min-w-0 flex-1">
-              <div class="font-bold text-xs truncate flex items-center member-name" style="${nameStyle}">
-                <span>${esc(m.handle)}</span>
-                ${renderUserTag(S.profileCache[m.uid])}
-                ${isNewMember(m.uid)?' <i class="fa-solid fa-seedling new-member-leaf ml-1" title="New member"></i>':''}
-              </div>
-              <div class="text-[9px] text-slate-500">${isOwner?'Owner · ':''}${statusLabel}</div>
-            </div>`;
-          list.appendChild(div);
-          const nameSpan = div.querySelector('.member-name');
-          if (nameSpan) styleName(nameSpan, profile || { handle: m.handle });
-        });
-      };
+            <div class="text-[9px] text-slate-500">${isOwner?'Owner · ':''}${statusLabel}</div>
+          </div>`;
+        list.appendChild(div);
+        const nameSpan = div.querySelector('.member-name');
+        if (nameSpan) styleName(nameSpan, profile || { handle: m.handle });
+      });
+    };
 
-      renderGroup('Online', online);
-      renderGroup('Offline', offline);
-      $('memberCount').textContent = members.length;
-    }catch(e){ console.warn(e); }
-  };
-  load();
-  const iv = setInterval(load, 10000);
-  S.unsubMembers = () => clearInterval(iv);
+    renderGroup('Online', online);
+    renderGroup('Offline', offline);
+    $('memberCount').textContent = members.length;
+  }, err => console.error('Members listener error:', err));
 }
 function computePresence(u){
   if(!u) return 'offline';
