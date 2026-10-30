@@ -775,6 +775,20 @@
       </div>
     </div>
 
+    <!-- BADGE SELECTION -->
+    <div class="mb-4">
+      <label class="field-label mb-1">Badge</label>
+      <select id="profileBadge" class="field text-xs">
+        <option value="">No Badge</option>
+      </select>
+      <p class="text-[9px] text-slate-500 italic" id="badgeLimitText">Select a badge to display</p>
+    </div>
+
+    <!-- BADGE DISPLAY -->
+    <div id="profileBadgeDisplay" class="hidden mb-4 p-2 rounded-lg text-center">
+      <span id="profileBadgeSymbol" class="text-lg"></span>
+    </div>
+
     <!-- AVATAR CONTROLS -->
     <div id="avatarSeedBox" class="mb-4">
       <label class="field-label mb-1">Avatar Seed</label>
@@ -912,7 +926,7 @@
     <h2 class="font-bold text-white mb-1"><i class="fa-solid fa-ticket text-bch"></i> Join via Invite</h2>
     <label for="inviteCodeInput" class="hidden">Invite Code</label>
     <input type="text" id="inviteCodeInput" placeholder="HAVOC-XXXXXX" maxlength="20" class="field uppercase tracking-widest text-center font-bold mono mb-3 mt-3">
-    <div class="text-[9px] text-red-500 mono mt-2 text-center leading-tight opacity-70">
+    <div id="invitePuzzleText" class="text-[9px] text-red-500 mono mt-2 text-center leading-tight opacity-70">
       CRITICAL EXCEPTION AT SECTOR: [KEY_BYTE: 0x4D]<br>
       FAULT REGISTER DUMP:<br>
       0x74 0x7B 0x7D 0x74 0x19 0x15<br>
@@ -1566,12 +1580,36 @@ function parseEmojis(t){
 function getMutes(){ try{ return JSON.parse(localStorage.getItem('havoc_mutes')||'{}'); }catch{ return {}; } }
 function setMute(sid, type, val){ const m=getMutes(); if(!m[sid]) m[sid]={}; m[sid][type]=val; localStorage.setItem('havoc_mutes',JSON.stringify(m)); }
 function isServerMuted(sid, type){ return !!(getMutes()[sid]?.[type]); }
+
+// Badge system
+const BADGES = [
+  { id: 'puzzle_solver', name: 'Puzzle Solver', symbol: '♄🜁🜄☉☾', textColor: '#FFD700', bgColor: '#000000', description: 'Solved the invite puzzle', isAdmin: false },
+  { id: 'admin_basic', name: 'Admin', symbol: '⚡', textColor: '#FF0000', bgColor: '#000000', description: 'Server Administrator', isAdmin: true },
+  { id: 'admin_mod', name: 'Moderator', symbol: '🛡️', textColor: '#FF0000', bgColor: '#000000', description: 'Server Moderator', isAdmin: true },
+];
 function saveRemember(email, pass){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email,pass})); else localStorage.removeItem('havoc_remember'); }
 function loadRemember(){ try{ const d=JSON.parse(localStorage.getItem('havoc_remember')||'null'); if(d?.email){ $('lEmail').value=d.email; $('lPass').value=d.pass||''; $('rememberMe').checked=true; } }catch{} }
 
 // Modal helpers (must be defined early for HTML onclick handlers)
 window.openModal = id => {
   $(`modal-${id}`)?.classList.remove('hidden');
+  
+  // Handle invite modal puzzle text
+  if(id === 'joinInvite'){
+    const puzzleSolved = localStorage.getItem('havoc_puzzle_solved') === 'true';
+    const puzzleText = $('invitePuzzleText');
+    if(puzzleText) {
+      if(puzzleSolved) {
+        puzzleText.innerHTML = 'Congratulations You have made it this far. Welcome. Good Luck.';
+        puzzleText.classList.remove('text-red-500');
+        puzzleText.classList.add('text-green-500');
+      } else {
+        puzzleText.innerHTML = `CRITICAL EXCEPTION AT SECTOR: [KEY_BYTE: 0x4D]<br>FAULT REGISTER DUMP:<br>0x74 0x7B 0x7D 0x74 0x19 0x15<br>[LOCATE CONTAINMENT UNIT]`;
+        puzzleText.classList.remove('text-green-500');
+        puzzleText.classList.add('text-red-500');
+      }
+    }
+  }
 };
 window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
@@ -2050,7 +2088,65 @@ window.initProfileEditor = () => {
       if(inputs[i]) inputs[i].value = color;
     });
   }
+  // Load badge dropdown
+  const badgeSelect = $('profileBadge');
+  if(badgeSelect) {
+    badgeSelect.innerHTML = '<option value="">No Badge</option>';
+    const userBadges = S.profile?.badges || [];
+    const isAdmin = S.canManage || S.isAdmin;
+    
+    BADGES.forEach(badge => {
+      // Check if user is eligible for this badge
+      if(badge.isAdmin && !isAdmin) return;
+      if(badge.id === 'puzzle_solver' && localStorage.getItem('havoc_puzzle_solved') !== 'true') return;
+      
+      const opt = document.createElement('option');
+      opt.value = badge.id;
+      opt.textContent = badge.name;
+      if(userBadges.includes(badge.id)) {
+        if(S.profile?.selectedBadge === badge.id) opt.selected = true;
+      }
+      badgeSelect.appendChild(opt);
+    });
+    
+    // Update badge limit text
+    const limitText = $('badgeLimitText');
+    if(limitText) {
+      limitText.textContent = isAdmin ? 'Admins can select multiple badges' : 'You can select 1 badge';
+    }
+    
+    // Render selected badge display
+    renderProfileBadge();
+    
+    // Add change listener for badge dropdown
+    badgeSelect.onchange = () => {
+      renderProfileBadge();
+    };
+  }
 };
+
+function renderProfileBadge() {
+  const badgeDisplay = $('profileBadgeDisplay');
+  const badgeSymbol = $('profileBadgeSymbol');
+  if(!badgeDisplay || !badgeSymbol) return;
+  
+  const selectedBadgeId = S.profile?.selectedBadge;
+  if(!selectedBadgeId) {
+    badgeDisplay.classList.add('hidden');
+    return;
+  }
+  
+  const badge = BADGES.find(b => b.id === selectedBadgeId);
+  if(!badge) {
+    badgeDisplay.classList.add('hidden');
+    return;
+  }
+  
+  badgeDisplay.classList.remove('hidden');
+  badgeDisplay.style.background = badge.bgColor;
+  badgeDisplay.style.color = badge.textColor;
+  badgeSymbol.textContent = badge.symbol;
+}
 
 function updateProfileUIFromStyle() {
   if(S.profileStyle.banner) {
@@ -2470,7 +2566,33 @@ window.saveProfile = async () => {
       try{ await deleteDoc(doc(db,'usernames', oldHandle)); }catch(e){}
     }
     await setDoc(doc(db,'usernames', handleKey), { uid:S.user.uid, handle, updatedAt:Date.now() });
-    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag };
+    
+    // Handle badges
+    const selectedBadge = $('profileBadge').value;
+    const isAdmin = S.canManage || S.isAdmin;
+    let badges = S.profile?.badges || [];
+    
+    // Auto-award puzzle solver badge if they solved it
+    if(localStorage.getItem('havoc_puzzle_solved') === 'true' && !badges.includes('puzzle_solver')) {
+      badges.push('puzzle_solver');
+    }
+    
+    // Auto-award admin badge if they're admin
+    if(isAdmin && !badges.includes('admin_basic')) {
+      badges.push('admin_basic');
+    }
+    
+    // For normal users, only keep 1 badge (the selected one)
+    if(!isAdmin && selectedBadge) {
+      badges = [selectedBadge];
+    } else if(isAdmin && selectedBadge) {
+      // Admins can have multiple, so add if not already present
+      if(!badges.includes(selectedBadge)) {
+        badges.push(selectedBadge);
+      }
+    }
+    
+    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag, badges, selectedBadge };
     if(!S.profile.createdAt) updates.createdAt = Date.now();
     
     // Sign profile update with post-quantum signature
@@ -3836,6 +3958,12 @@ window.joinViaInvite = async () => {
         userTag: S.profile?.userTag || ''
       });
       await updateDoc(doc(db,'invites',code), {uses:(inv.uses||0)+1});
+      
+      // Check if they solved the puzzle (joined 9609TX)
+      if(code === '9609TX') {
+        localStorage.setItem('havoc_puzzle_solved', 'true');
+        localStorage.setItem('havoc_puzzle_code', code);
+      }
     }
     showInviteMsg(`Joined "${inv.serverName}"!`, false);
     const sSnap = await getDoc(doc(db,'servers',inv.serverId));
