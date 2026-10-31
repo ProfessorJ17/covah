@@ -5672,14 +5672,21 @@ window.adminSendFriendRequest = async (uid, handle, avatar) => {
 
 window.adminSendMessage = async (uid, handle, avatar) => {
   try {
-    // Add to friends temporarily if not already friends (required for DM)
-    const isFriend = S.friends.some(f => f.uid === uid);
-    if(!isFriend) {
-      await sendFriendRequest(uid, handle, avatar);
-      alert(`Friend request sent to ${handle}. You can message them once they accept.`);
-    } else {
-      startDM(uid, handle, avatar);
-    }
+    // Admins can message anyone without being friends
+    S.dmTarget = { uid, handle, avatar };
+    S.inDMs = true;
+    openDMs();
+    $('chanIcon').className = 'fa-solid fa-at text-bch-bright text-xs';
+    $('chanHeader').textContent = handle;
+    $('chatInput').disabled = false;
+    $('chatInput').placeholder = `Message @${handle}`;
+    $('membersContent').classList.add('hidden');
+    $('dmProfileContent').classList.remove('hidden');
+    $('dmProfileAvatar').src = avatar || userAvatar(uid);
+    $('dmProfileHandle').textContent = handle;
+    $('dmProfileStatus').textContent = 'Admin DM';
+    $('dmProfileDot').className = 'member-status-dot status-online';
+    closeModal('adminPanel');
   } catch(e) {
     alert(`Error: ${e.message}`);
   }
