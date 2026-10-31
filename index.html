@@ -5622,9 +5622,12 @@ window.loadAdminUsers = async () => {
           <div class="text-[9px] text-slate-500 mono truncate">${esc(d.id)}</div>
         </div>
         ${u.email===ADMIN_EMAIL?'<span class="badge-admin">ADMIN</span>':`
-          <div class="flex gap-1">
+          <div class="flex gap-1 flex-wrap">
+            <button onclick="adminSendFriendRequest('${esc(d.id)}','${esc(u.handle)}','${esc(u.avatar||'')}')" class="text-[10px] text-bch border border-bch/30 rounded px-1.5 py-0.5 hover:bg-bch/10">Add Friend</button>
+            <button onclick="adminSendMessage('${esc(d.id)}','${esc(u.handle)}','${esc(u.avatar||'')}')" class="text-[10px] text-slate-400 border border-slate-500/30 rounded px-1.5 py-0.5 hover:bg-slate-500/10">Message</button>
             <button onclick="adminKickUser('${esc(d.id)}','${esc(u.handle)}')" class="text-[10px] text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 hover:bg-amber-500/10">Kick</button>
             <button onclick="adminBanUser('${esc(d.id)}','${esc(u.email||u.handle)}')" class="text-[10px] text-red-500 border border-red-500/30 rounded px-1.5 py-0.5 hover:bg-red-500/10">Ban</button>
+            <button onclick="adminDeleteUser('${esc(d.id)}','${esc(u.handle)}','${esc(u.email||'')}')" class="text-[10px] text-purple-500 border border-purple-500/30 rounded px-1.5 py-0.5 hover:bg-purple-500/10">Delete</button>
           </div>
         `}
       `;
@@ -5656,6 +5659,53 @@ window.adminBanUser = async (uid, info) => {
   }
   alert(`${info} has been globally banned.`);
   loadAdminUsers();
+};
+
+window.adminSendFriendRequest = async (uid, handle, avatar) => {
+  try {
+    await sendFriendRequest(uid, handle, avatar);
+    alert(`Friend request sent to ${handle}!`);
+  } catch(e) {
+    alert(`Error sending friend request: ${e.message}`);
+  }
+};
+
+window.adminSendMessage = async (uid, handle, avatar) => {
+  try {
+    // Add to friends temporarily if not already friends (required for DM)
+    const isFriend = S.friends.some(f => f.uid === uid);
+    if(!isFriend) {
+      await sendFriendRequest(uid, handle, avatar);
+      alert(`Friend request sent to ${handle}. You can message them once they accept.`);
+    } else {
+      startDM(uid, handle, avatar);
+    }
+  } catch(e) {
+    alert(`Error: ${e.message}`);
+  }
+};
+
+window.adminDeleteUser = async (uid, handle, email) => {
+  if(!confirm(`DELETE ACCOUNT: ${handle} (${email})\n\nThis will permanently delete this user account and all their data. This action cannot be undone.`)) return;
+  try {
+    // Delete user document
+    await deleteDoc(doc(db, 'users', uid));
+    // Delete username index
+    await deleteDoc(doc(db, 'usernames', handle.toLowerCase()));
+    // Delete email index
+    await deleteDoc(doc(db, 'emails', email));
+    // Delete from all servers (members)
+    const serversSnap = await getDocs(collection(db, 'servers'));
+    for(const serverDoc of serversSnap.docs) {
+      try {
+        await deleteDoc(doc(db, 'servers', serverDoc.id, 'members', uid));
+      } catch(e) {}
+    }
+    alert(`Account ${handle} has been deleted.`);
+    loadAdminUsers();
+  } catch(e) {
+    alert(`Error deleting account: ${e.message}`);
+  }
 };
 window.loadBlacklist = async () => {
   const snap = await getDocs(collection(db,'blacklistedDomains'));
