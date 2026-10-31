@@ -419,7 +419,7 @@
         <div id="dmProfileStatus" class="text-xs text-slate-400 mono"></div>
       </div>
       <div class="space-y-2 text-xs">
-        <button id="dmFriendBtn" onclick="handleDMFriendAction()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
+        <button id="dmFriendBtn" onclick="console.log('Button clicked!'); handleDMFriendAction()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
         <button onclick="blockCurrentDM()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Block</button>
       </div>
     </div>
@@ -5179,13 +5179,22 @@ window.blockCurrentDM = async () => {
 };
 
 window.handleDMFriendAction = async () => {
-  if(!S.dmTarget) return;
+  console.log('=== handleDMFriendAction START ===');
+  console.log('S.dmTarget:', S.dmTarget);
+  console.log('S.friends:', S.friends);
+  
+  if(!S.dmTarget) {
+    console.error('dmTarget is null, cannot proceed');
+    alert('Error: No DM target. Please select a user first.');
+    return;
+  }
+  
   const uid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
   const handle = typeof S.dmTarget === 'string' ? 'User' : S.dmTarget.handle;
   const avatar = typeof S.dmTarget === 'string' ? '' : S.dmTarget.avatar;
   const btn = $('dmFriendBtn');
   
-  console.log('handleDMFriendAction called:', { uid, handle, dmTarget: S.dmTarget });
+  console.log('Parsed values:', { uid, handle, btnExists: !!btn });
   
   const isFriend = S.friends.some(f => f.uid === uid);
   const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
