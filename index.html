@@ -4870,7 +4870,10 @@ window.blockUser = async uid => {
 };
 window.startDM = (uid, handle, avatar) => {
   const isFriend = S.friends.some(f => f.uid === uid);
-  if(!isFriend) return alert('You must be friends to start a direct message conversation.');
+  const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+  
+  // Admins can message anyone without being friends
+  if(!isFriend && !isAdmin) return alert('You must be friends to start a direct message conversation.');
 
   S.dmTarget = { uid, handle, avatar };
   S.inDMs = true;
@@ -4883,7 +4886,7 @@ window.startDM = (uid, handle, avatar) => {
   $('dmProfileContent').classList.remove('hidden');
   $('dmProfileAvatar').src = avatar || userAvatar(uid);
   $('dmProfileHandle').textContent = handle;
-  $('dmProfileStatus').textContent = 'Direct Message';
+  $('dmProfileStatus').textContent = isAdmin && !isFriend ? 'Admin DM' : 'Direct Message';
 
   // Update status dot and ring for DM profile
   const profile = S.profileCache?.[uid] || {};
