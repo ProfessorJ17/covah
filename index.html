@@ -3432,7 +3432,27 @@ window.showUserProfile = async (e, uid, fallbackHandle, fallbackAvatar) => {
   const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
   if (isFriend) {
     $('upFriendBtn').innerHTML = '<i class="fa-solid fa-user-minus"></i>';
-    $('upFriendBtn').onclick = () => { removeFriend(uid); popup.classList.add('hidden'); };
+    $('upFriendBtn').onclick = async () => {
+      if(!confirm('Remove friend?')) return;
+      try {
+        await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
+        await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
+        await loadFriends();
+        // Update button to add friend
+        $('upFriendBtn').innerHTML = '<i class="fa-solid fa-user-plus"></i>';
+        $('upFriendBtn').disabled = false;
+        $('upFriendBtn').classList.remove('opacity-50');
+        $('upFriendBtn').onclick = () => { sendFriendRequest(uid, handle, avatar); };
+        // If not admin, hide message button since no longer friends
+        const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+        if(!isAdmin) {
+          $('upMsgBtn').classList.add('hidden');
+        }
+      } catch(e) {
+        console.error('Error removing friend:', e);
+        alert('Error removing friend');
+      }
+    };
   } else if (pendingOut) {
     $('upFriendBtn').innerHTML = '<i class="fa-solid fa-clock"></i>';
     $('upFriendBtn').disabled = true;
@@ -4384,7 +4404,10 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
   if(S.inDMs && S.dmTarget){
     const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
     const isFriend = S.friends.some(f => f.uid === targetUid);
-    if(!isFriend) return alert('Cannot send message: You are no longer friends with this user.');
+    const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+
+    // Admins can message anyone, regular users must be friends
+    if(!isFriend && !isAdmin) return alert('Cannot send message: You must be friends to message this user.');
 
     const dmId = [S.user.uid, targetUid].sort().join('_');
 
@@ -4851,14 +4874,31 @@ window.sendFriendRequest = async (uid, handle, avatar) => {
   await setDoc(doc(db,'users', uid, 'friendRequests', S.user.uid), {
     handle: safe(S.profile?.handle,'User'),
     avatar: safe(S.profile?.avatar,''),
-    fromUid: S.user.uid,
-    ts: Date.now()
+    sentAt: Date.now()
   });
   await setDoc(doc(db,'users', S.user.uid, 'outgoingRequests', uid), {
-    handle, avatar, toUid: uid, ts: Date.now()
+    handle, avatar, sentAt: Date.now()
   });
   await loadFriends();
-  alert('Friend request sent to ' + handle);
+
+  // Update UI button to show pending state
+  const popup = $('userPopup');
+  if(popup && !popup.classList.contains('hidden') && S.popupUid === uid) {
+    const btn = $('upFriendBtn');
+    if(btn) {
+      btn.innerHTML = '<i class="fa-solid fa-clock"></i>';
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+    }
+  }
+
+  // Update DM profile button if visible
+  const dmRemoveBtn = document.querySelector('button[onclick="removeCurrentDMFriend()"]');
+  if(dmRemoveBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+    dmRemoveBtn.textContent = 'Request Pending';
+    dmRemoveBtn.disabled = true;
+    dmRemoveBtn.classList.add('opacity-50');
+  }
 };
 window.acceptFriendRequest = async (fromUid, handle, avatar) => {
   if(!S.user) return;
@@ -4873,6 +4913,31 @@ window.acceptFriendRequest = async (fromUid, handle, avatar) => {
   await deleteDoc(doc(db,'users', S.user.uid, 'friendRequests', fromUid));
   await deleteDoc(doc(db,'users', fromUid, 'outgoingRequests', S.user.uid));
   await loadFriends();
+
+  // Update UI button to show remove friend
+  const popup = $('userPopup');
+  if(popup && !popup.classList.contains('hidden') && S.popupUid === fromUid) {
+    const btn = $('upFriendBtn');
+    if(btn) {
+      btn.innerHTML = '<i class="fa-solid fa-user-minus"></i>';
+      btn.disabled = false;
+      btn.classList.remove('opacity-50');
+    }
+    // Show message button
+    const msgBtn = $('upMsgBtn');
+    if(msgBtn) msgBtn.classList.remove('hidden');
+  }
+
+  // Update DM profile button if visible
+  const dmRemoveBtn = document.querySelector('button[onclick="removeCurrentDMFriend()"]');
+  if(dmRemoveBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === fromUid) {
+    dmRemoveBtn.textContent = 'Remove Friend';
+    dmRemoveBtn.disabled = false;
+    dmRemoveBtn.classList.remove('opacity-50');
+    // Enable chat
+    $('chatInput').disabled = false;
+    $('chatInput').placeholder = `Message @${handle}`;
+  }
 };
 window.declineFriendRequest = async (fromUid) => {
   await deleteDoc(doc(db,'users', S.user.uid, 'friendRequests', fromUid));
@@ -4891,6 +4956,16 @@ window.removeFriend = async uid => {
   loadFriends();
 };
 window.blockUser = async uid => {
+  // Check if target is admin
+  try {
+    const targetSnap = await getDoc(doc(db, 'users', uid));
+    if(targetSnap.exists()) {
+      const targetData = targetSnap.data();
+      const isAdmin = targetData.isAdmin || targetData.email === ADMIN_EMAIL;
+      if(isAdmin) return alert('Cannot block admin users.');
+    }
+  } catch(e) {}
+
   if(!confirm('Block this user?')) return;
   await setDoc(doc(db,'users',S.user.uid,'blocked',uid), {blockedAt:Date.now()});
   await removeFriend(uid);
@@ -4959,8 +5034,26 @@ window.removeCurrentDMFriend = async () => {
     await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
     await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
     await loadFriends();
-    // Return to DM home if current DM was with this friend
-    if(S.inDMs && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+
+    // Update UI button to add friend
+    const removeBtn = document.querySelector('button[onclick="removeCurrentDMFriend()"]');
+    if(removeBtn) {
+      removeBtn.textContent = 'Add Friend';
+      removeBtn.classList.remove('text-red-400', 'hover:bg-red-900/40');
+      removeBtn.classList.add('text-bch-bright', 'hover:bg-bch/10');
+      removeBtn.onclick = () => {
+        const handle = typeof S.dmTarget === 'string' ? 'User' : S.dmTarget.handle;
+        const avatar = typeof S.dmTarget === 'string' ? '' : S.dmTarget.avatar;
+        sendFriendRequest(uid, handle, avatar);
+      };
+    }
+
+    // If not admin, disable chat and return to DM home
+    const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+    if(!isAdmin) {
+      $('chatInput').disabled = true;
+      $('chatInput').placeholder = 'Select a friend to start chatting…';
+      $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a friend to start chatting.<br><span class="text-slate-700">Friends appear on the left.</span></div>';
       openDMs();
     }
   } catch(e) {
@@ -4971,6 +5064,17 @@ window.removeCurrentDMFriend = async () => {
 window.blockCurrentDM = async () => {
   if(!S.dmTarget) return;
   const uid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+
+  // Check if target is admin
+  try {
+    const targetSnap = await getDoc(doc(db, 'users', uid));
+    if(targetSnap.exists()) {
+      const targetData = targetSnap.data();
+      const isAdmin = targetData.isAdmin || targetData.email === ADMIN_EMAIL;
+      if(isAdmin) return alert('Cannot block admin users.');
+    }
+  } catch(e) {}
+
   if(!confirm('Block this user?')) return;
   try {
     await setDoc(doc(db,'users',S.user.uid,'blocked',uid), {blockedAt:Date.now()});
