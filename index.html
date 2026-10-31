@@ -4835,7 +4835,10 @@ function renderFriends(){
     const div = document.createElement('div');
     div.className = 'dm-item';
     div.dataset.name = (f.handle||'').toLowerCase();
-    div.onclick = () => startDM(f.uid, f.handle, f.avatar);
+    div.onclick = () => {
+      console.log('Friend item clicked:', { uid: f.uid, handle: f.handle });
+      startDM(f.uid, f.handle, f.avatar);
+    };
     div.oncontextmenu = e => showUserContext(e, f.uid, f.handle, f.avatar);
     div.innerHTML = `
       <div class="relative shrink-0 avatar-wrapper" style="width:40px;height:40px">
@@ -4845,7 +4848,7 @@ function renderFriends(){
       <div class="min-w-0 flex-1">
         <div class="text-xs truncate msg-handle" style="${nameStyle}">${esc(f.handle)}</div>
       </div>
-      <button onclick="event.stopPropagation();startDM('${esc(f.uid)}','${esc(f.handle)}','${esc(f.avatar||'')}')" class="text-slate-500 hover:text-bch text-xs"><i class="fa-solid fa-message"></i></button>
+      <button onclick="event.stopPropagation();console.log('Message button clicked:', { uid: '${esc(f.uid)}', handle: '${esc(f.handle)}' }); startDM('${esc(f.uid)}','${esc(f.handle)}','${esc(f.avatar||'')}')" class="text-slate-500 hover:text-bch text-xs"><i class="fa-solid fa-message"></i></button>
     `;
     el.appendChild(div);
     const nameEl = div.querySelector('.msg-handle');
@@ -6075,20 +6078,8 @@ window.adminSendFriendRequest = async (uid, handle, avatar) => {
 
 window.adminSendMessage = async (uid, handle, avatar) => {
   try {
-    // Admins can message anyone without being friends
-    S.dmTarget = { uid, handle, avatar };
-    S.inDMs = true;
-    openDMs();
-    $('chanIcon').className = 'fa-solid fa-at text-bch-bright text-xs';
-    $('chanHeader').textContent = handle;
-    $('chatInput').disabled = false;
-    $('chatInput').placeholder = `Message @${handle}`;
-    $('membersContent').classList.add('hidden');
-    $('dmProfileContent').classList.remove('hidden');
-    $('dmProfileAvatar').src = avatar || userAvatar(uid);
-    $('dmProfileHandle').textContent = handle;
-    $('dmProfileStatus').textContent = 'Admin DM';
-    $('dmProfileDot').className = 'member-status-dot status-online';
+    // Use startDM which properly sets up the DM state
+    startDM(uid, handle, avatar);
     closeModal('adminPanel');
   } catch(e) {
     alert(`Error: ${e.message}`);
