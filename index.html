@@ -419,7 +419,7 @@
         <div id="dmProfileStatus" class="text-xs text-slate-400 mono"></div>
       </div>
       <div class="space-y-2 text-xs">
-        <button onclick="removeCurrentDMFriend()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
+        <button id="dmFriendBtn" onclick="handleDMFriendAction()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
         <button onclick="blockCurrentDM()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Block</button>
       </div>
     </div>
@@ -1960,12 +1960,38 @@ window.filterDMs = (q) => {
     el.style.display = name.includes(q) ? '' : 'none';
   });
 };
-window.promptNewDM = () => {
+window.promptNewDM = async () => {
   const handle = prompt('Enter handle of user to message:');
   if(!handle) return;
+  
+  const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
   const f = S.friends.find(x => x.handle.toLowerCase() === handle.toLowerCase());
-  if(f) startDM(f.uid, f.handle, f.avatar);
-  else alert('User not in your friends list. Add them first by right-clicking their avatar.');
+  
+  if(f) {
+    startDM(f.uid, f.handle, f.avatar);
+  } else if(isAdmin) {
+    // Admins can message by handle even if not friends
+    try {
+      const handleKey = handle.toLowerCase();
+      const uname = await getDoc(doc(db,'usernames', handleKey));
+      if(!uname.exists()){
+        alert('User not found');
+        return;
+      }
+      const uid = uname.data().uid;
+      if(uid === S.user.uid){
+        alert('That\'s you');
+        return;
+      }
+      const uSnap = await getDoc(doc(db,'users', uid));
+      const u = uSnap.exists() ? uSnap.data() : {};
+      startDM(uid, u.handle || handle, u.avatar || userAvatar(uid));
+    } catch(e) {
+      alert('Error: ' + e.message);
+    }
+  } else {
+    alert('User not in your friends list. Add them first by right-clicking their avatar.');
+  }
 };
 
 // ========== PROFILE ENHANCEMENTS (Banner, Name, GIF Editor) ==========
@@ -5090,6 +5116,104 @@ window.blockCurrentDM = async () => {
     console.error('Error blocking user:', e);
     alert('Error blocking user');
   }
+};
+
+window.handleDMFriendAction = async () => {
+  if(!S.dmTarget) return;
+  const uid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+  const handle = typeof S.dmTarget === 'string' ? 'User' : S.dmTarget.handle;
+  const avatar = typeof S.dmTarget === 'string' ? '' : S.dmTarget.avatar;
+  const btn = $('dmFriendBtn');
+  
+  const isFriend = S.friends.some(f => f.uid === uid);
+  const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
+  
+  if(isFriend) {
+    // Remove friend
+    if(!confirm('Remove friend?')) return;
+    try {
+      await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
+      await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
+      await loadFriends();
+      
+      // Update button to Add Friend
+      if(btn) {
+        btn.textContent = 'Add Friend';
+        btn.classList.remove('text-red-400', 'hover:bg-red-900/40');
+        btn.classList.add('text-bch-bright', 'hover:bg-bch/10');
+      }
+      
+      // If not admin, disable chat
+      const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+      if(!isAdmin) {
+        $('chatInput').disabled = true;
+        $('chatInput').placeholder = 'Select a friend to start chatting…';
+        $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a friend to start chatting.<br><span class="text-slate-700">Friends appear on the left.</span></div>';
+        openDMs();
+      }
+    } catch(e) {
+      console.error('Error removing friend:', e);
+      alert('Error removing friend');
+    }
+  } else if(pendingOut) {
+    // Already pending - do nothing
+    return;
+  } else {
+    // Send friend request
+    try {
+      await setDoc(doc(db,'users', uid, 'friendRequests', S.user.uid), {
+        handle: safe(S.profile?.handle,'User'),
+        avatar: safe(S.profile?.avatar,''),
+        sentAt: Date.now()
+      });
+      await setDoc(doc(db,'users', S.user.uid, 'outgoingRequests', uid), {
+        handle, avatar, sentAt: Date.now()
+      });
+      await loadFriends();
+      
+      // Update button to Request Pending
+      if(btn) {
+        btn.textContent = 'Request Pending';
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+      }
+    } catch(e) {
+      console.error('Error sending friend request:', e);
+      alert('Error sending friend request');
+    }
+  }
+};
+
+// Update DM friend button when DM is opened
+const originalStartDM = window.startDM;
+window.startDM = function(uid, handle, avatar) {
+  originalStartDM(uid, handle, avatar);
+  
+  // Update friend button state after DM opens
+  setTimeout(() => {
+    const btn = $('dmFriendBtn');
+    if(!btn) return;
+    
+    const isFriend = S.friends.some(f => f.uid === uid);
+    const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
+    
+    if(isFriend) {
+      btn.textContent = 'Remove Friend';
+      btn.classList.remove('text-bch-bright', 'hover:bg-bch/10', 'opacity-50');
+      btn.classList.add('text-red-400', 'hover:bg-red-900/40');
+      btn.disabled = false;
+    } else if(pendingOut) {
+      btn.textContent = 'Request Pending';
+      btn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'text-bch-bright', 'hover:bg-bch/10');
+      btn.classList.add('opacity-50');
+      btn.disabled = true;
+    } else {
+      btn.textContent = 'Add Friend';
+      btn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'opacity-50');
+      btn.classList.add('text-bch-bright', 'hover:bg-bch/10');
+      btn.disabled = false;
+    }
+  }, 100);
 };
 
 function loadDms(targetUid){
