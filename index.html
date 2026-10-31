@@ -4430,14 +4430,26 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
     const isFriend = S.friends.some(f => f.uid === targetUid);
     const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
 
+    console.log('actuallySendMessage DM:', {
+      targetUid,
+      isFriend,
+      isAdmin,
+      userEmail: S.profile?.email,
+      ADMIN_EMAIL
+    });
+
     // Admins can message anyone, regular users must be friends
-    if(!isFriend && !isAdmin) return alert('Cannot send message: You must be friends to message this user.');
+    if(!isFriend && !isAdmin) {
+      console.error('Cannot send DM: not friends and not admin');
+      return alert('Cannot send message: You must be friends to message this user.');
+    }
 
     const dmId = [S.user.uid, targetUid].sort().join('_');
+    console.log('DM ID:', dmId);
 
     // Since PQ encryption is disabled, send plain text messages
     try {
-      await addDoc(collection(db,'dms',dmId,'messages'), {
+      const messageData = {
         from: S.user.uid,
         handle: safe(S.profile?.handle, 'User'),
         avatar: safe(S.profile?.avatar, userAvatar(S.user.uid)),
@@ -4445,7 +4457,10 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
         imageUrl: imageUrl||null,
         audioUrl: audioUrl||null,
         ts: Date.now()
-      });
+      };
+      console.log('Sending DM message:', messageData);
+      await addDoc(collection(db,'dms',dmId,'messages'), messageData);
+      console.log('DM message sent successfully to Firestore');
     } catch(e) {
       console.error('Failed to send DM message:', e);
       alert('Failed to send message: ' + e.message);
@@ -4552,7 +4567,19 @@ window.sendMsg = async e => {
   const content = input.value.trim();
   if((!content && !S.pendingImage && !S.pendingImageUrl && !S.pendingAudio) || !S.user) return;
 
-  if(S.inDMs && !S.dmTarget) return;
+  console.log('sendMsg called:', { 
+    inDMs: S.inDMs, 
+    dmTarget: S.dmTarget, 
+    content: content,
+    isAdmin: S.isAdmin,
+    canManage: S.canManage,
+    userEmail: S.profile?.email
+  });
+
+  if(S.inDMs && !S.dmTarget) {
+    console.error('DM send failed: no dmTarget');
+    return;
+  }
   if(!S.inDMs && (!S.server || S.channelType !== 'text')) return;
   if(!S.inDMs && S.locked && !S.canManage) return alert('Channel is locked');
 
@@ -4576,8 +4603,13 @@ window.sendMsg = async e => {
       await registerImage(imageUrl);
       clearImagePreview(); 
     }
+    console.log('Calling actuallySendMessage...');
     await actuallySendMessage(content, imageUrl, null);
-  }catch(err){ alert('Send failed: '+err.message); }
+    console.log('Message sent successfully');
+  }catch(err){ 
+    console.error('Send failed:', err);
+    alert('Send failed: '+err.message); 
+  }
 };
 window.deleteMsg = async id => { if(!S.canManage) return; if(!confirm('Delete?')) return; await deleteDoc(doc(db,'servers',S.server.id,'channels',S.channel,'messages',id)); };
 
@@ -5125,26 +5157,34 @@ window.handleDMFriendAction = async () => {
   const avatar = typeof S.dmTarget === 'string' ? '' : S.dmTarget.avatar;
   const btn = $('dmFriendBtn');
   
+  console.log('handleDMFriendAction called:', { uid, handle, dmTarget: S.dmTarget });
+  
   const isFriend = S.friends.some(f => f.uid === uid);
   const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
   
+  console.log('Friend status:', { isFriend, pendingOut, friends: S.friends.map(f => f.uid) });
+  
   if(isFriend) {
     // Remove friend
+    console.log('Removing friend:', uid);
     if(!confirm('Remove friend?')) return;
     try {
       await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
       await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
       await loadFriends();
+      console.log('Friend removed, reloading friends list');
       
       // Update button to Add Friend
       if(btn) {
         btn.textContent = 'Add Friend';
         btn.classList.remove('text-red-400', 'hover:bg-red-900/40');
         btn.classList.add('text-bch-bright', 'hover:bg-bch/10');
+        console.log('Button updated to Add Friend');
       }
       
       // If not admin, disable chat
       const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+      console.log('Admin check for chat disable:', { isAdmin, userEmail: S.profile?.email });
       if(!isAdmin) {
         $('chatInput').disabled = true;
         $('chatInput').placeholder = 'Select a friend to start chatting…';
@@ -5157,9 +5197,11 @@ window.handleDMFriendAction = async () => {
     }
   } else if(pendingOut) {
     // Already pending - do nothing
+    console.log('Friend request already pending');
     return;
   } else {
     // Send friend request
+    console.log('Sending friend request to:', uid);
     try {
       await setDoc(doc(db,'users', uid, 'friendRequests', S.user.uid), {
         handle: safe(S.profile?.handle,'User'),
@@ -5170,12 +5212,14 @@ window.handleDMFriendAction = async () => {
         handle, avatar, sentAt: Date.now()
       });
       await loadFriends();
+      console.log('Friend request sent');
       
       // Update button to Request Pending
       if(btn) {
         btn.textContent = 'Request Pending';
         btn.disabled = true;
         btn.classList.add('opacity-50');
+        console.log('Button updated to Request Pending');
       }
     } catch(e) {
       console.error('Error sending friend request:', e);
