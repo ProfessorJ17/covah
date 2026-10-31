@@ -1917,6 +1917,7 @@ window.doSignOut = async () => {
 
 // ========== DM ==========
 window.openDMs = () => {
+  console.log('openDMs called, clearing dmTarget');
   if(S.unsubMsgs){ try{ S.unsubMsgs(); }catch(e){} S.unsubMsgs = null; }
   if(S.unsubMembers){ try{ S.unsubMembers(); }catch(e){} S.unsubMembers = null; }
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
@@ -1926,7 +1927,7 @@ window.openDMs = () => {
   S.server = null;
   S.channel = null;
   S.channelType = null;
-  S.dmTarget = null;
+  S.dmTarget = null; // Clear when going to DM home
   $('dmHomeBtn').classList.add('dm-active');
   document.querySelectorAll('#serverList button').forEach(b => b.classList.remove('server-active'));
   $('currentServerName').textContent = 'Direct Messages';
@@ -4926,6 +4927,7 @@ function showAddFriendMsg(msg, err){
   el.classList.remove('hidden');
 }
 window.sendFriendRequest = async (uid, handle, avatar) => {
+  console.log('sendFriendRequest called:', { uid, handle });
   if(!S.user || uid === S.user.uid) return;
   if(S.friends.some(f => f.uid === uid)) return alert('Already friends');
   await setDoc(doc(db,'users', uid, 'friendRequests', S.user.uid), {
@@ -4937,6 +4939,7 @@ window.sendFriendRequest = async (uid, handle, avatar) => {
     handle, avatar, sentAt: Date.now()
   });
   await loadFriends();
+  console.log('Friend request sent, friends loaded');
 
   // Update UI button to show pending state
   const popup = $('userPopup');
@@ -4946,15 +4949,18 @@ window.sendFriendRequest = async (uid, handle, avatar) => {
       btn.innerHTML = '<i class="fa-solid fa-clock"></i>';
       btn.disabled = true;
       btn.classList.add('opacity-50');
+      console.log('Popup button updated to pending');
     }
   }
 
   // Update DM profile button if visible
-  const dmRemoveBtn = document.querySelector('button[onclick="removeCurrentDMFriend()"]');
-  if(dmRemoveBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
-    dmRemoveBtn.textContent = 'Request Pending';
-    dmRemoveBtn.disabled = true;
-    dmRemoveBtn.classList.add('opacity-50');
+  const dmFriendBtn = $('dmFriendBtn');
+  if(dmFriendBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+    dmFriendBtn.textContent = 'Request Pending';
+    dmFriendBtn.disabled = true;
+    dmFriendBtn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'text-bch-bright', 'hover:bg-bch/10');
+    dmFriendBtn.classList.add('opacity-50');
+    console.log('DM friend button updated to pending');
   }
 };
 window.acceptFriendRequest = async (fromUid, handle, avatar) => {
@@ -4986,11 +4992,12 @@ window.acceptFriendRequest = async (fromUid, handle, avatar) => {
   }
 
   // Update DM profile button if visible
-  const dmRemoveBtn = document.querySelector('button[onclick="removeCurrentDMFriend()"]');
-  if(dmRemoveBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === fromUid) {
-    dmRemoveBtn.textContent = 'Remove Friend';
-    dmRemoveBtn.disabled = false;
-    dmRemoveBtn.classList.remove('opacity-50');
+  const dmFriendBtn = $('dmFriendBtn');
+  if(dmFriendBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === fromUid) {
+    dmFriendBtn.textContent = 'Remove Friend';
+    dmFriendBtn.classList.remove('text-bch-bright', 'hover:bg-bch/10', 'opacity-50');
+    dmFriendBtn.classList.add('text-red-400', 'hover:bg-red-900/40');
+    dmFriendBtn.disabled = false;
     // Enable chat
     $('chatInput').disabled = false;
     $('chatInput').placeholder = `Message @${handle}`;
@@ -5007,10 +5014,31 @@ window.cancelFriendRequest = async (toUid) => {
   await loadFriends();
 };
 window.removeFriend = async uid => {
+  console.log('removeFriend called:', { uid });
   if(!confirm('Remove friend?')) return;
   await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
   await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
-  loadFriends();
+  await loadFriends();
+  console.log('Friend removed, friends reloaded');
+
+  // Update DM profile button if visible
+  const dmFriendBtn = $('dmFriendBtn');
+  if(dmFriendBtn && S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+    dmFriendBtn.textContent = 'Add Friend';
+    dmFriendBtn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'opacity-50');
+    dmFriendBtn.classList.add('text-bch-bright', 'hover:bg-bch/10');
+    dmFriendBtn.disabled = false;
+    console.log('DM friend button updated to Add Friend');
+    
+    // If not admin, disable chat
+    const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+    if(!isAdmin) {
+      $('chatInput').disabled = true;
+      $('chatInput').placeholder = 'Select a friend to start chatting…';
+      $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a friend to start chatting.<br><span class="text-slate-700">Friends appear on the left.</span></div>';
+      openDMs();
+    }
+  }
 };
 window.blockUser = async uid => {
   // Check if target is admin
@@ -5231,31 +5259,40 @@ window.handleDMFriendAction = async () => {
 // Update DM friend button when DM is opened
 const originalStartDM = window.startDM;
 window.startDM = function(uid, handle, avatar) {
+  console.log('startDM wrapper called:', { uid, handle, avatar });
   originalStartDM(uid, handle, avatar);
   
   // Update friend button state after DM opens
   setTimeout(() => {
     const btn = $('dmFriendBtn');
-    if(!btn) return;
+    if(!btn) {
+      console.log('dmFriendBtn not found');
+      return;
+    }
     
     const isFriend = S.friends.some(f => f.uid === uid);
     const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
+    
+    console.log('Updating DM friend button:', { isFriend, pendingOut, friends: S.friends.map(f => f.uid) });
     
     if(isFriend) {
       btn.textContent = 'Remove Friend';
       btn.classList.remove('text-bch-bright', 'hover:bg-bch/10', 'opacity-50');
       btn.classList.add('text-red-400', 'hover:bg-red-900/40');
       btn.disabled = false;
+      console.log('Button set to Remove Friend');
     } else if(pendingOut) {
       btn.textContent = 'Request Pending';
       btn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'text-bch-bright', 'hover:bg-bch/10');
       btn.classList.add('opacity-50');
       btn.disabled = true;
+      console.log('Button set to Request Pending');
     } else {
       btn.textContent = 'Add Friend';
       btn.classList.remove('text-red-400', 'hover:bg-red-900/40', 'opacity-50');
       btn.classList.add('text-bch-bright', 'hover:bg-bch/10');
       btn.disabled = false;
+      console.log('Button set to Add Friend');
     }
   }, 100);
 };
