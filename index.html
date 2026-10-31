@@ -1954,7 +1954,7 @@ window.openDMs = () => {
   if($('memberCount')) $('memberCount').textContent = '0';
   $('typingIndicator').classList.add('hidden');
   if($('membersList')) $('membersList').innerHTML = '';
-  loadFriends(); renderDMList();
+  loadFriends(); renderDMList(); // Note: renderDMList is now async but we don't await here
   dmTab('dms');
 };
 function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); $('membersPanel').classList.remove('hidden'); }
@@ -4815,7 +4815,7 @@ async function loadFriends(){
 
     renderFriends();
     renderPending();
-    renderDMList();
+    renderDMList(); // Note: async but don't await to avoid blocking
     updatePendingBadge();
   }catch(e){ console.warn('loadFriends', e); }
 }
@@ -4897,10 +4897,54 @@ function renderPending(){
     out.appendChild(div);
   });
 }
-function renderDMList(){
+async function renderDMList(){
   const el = $('dmList'); if(!el) return;
   el.innerHTML = '';
-  S.friends.forEach(f => {
+  
+  // Get all users you've had DMs with by querying dms collection
+  const conversationUsers = new Map();
+  
+  // Add friends first
+  (S.friends || []).forEach(f => {
+    conversationUsers.set(f.uid, { uid: f.uid, handle: f.handle, avatar: f.avatar, style: f.style });
+  });
+  
+  // Query dms collection to find other conversations (admin DMs to non-friends)
+  try {
+    const dmsCol = collection(db, 'dms');
+    const snap = await getDocs(dmsCol);
+    const userPromises = [];
+    snap.forEach(docSnap => {
+      const dmId = docSnap.id;
+      const uids = dmId.split('_');
+      if(uids.includes(S.user.uid)) {
+        const otherUid = uids.find(uid => uid !== S.user.uid);
+        if(otherUid && !conversationUsers.has(otherUid)) {
+          // Get user profile
+          userPromises.push(
+            getDoc(doc(db, 'users', otherUid)).then(userSnap => {
+              if(userSnap.exists()) {
+                const userData = userSnap.data();
+                conversationUsers.set(otherUid, {
+                  uid: otherUid,
+                  handle: userData.handle || 'User',
+                  avatar: userData.avatar || userAvatar(otherUid),
+                  style: userData.style || null
+                });
+              }
+            }).catch(() => {})
+          );
+        }
+      }
+    });
+    await Promise.all(userPromises);
+  } catch(e) {
+    console.error('Error loading DM conversations:', e);
+  }
+  
+  const conversations = Array.from(conversationUsers.values());
+  
+  conversations.forEach(f => {
     // Use profileCache for style, fall back to friend object
     const profile = S.profileCache?.[f.uid] || {};
     const style = profile.style || f.style || null;
@@ -4911,15 +4955,20 @@ function renderDMList(){
 
     const div = document.createElement('div');
     const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget?.uid;
-    div.className = `dm-item ${targetUid===f.uid?'active':''}`;
+    div.className = `dm-item group ${targetUid===f.uid?'active':''}`;
     div.dataset.name = (f.handle||'').toLowerCase();
-    div.onclick = () => startDM(f.uid, f.handle, f.avatar);
+    div.onclick = (e) => {
+      if(!e.target.closest('.delete-dm-btn')) {
+        startDM(f.uid, f.handle, f.avatar);
+      }
+    };
     div.innerHTML = `
       <div class="relative shrink-0 avatar-wrapper" style="width:40px;height:40px">
         <img src="${esc(f.avatar||userAvatar('x'))}" class="rounded-full" style="${avatarStyle}">
         <span class="member-status-dot ${dotClass}"></span>
       </div>
-      <span class="text-xs truncate msg-handle" style="${nameStyle}">${esc(f.handle)}</span>
+      <span class="text-xs truncate msg-handle flex-1" style="${nameStyle}">${esc(f.handle)}</span>
+      <button onclick="deleteDMConversation('${esc(f.uid)}','${esc(f.handle)}')" class="delete-dm-btn hidden group-hover:inline text-slate-500 hover:text-red-400 text-[10px] ml-1" title="Delete Conversation"><i class="fa-solid fa-xmark"></i></button>
     `;
     el.appendChild(div);
     const nameEl = div.querySelector('.msg-handle');
@@ -5135,7 +5184,7 @@ window.startDM = (uid, handle, avatar) => {
   // Load DM messages and typing
   loadDms(uid);
   listenForTyping();
-  renderDMList();
+  renderDMList(); // Note: async but don't await
 };
 window.removeCurrentDMFriend = async () => {
   if(!S.dmTarget) return;
@@ -5508,6 +5557,41 @@ async function checkDMNotifications() {
   
   updateDMNotificationUI();
 }
+
+// Delete DM conversation
+window.deleteDMConversation = async (uid, handle) => {
+  if(!confirm(`Delete conversation with ${handle}? This will remove all messages for both users.`)) return;
+  
+  const dmId = [S.user.uid, uid].sort().join('_');
+  
+  try {
+    // Delete all messages in the DM
+    const messagesCol = collection(db, 'dms', dmId, 'messages');
+    const snap = await getDocs(messagesCol);
+    const batch = writeBatch(db);
+    snap.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    
+    // Clear notification data for this user
+    delete S.dmUnread[uid];
+    delete S.dmLastRead[uid];
+    localStorage.setItem('havoc_dm_unread', JSON.stringify(S.dmUnread));
+    localStorage.setItem('havoc_dm_last_read', JSON.stringify(S.dmLastRead));
+    updateDMNotificationUI();
+    
+    // If this was the current DM, return to DM home
+    if(S.dmTarget && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+      openDMs();
+    }
+    
+    alert('Conversation deleted');
+  } catch(e) {
+    console.error('Error deleting DM conversation:', e);
+    alert('Error deleting conversation');
+  }
+};
 
 // ========== VOICE + VIDEO ==========
 const volMonitors = new Map();
@@ -6690,7 +6774,7 @@ function refreshAllUIWithStyle() {
   // Refresh friends
   if(S.friends) renderFriends();
   // Refresh DM list
-  if(S.friends) renderDMList();
+  if(S.friends) renderDMList(); // Note: async but don't await
   // Update user UI
   updateUserUI();
 }
