@@ -217,10 +217,16 @@
 
   <!-- SERVER RAIL -->
   <nav class="w-16 bg-dark-950 border-r border-dark-700 flex flex-col items-center py-3 gap-2 shrink-0 overflow-y-auto">
-    <button id="dmHomeBtn" onclick="openDMs()" title="Direct Messages"
-      class="relative w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch transition-all flex items-center justify-center overflow-hidden dm-active">
-      <img src="https://professorj17.github.io/4everai/HAVOC.ico" class="w-7 h-7 rounded-md">
-    </button>
+    <div class="relative">
+      <button id="dmHomeBtn" onclick="openDMs()" title="Direct Messages"
+        class="relative w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch transition-all flex items-center justify-center overflow-hidden dm-active">
+        <img src="https://professorj17.github.io/4everai/HAVOC.ico" class="w-7 h-7 rounded-md">
+      </button>
+      <!-- DM Notification Badge -->
+      <div id="dmUnreadBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center border-2 border-dark-950">0</div>
+    </div>
+    <!-- DM Notification Avatars -->
+    <div id="dmNotificationAvatars" class="flex flex-col items-center gap-1 max-h-24 overflow-y-auto w-full px-2"></div>
     <div class="w-8 h-0.5 bg-dark-700 rounded-full my-1"></div>
     <div id="serverList" class="flex flex-col items-center gap-2 w-full px-2 flex-1"></div>
     <div class="flex flex-col items-center gap-2 pb-2 w-full px-2">
@@ -796,19 +802,7 @@
       </div>
     </div>
 
-    <!-- BADGE SELECTION -->
-    <div class="mb-4">
-      <label class="field-label mb-1">Badge</label>
-      <select id="profileBadge" class="field text-xs">
-        <option value="">No Badge</option>
-      </select>
-      <p class="text-[9px] text-slate-500 italic" id="badgeLimitText">Select a badge to display</p>
-    </div>
 
-    <!-- BADGE DISPLAY -->
-    <div id="profileBadgeDisplay" class="hidden mb-4 p-2 rounded-lg text-center">
-      <span id="profileBadgeSymbol" class="text-lg"></span>
-    </div>
 
     <!-- AVATAR CONTROLS -->
     <div id="avatarSeedBox" class="mb-4">
@@ -887,7 +881,6 @@
         </div>
       </div>
 
-      <div><label for="profileStatus" class="field-label">Status</label><input type="text" id="profileStatus" maxlength="40" class="field text-xs"></div>
       <div><label for="profileBio" class="field-label">Bio</label><textarea id="profileBio" rows="2" maxlength="120" class="field resize-none text-xs"></textarea></div>
 
       <!-- USER TAG -->
@@ -1793,10 +1786,23 @@ onAuthStateChanged(auth, async user => {
     $('gifBtn') && $('gifBtn').classList.toggle('hidden', user.isAnonymous);
     $('emojiBtn') && $('emojiBtn').classList.toggle('hidden', user.isAnonymous);
     $('audioClipBtn').classList.toggle('hidden', user.isAnonymous);
-    S.myStatus = (S.profile && S.profile.status) ? S.profile.status : 'online';
+    // Load status from profile first, then localStorage as backup
+    S.myStatus = (S.profile && S.profile.status) ? S.profile.status : localStorage.getItem('havoc_status') || 'online';
     if(S.myStatus === 'invisible') S.myStatus = 'online';
     updateStatusDot();
+    
+    // Load DM notification state
+    try {
+      S.dmLastRead = JSON.parse(localStorage.getItem('havoc_dm_last_read') || '{}');
+      S.dmUnread = JSON.parse(localStorage.getItem('havoc_dm_unread') || '{}');
+    } catch(e) {
+      S.dmLastRead = {};
+      S.dmUnread = {};
+    }
     startPresenceHeartbeat();
+    
+    // Start periodic DM notification check
+    setInterval(checkDMNotifications, 30000); // Check every 30 seconds
     loadFriends();
 
     // Update UI first before loading server (so user sees they're logged in)
@@ -2175,12 +2181,6 @@ window.initProfileEditor = () => {
       }
       badgeSelect.appendChild(opt);
     });
-    
-    // Update badge limit text
-    const limitText = $('badgeLimitText');
-    if(limitText) {
-      limitText.textContent = isAdmin ? 'Admins can select multiple badges' : 'You can select 1 badge';
-    }
     
     // Render selected badge display
     renderProfileBadge();
@@ -4270,6 +4270,10 @@ async function renderMsgs(msgs){
         </div>
       `;
     }
+    
+    // Add delete button for own messages
+    const deleteBtn = m.uid === S.user?.uid ? `<button onclick="deleteChannelMessage('${m.id}')" class="ml-2 text-slate-500 hover:text-red-400 text-[10px]" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : '';
+    
     let reactHtml = '';
     if(m.reactions){
       const entries = Object.entries(m.reactions);
@@ -4313,7 +4317,7 @@ async function renderMsgs(msgs){
           <button onclick="startReply('${esc(m.id)}','${esc(displayHandle)}','${esc(contentStr.slice(0,80))}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Reply"><i class="fa-solid fa-reply"></i></button>
           <button onclick="showReactionPicker(event,'${esc(m.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Add reaction"><i class="fa-regular fa-face-smile"></i></button>
           <button onclick="pinMessage('${esc(m.id)}','${esc(contentStr.replace(/'/g,"").slice(0,150))}','${esc(displayHandle)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Pin Message"><i class="fa-solid fa-thumbtack"></i></button>
-          ${S.canManage?`<button onclick="deleteMsg('${esc(m.id)}')" class="hidden group-hover:inline text-red-500 text-[10px] ml-auto"><i class="fa-solid fa-trash"></i></button>`:''}
+          ${m.uid === S.user?.uid || S.canManage ? `<button onclick="deleteChannelMessage('${esc(m.id)}')" class="hidden group-hover:inline text-red-500 text-[10px] ml-auto" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : ''}
         </div>
         ${m.replyTo ? `<div class="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
           <i class="fa-solid fa-reply"></i> replying to <span class="text-bch">${esc(m.replyHandle || 'someone')}</span>
@@ -4612,7 +4616,21 @@ window.sendMsg = async e => {
     alert('Send failed: '+err.message); 
   }
 };
-window.deleteMsg = async id => { if(!S.canManage) return; if(!confirm('Delete?')) return; await deleteDoc(doc(db,'servers',S.server.id,'channels',S.channel,'messages',id)); };
+window.deleteChannelMessage = async id => {
+  // Get the message to check ownership
+  const msgRef = doc(db, 'servers', S.server.id, 'channels', S.channel, 'messages', id);
+  const msgSnap = await getDoc(msgRef);
+  if(!msgSnap.exists()) return;
+  
+  const msg = msgSnap.data();
+  const isOwner = msg.uid === S.user?.uid;
+  const isAdmin = S.canManage;
+  
+  if(!isOwner && !isAdmin) return alert('You can only delete your own messages');
+  
+  if(!confirm('Delete this message?')) return;
+  await deleteDoc(msgRef);
+};
 
 // ========== MEMBERS ==========
 function listenMembers(serverId){
@@ -5080,6 +5098,9 @@ window.startDM = (uid, handle, avatar) => {
   S.channel = null;
   S.channelType = null;
   S.dmTarget = { uid, handle, avatar };
+  
+  // Mark DM as read
+  markDMAsRead(uid);
 
   // Update UI
   $('dmHomeBtn').classList.add('dm-active');
@@ -5330,6 +5351,9 @@ function loadDms(targetUid){
     const msgs = [];
     snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
     msgs.reverse(); // oldest → newest for display
+    
+    // Mark as read when viewing DM
+    markDMAsRead(targetUid);
 
     const feed = $('msgFeed'); feed.innerHTML = '';
     if(!msgs.length){
@@ -5372,11 +5396,117 @@ function loadDms(targetUid){
         </div>
       `;
     }
-    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'}">${contentHtml}<div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${shortTime(m.ts)}</div></div>`;
+    
+    // Add delete button for own messages
+    const deleteBtn = mine ? `<button onclick="deleteDMMessage('${m.id}')" class="ml-2 text-slate-500 hover:text-red-400 text-[10px]" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : '';
+    
+    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'}">${contentHtml}<div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${shortTime(m.ts)}${deleteBtn}</div></div>`;
     feed.appendChild(div);
   }
   const c = $('msgContainer'); c.scrollTop = c.scrollHeight;
   }, err => console.error('loadDms error:', err));
+}
+
+// Delete DM message for both users
+window.deleteDMMessage = async (messageId) => {
+  if(!S.dmTarget) return;
+  const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+  const dmId = [S.user.uid, targetUid].sort().join('_');
+  
+  if(!confirm('Delete this message? This will delete it for both users.')) return;
+  
+  try {
+    await deleteDoc(doc(db, 'dms', dmId, 'messages', messageId));
+  } catch(e) {
+    console.error('Error deleting DM message:', e);
+    alert('Error deleting message');
+  }
+};
+
+// DM Notification Tracking
+S.dmUnread = {}; // Track unread counts per user
+S.dmLastRead = {}; // Track last read timestamp per user
+
+// Update DM notifications when opening a DM
+function markDMAsRead(targetUid) {
+  S.dmLastRead[targetUid] = Date.now();
+  S.dmUnread[targetUid] = 0;
+  localStorage.setItem('havoc_dm_last_read', JSON.stringify(S.dmLastRead));
+  localStorage.setItem('havoc_dm_unread', JSON.stringify(S.dmUnread));
+  updateDMNotificationUI();
+}
+
+// Update DM notification UI (avatars and badge)
+function updateDMNotificationUI() {
+  const badge = $('dmUnreadBadge');
+  const avatarContainer = $('dmNotificationAvatars');
+  if(!badge || !avatarContainer) return;
+  
+  // Calculate total unread
+  const totalUnread = Object.values(S.dmUnread).reduce((a, b) => a + b, 0);
+  
+  if(totalUnread > 0) {
+    badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+  
+  // Show notification avatars for users with unread messages
+  avatarContainer.innerHTML = '';
+  Object.entries(S.dmUnread).forEach(([uid, count]) => {
+    if(count > 0) {
+      const friend = S.friends.find(f => f.uid === uid);
+      if(friend) {
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'relative w-9 h-9 rounded-[12px] overflow-hidden cursor-pointer hover:rounded-[8px] transition-all';
+        avatarDiv.onclick = () => startDM(friend.uid, friend.handle, friend.avatar);
+        avatarDiv.innerHTML = `
+          <img src="${esc(friend.avatar || userAvatar(uid))}" class="w-full h-full object-cover">
+          <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-dark-950">${count > 9 ? '9+' : count}</div>
+        `;
+        avatarContainer.appendChild(avatarDiv);
+      }
+    }
+  });
+}
+
+// Check for new DM messages and update notifications
+async function checkDMNotifications() {
+  if(!S.user) return;
+  
+  const friends = S.friends || [];
+  const lastRead = S.dmLastRead || {};
+  
+  for(const friend of friends) {
+    const dmId = [S.user.uid, friend.uid].sort().join('_');
+    const q = query(
+      collection(db, 'dms', dmId, 'messages'),
+      orderBy('ts', 'desc'),
+      limit(1)
+    );
+    
+    try {
+      const snap = await getDocs(q);
+      if(!snap.empty) {
+        const lastMsg = snap.docs[0].data();
+        const lastReadTime = lastRead[friend.uid] || 0;
+        
+        // Count unread messages (messages after last read time)
+        const countQ = query(
+          collection(db, 'dms', dmId, 'messages'),
+          where('ts', '>', lastReadTime),
+          where('from', '!=', S.user.uid)
+        );
+        const countSnap = await getDocs(countQ);
+        S.dmUnread[friend.uid] = countSnap.size;
+      }
+    } catch(e) {
+      console.error('Error checking DM notifications:', e);
+    }
+  }
+  
+  updateDMNotificationUI();
 }
 
 // ========== VOICE + VIDEO ==========
@@ -6150,6 +6280,8 @@ window.setMyStatus = async (status) => {
     await updateDoc(doc(db,'users',S.user.uid), { status, lastSeen: Date.now() });
     if(S.profile) S.profile.status = status;
     updateUserUI();
+    // Save to localStorage as backup
+    localStorage.setItem('havoc_status', status);
   }catch(e){ console.warn(e); }
 };
 
