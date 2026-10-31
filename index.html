@@ -4620,6 +4620,7 @@ window.showUserContext = (e, uid, handle, avatar) => {
   const menu = $('ctxMenu');
   const isFriend = S.friends.some(f => f.uid === uid);
   const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
+  const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
   let friendAction = '';
   if(isFriend){
     friendAction = `<div class="ctx-item" onclick="removeFriend('${esc(uid)}');hideCtx()"><i class="fa-solid fa-user-minus w-4"></i> Remove Friend</div>`;
@@ -4628,9 +4629,12 @@ window.showUserContext = (e, uid, handle, avatar) => {
   } else {
     friendAction = `<div class="ctx-item" onclick="sendFriendRequest('${esc(uid)}','${esc(handle)}','${esc(avatar||'')}');hideCtx()"><i class="fa-solid fa-user-plus w-4"></i> Add Friend</div>`;
   }
-  
+
+  // Admins can message anyone, regular users only friends
+  const canMessage = isFriend || isAdmin;
+
   menu.innerHTML = `
-    ${isFriend ? `<div class="ctx-item" onclick="startDM('${esc(uid)}','${esc(handle)}','${esc(avatar||'')}');hideCtx()"><i class="fa-solid fa-message w-4"></i> Message</div>` : ''}
+    ${canMessage ? `<div class="ctx-item" onclick="startDM('${esc(uid)}','${esc(handle)}','${esc(avatar||'')}');hideCtx()"><i class="fa-solid fa-message w-4"></i> Message</div>` : ''}
     ${friendAction}
     <div class="ctx-item text-red-400" onclick="blockUser('${esc(uid)}');hideCtx()"><i class="fa-solid fa-ban w-4"></i> Block</div>
     <div class="ctx-item" onclick="copyUserId('${esc(uid)}');hideCtx()"><i class="fa-solid fa-copy w-4"></i> Copy User ID</div>`;
