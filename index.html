@@ -60,7 +60,7 @@
     .reaction-bar{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
     .reaction{background:#1c222e;border:1px solid #323c52;border-radius:12px;padding:1px 7px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;position:relative}
     .reaction:hover,.reaction.mine{border-color:#0AC18E;background:rgba(10,193,142,.15)}
-    .reaction[data-count]:hover::after{content:attr(data-users);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#0f1218;border:1px solid #323c52;border-radius:6px;padding:4px 8px;font-size:10px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;color:#fff;z-index:10;margin-bottom:4px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+    .reaction[data-count]:hover::after{content:attr(data-users);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#0f1218;border:1px solid #323c52;border-radius:6px;padding:6px 10px;font-size:11px;white-space:nowrap;max-width:250px;overflow:hidden;text-overflow:ellipsis;color:#fff;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.5);pointer-events:none}
     .video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;width:100%;max-width:900px}
     .video-tile{background:#0f1218;border-radius:12px;overflow:hidden;position:relative;aspect-ratio:16/10;transition:box-shadow 0.2s}
     .video-tile.speaking{box-shadow: 0 0 0 2px #0AC18E}
@@ -70,6 +70,27 @@
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.05)}}
     @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
     canvas#audioVisualizer{filter: drop-shadow(0 0 4px rgba(10, 193, 142, 0.3))}
+
+    /* Typing dots animation for members list */
+    .member-typing-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .typing-dot {
+      width: 4px;
+      height: 4px;
+      background: #00E5A3;
+      border-radius: 50%;
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
     .dm-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;cursor:pointer}
     .dm-item:hover,.dm-item.active{background:#1c222e}
 
@@ -1575,9 +1596,18 @@ const EMOJI_LIST = [
   '🤙','💪','⭐','🌟','✨','🎊','🏆','💯','✅','❌','❓','❗','💬','👀','🗿','🐸','👑','🐐','🤷','🤦',
   '🚀','💎','🍿','💅','🧠','☕','👁️','🥀','🎃','🗣️','🦴'
 ];
-function parseEmojis(t){ 
+function parseEmojis(t){
   if (typeof t !== 'string') return t || '';
-  return t.replace(/:[a-z0-9_+-]+:/gi, m => EMOJI_MAP[m.toLowerCase()]||m); 
+  return t.replace(/:[a-z0-9_+-]+:/gi, m => EMOJI_MAP[m.toLowerCase()]||m);
+}
+
+function parseLinks(t){
+  if (typeof t !== 'string') return t || '';
+  // Match URLs and wrap them in anchor tags
+  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+  return t.replace(urlRegex, url => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline">${url}</a>`;
+  });
 }
 
 function getMutes(){ try{ return JSON.parse(localStorage.getItem('havoc_mutes')||'{}'); }catch{ return {}; } }
@@ -1820,13 +1850,20 @@ window.doRegister = async e => {
   const domain=email.split('@')[1];
   if(domain){ const ban=await getDoc(doc(db,'blacklistedDomains',domain)); if(ban.exists()) return showAuthErr(`@${domain} is blocked`); }
   try{
+    // Check if handle is already taken
     const handleKey = handle.toLowerCase();
     const taken = await getDoc(doc(db,'usernames', handleKey));
     if(taken.exists()) return showAuthErr('Handle already taken');
+
+    // Check if email is already registered (using emails collection for uniqueness)
+    const emailDoc = await getDoc(doc(db, 'emails', email));
+    if(emailDoc.exists()) return showAuthErr('Email already registered');
+
     const cred=await createUserWithEmailAndPassword(auth,email,pass);
     const profile={uid:cred.user.uid,email,handle,avatar:userAvatar(cred.user.uid),bio:'',status:'',createdAt:Date.now()};
     await setDoc(doc(db,'users',cred.user.uid),profile);
     await setDoc(doc(db,'usernames', handleKey), { uid:cred.user.uid, handle, updatedAt:Date.now() });
+    await setDoc(doc(db, 'emails', email), { uid:cred.user.uid, email, registeredAt:Date.now() }); // Email index for uniqueness
     S.profile=profile; closeModal('auth');
   }catch(err){ showAuthErr(err.message); }
 };
@@ -3675,10 +3712,13 @@ async function switchServer(s){
   $('addVoiceBtn').classList.toggle('hidden', !S.canManage);
   $('typingIndicator').classList.add('hidden');
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
+  if(serverTypingUnsub){ try{ serverTypingUnsub(); }catch(e){} serverTypingUnsub = null; }
+  otherTypers = {}; // Reset other typers when switching servers
   await loadMyServers();
   await loadChannels(s.id);
   await loadRoles(s.id);
   listenMembers(s.id);
+  listenServerTyping(s.id); // Listen to typing across all channels for members list
   
   // Restore last visited channel for this server
   const lastChannelId = localStorage.getItem(`havoc_last_channel_${s.id}`);
@@ -4139,7 +4179,7 @@ async function renderMsgs(msgs){
     // Ensure content is a string
     if (typeof content !== 'string') content = String(content || '');
     
-    let contentHtml = parseMentions(esc(parseEmojis(content)));
+    let contentHtml = parseMentions(esc(parseLinks(parseEmojis(content))));
     if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-xs max-h-64 rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
     if(m.audioUrl) {
       const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
@@ -4172,7 +4212,8 @@ async function renderMsgs(msgs){
             const member = S.membersCache.find(m => m.uid === uid);
             return member ? member.handle : 'Unknown';
           }).join(', ') : '';
-          const tooltipAttr = count > 1 ? `data-users="${esc(userList)}" data-count="${count}"` : '';
+          // Always show tooltip if there are users who reacted
+          const tooltipAttr = count > 0 ? `data-users="${esc(userList)}" data-count="${count}"` : '';
           return `<span class="reaction ${mine?'mine':''}" ${tooltipAttr} onclick="toggleReaction('${esc(m.id)}','${emoji}')">${emoji} ${count}</span>`;
         }).join('') + '</div>';
       }
@@ -4537,6 +4578,7 @@ function listenMembers(serverId){
         
         const div = document.createElement('div');
         div.className = 'flex items-center gap-1.5 px-1.5 py-1.5 rounded hover:bg-dark-800 cursor-pointer';
+        div.dataset.uid = m.uid; // Add uid for typing status tracking
         div.onclick = e => { showUserProfile(e, m.uid, m.handle, m.avatar); };
         div.oncontextmenu = e => { e.preventDefault(); showUserContext(e, m.uid, m.handle, m.avatar); };
         // Don't apply avatarStyle transforms in members list to prevent scaling issues
@@ -4903,7 +4945,7 @@ function loadDms(targetUid){
       // Ensure content is a string
       if (typeof content !== 'string') content = String(content || '');
 
-      let contentHtml = esc(parseEmojis(content));
+      let contentHtml = esc(parseLinks(parseEmojis(content)));
       if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-full rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
       if(m.audioUrl) {
         const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
@@ -5789,6 +5831,8 @@ function startPresenceHeartbeat(){
 // ========== TYPING INDICATOR ==========
 let typingTimer = null;
 const TYPING_TIMEOUT = 3000; // 3 seconds of no typing = stopped typing
+let otherTypers = {}; // Track other users who are typing
+let serverTypingUnsub = null; // Server-wide typing listener
 
 function sendTypingEvent() {
   if (!S.user) return;
@@ -5836,13 +5880,16 @@ function listenForTyping() {
   S.unsubTyping = onSnapshot(typingCol, (snap) => {
     const now = Date.now();
     const typers = {};
+    otherTypers = {}; // Reset and track other typers for members list
     snap.forEach(d => {
       const data = d.data();
       if (data.uid !== S.user.uid && (now - (data.timestamp || 0)) < 3000) {
         typers[data.uid] = data.handle;
+        otherTypers[data.uid] = data.handle; // Track for members list
       }
     });
     updateTypingIndicator(typers);
+    updateMembersTypingStatus(); // Update members list with typing indicators
   });
 }
 
@@ -5853,19 +5900,21 @@ function updateTypingIndicator(typers) {
 
   const typersList = Object.values(typers);
   
-  // Only hide if no typers AND user is not currently typing themselves
+  // Include self in the typers list if currently typing
   const isSelfTyping = typingTimer !== null;
-  if (typersList.length === 0 && !isSelfTyping) {
+  if (isSelfTyping) {
+    typersList.push(safe(S.profile?.handle, 'You'));
+  }
+  
+  // Hide if no typers at all
+  if (typersList.length === 0) {
     indicator.classList.add('hidden');
     return;
   }
 
   indicator.classList.remove('hidden');
 
-  if (typersList.length === 0 && isSelfTyping) {
-    // Only show self-typing
-    text.textContent = `${safe(S.profile?.handle, 'You')} is typing...`;
-  } else if (typersList.length === 1) {
+  if (typersList.length === 1) {
     text.textContent = `${typersList[0]} is typing...`;
   } else if (typersList.length === 2) {
     text.textContent = `${typersList[0]} and ${typersList[1]} are typing...`;
@@ -5874,6 +5923,70 @@ function updateTypingIndicator(typers) {
   } else {
     text.textContent = `${typersList.slice(0, 3).join(', ')} and ${typersList.length - 3} others are typing...`;
   }
+}
+
+function updateMembersTypingStatus() {
+  // Update members list to show typing indicators for users typing anywhere in the server
+  const memberItems = document.querySelectorAll('#membersList .flex.items-center');
+  memberItems.forEach(item => {
+    const uid = item.dataset.uid;
+    if (uid && otherTypers[uid]) {
+      // Add typing animation dots next to the name
+      let typingDots = item.querySelector('.member-typing-dots');
+      if (!typingDots) {
+        typingDots = document.createElement('span');
+        typingDots.className = 'member-typing-dots ml-1.5 flex items-center gap-0.5';
+        typingDots.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+        const nameSpan = item.querySelector('.member-name');
+        if (nameSpan) nameSpan.appendChild(typingDots);
+      }
+    } else {
+      // Remove typing dots if not typing
+      const typingDots = item.querySelector('.member-typing-dots');
+      if (typingDots) typingDots.remove();
+    }
+  });
+}
+
+function listenServerTyping(serverId) {
+  // Listen to typing events across all channels in the server for members list
+  if (serverTypingUnsub) {
+    try { serverTypingUnsub(); } catch(e) {}
+    serverTypingUnsub = null;
+  }
+
+  if (!serverId) return;
+
+  // Get all channels in the server
+  const channelsCol = collection(db, 'servers', serverId, 'channels');
+  const typingListeners = [];
+
+  getDocs(channelsCol).then(snap => {
+    snap.forEach(channelDoc => {
+      const channelId = channelDoc.id;
+      const typingCol = collection(db, 'servers', serverId, 'channels', channelId, 'typing');
+      
+      const unsub = onSnapshot(typingCol, (typingSnap) => {
+        const now = Date.now();
+        typingSnap.forEach(d => {
+          const data = d.data();
+          if (data.uid !== S.user.uid && (now - (data.timestamp || 0)) < 3000) {
+            otherTypers[data.uid] = data.handle;
+          } else if ((now - (data.timestamp || 0)) >= 3000) {
+            // Remove from otherTypers if expired
+            delete otherTypers[data.uid];
+          }
+        });
+        updateMembersTypingStatus();
+      });
+      typingListeners.push(unsub);
+    });
+
+    // Combined unsubscribe function
+    serverTypingUnsub = () => {
+      typingListeners.forEach(unsub => { try { unsub(); } catch(e) {} });
+    };
+  }).catch(e => console.error('Error listening to server typing:', e));
 }
 
 // Show self-typing indicator when user is typing
@@ -5889,6 +6002,10 @@ function showSelfTyping(isTyping, forceHide = false) {
     // Always hide if forceHide is true (e.g., when sending a message)
     if (forceHide) {
       indicator.classList.add('hidden');
+      if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+      }
     } else {
       // Otherwise only hide if no other typers
       if (Object.keys(S.typing || {}).length === 0) {
@@ -5907,15 +6024,20 @@ function setupTypingInput() {
       sendTypingEvent();
       showSelfTyping(true);
       
-      // Clear any existing self-typing timer
+      // Clear any existing self-typing timer and reset it
       if (typingTimer) clearTimeout(typingTimer);
       
       // Hide self-typing after 3 seconds of no typing
       typingTimer = setTimeout(() => {
         showSelfTyping(false);
+        typingTimer = null;
       }, TYPING_TIMEOUT);
     } else {
       showSelfTyping(false);
+      if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+      }
     }
   });
 
@@ -5923,8 +6045,11 @@ function setupTypingInput() {
   const form = $('msgForm');
   if (form) {
     form.addEventListener('submit', () => {
-      // Clear the self-typing timer
-      if (typingTimer) clearTimeout(typingTimer);
+      // Clear the self-typing timer and hide indicator immediately
+      if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+      }
       showSelfTyping(false, true); // Force hide the typing indicator
       
       let typingRef;
