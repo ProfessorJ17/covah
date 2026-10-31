@@ -4900,36 +4900,55 @@ window.blockUser = async uid => {
 window.startDM = (uid, handle, avatar) => {
   const isFriend = S.friends.some(f => f.uid === uid);
   const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
-  
+
   // Admins can message anyone without being friends
   if(!isFriend && !isAdmin) return alert('You must be friends to start a direct message conversation.');
 
-  S.dmTarget = { uid, handle, avatar };
+  // Clean up existing listeners
+  if (S.unsubMsgs) { try { S.unsubMsgs(); } catch(e) {} S.unsubMsgs = null; }
+  if (S.unsubDms) { try { S.unsubDms(); } catch(e) {} S.unsubDms = null; }
+  if (S.unsubTyping) { try { S.unsubTyping(); } catch(e) {} S.unsubTyping = null; }
+
+  // Set DM state
   S.inDMs = true;
-  openDMs();
+  S.server = null;
+  S.channel = null;
+  S.channelType = null;
+  S.dmTarget = { uid, handle, avatar };
+
+  // Update UI
+  $('dmHomeBtn').classList.add('dm-active');
+  document.querySelectorAll('#serverList button').forEach(b => b.classList.remove('server-active'));
+  $('currentServerName').textContent = 'Direct Messages';
+  $('serverIconPreview').classList.add('hidden');
+  $('serverSettingsBtn').classList.add('hidden');
+  $('inviteBtn').classList.add('hidden');
+  $('addChanBtn').classList.add('hidden');
+  $('addVoiceBtn').classList.add('hidden');
+  $('chanAdminBtn').classList.add('hidden');
+  showDMView();
   $('chanIcon').className = 'fa-solid fa-at text-bch-bright text-xs';
   $('chanHeader').textContent = handle;
   $('chatInput').disabled = false;
   $('chatInput').placeholder = `Message @${handle}`;
+  $('textArea').classList.remove('hidden');
+  $('voiceArea').classList.add('hidden');
   $('membersContent').classList.add('hidden');
   $('dmProfileContent').classList.remove('hidden');
   $('dmProfileAvatar').src = avatar || userAvatar(uid);
   $('dmProfileHandle').textContent = handle;
   $('dmProfileStatus').textContent = isAdmin && !isFriend ? 'Admin DM' : 'Direct Message';
 
-  // Update status dot and ring for DM profile
+  // Update status dot
   const profile = S.profileCache?.[uid] || {};
   const presence = computePresence(profile);
   const dotClass = presence === 'online' ? 'status-online' : presence === 'idle' ? 'status-idle' : presence === 'dnd' ? 'status-dnd' : 'status-offline';
   const dot = $('dmProfileDot');
   if(dot) dot.className = `member-status-dot ${dotClass} z-20`;
 
-  if (S.unsubMsgs) { try { S.unsubMsgs(); } catch(e) {} S.unsubMsgs = null; }
-  if (S.unsubDms) { try { S.unsubDms(); } catch(e) {} S.unsubDms = null; }
-  loadDms(uid);               // this now sets up the real-time listener
+  // Load DM messages and typing
+  loadDms(uid);
   listenForTyping();
-  renderDMList();
-
   renderDMList();
 };
 window.removeCurrentDMFriend = async () => {
