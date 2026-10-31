@@ -3417,8 +3417,33 @@ window.showUserProfile = async (e, uid, fallbackHandle, fallbackAvatar) => {
   } catch (e) {}
 
   // Buttons
-  $('upMsgBtn').onclick = () => { startDM(uid, handle, avatar); popup.classList.add('hidden'); };
-  $('upFriendBtn').onclick = () => sendFriendRequest(uid, handle, avatar);
+  const isFriend = S.friends.some(f => f.uid === uid);
+  const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+
+  // Message button - always show for admins, only for friends otherwise
+  if (isFriend || isAdmin) {
+    $('upMsgBtn').classList.remove('hidden');
+    $('upMsgBtn').onclick = () => { startDM(uid, handle, avatar); popup.classList.add('hidden'); };
+  } else {
+    $('upMsgBtn').classList.add('hidden');
+  }
+
+  // Friend button - show based on friend status
+  const pendingOut = (S.outgoing||[]).some(r => r.toUid === uid);
+  if (isFriend) {
+    $('upFriendBtn').innerHTML = '<i class="fa-solid fa-user-minus"></i>';
+    $('upFriendBtn').onclick = () => { removeFriend(uid); popup.classList.add('hidden'); };
+  } else if (pendingOut) {
+    $('upFriendBtn').innerHTML = '<i class="fa-solid fa-clock"></i>';
+    $('upFriendBtn').disabled = true;
+    $('upFriendBtn').classList.add('opacity-50');
+  } else {
+    $('upFriendBtn').innerHTML = '<i class="fa-solid fa-user-plus"></i>';
+    $('upFriendBtn').disabled = false;
+    $('upFriendBtn').classList.remove('opacity-50');
+    $('upFriendBtn').onclick = () => { sendFriendRequest(uid, handle, avatar); };
+  }
+
   $('upMoreBtn').onclick = (ev) => showUserContext(ev, uid, handle, avatar);
 
   // Note save
@@ -4907,8 +4932,41 @@ window.startDM = (uid, handle, avatar) => {
 
   renderDMList();
 };
-window.removeCurrentDMFriend = () => { if(S.dmTarget) removeFriend(typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid); };
-window.blockCurrentDM = () => { if(S.dmTarget) blockUser(typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid); };
+window.removeCurrentDMFriend = async () => {
+  if(!S.dmTarget) return;
+  const uid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+  if(!confirm('Remove friend?')) return;
+  try {
+    await deleteDoc(doc(db,'users',S.user.uid,'friends',uid));
+    await deleteDoc(doc(db,'users',uid,'friends',S.user.uid));
+    await loadFriends();
+    // Return to DM home if current DM was with this friend
+    if(S.inDMs && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+      openDMs();
+    }
+  } catch(e) {
+    console.error('Error removing friend:', e);
+    alert('Error removing friend');
+  }
+};
+window.blockCurrentDM = async () => {
+  if(!S.dmTarget) return;
+  const uid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+  if(!confirm('Block this user?')) return;
+  try {
+    await setDoc(doc(db,'users',S.user.uid,'blocked',uid), {blockedAt:Date.now()});
+    await removeFriend(uid);
+    await cancelFriendRequest(uid).catch(()=>{});
+    alert('Blocked');
+    // Return to DM home if current DM was with this user
+    if(S.inDMs && (typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid) === uid) {
+      openDMs();
+    }
+  } catch(e) {
+    console.error('Error blocking user:', e);
+    alert('Error blocking user');
+  }
+};
 
 function loadDms(targetUid){
   const dmId = [S.user.uid, targetUid].sort().join('_');
