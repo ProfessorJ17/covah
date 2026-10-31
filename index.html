@@ -3889,10 +3889,8 @@ function renderVoiceArea(){
   });
 }
 function switchChannel(c){
-  console.log('Switching to channel:', c, 'Current S.channel:', S.channel);
   leaveVoice();
   S.channel = c.id; S.channelType = 'text';
-  console.log('After setting S.channel:', S.channel);
 
   // Save last visited channel for this server
   if(S.server && c.id) {
@@ -4411,20 +4409,21 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
 
     const dmId = [S.user.uid, targetUid].sort().join('_');
 
-    // Use post-quantum encryption for DM messages
-    const encryptedContent = await PQ.encrypt(content || '');
-    const signature = await PQ.sign({ from: S.user.uid, content: encryptedContent, ts: Date.now() });
-
-    await PQFirestore.secureAddDoc(collection(db,'dms',dmId,'messages'), {
-      from: S.user.uid,
-      handle: safe(S.profile?.handle, 'User'),
-      avatar: safe(S.profile?.avatar, userAvatar(S.user.uid)),
-      content: encryptedContent,
-      signature: signature,
-      imageUrl: imageUrl||null,
-      audioUrl: audioUrl||null,
-      ts: Date.now()
-    });
+    // Since PQ encryption is disabled, send plain text messages
+    try {
+      await addDoc(collection(db,'dms',dmId,'messages'), {
+        from: S.user.uid,
+        handle: safe(S.profile?.handle, 'User'),
+        avatar: safe(S.profile?.avatar, userAvatar(S.user.uid)),
+        content: content || '',
+        imageUrl: imageUrl||null,
+        audioUrl: audioUrl||null,
+        ts: Date.now()
+      });
+    } catch(e) {
+      console.error('Failed to send DM message:', e);
+      alert('Failed to send message: ' + e.message);
+    }
     return;
   }
   if(!S.server || !S.channel) return;
@@ -4975,6 +4974,8 @@ window.blockUser = async uid => {
 window.startDM = (uid, handle, avatar) => {
   const isFriend = S.friends.some(f => f.uid === uid);
   const isAdmin = S.isAdmin || S.canManage || S.profile?.email === ADMIN_EMAIL;
+
+  console.log('startDM called:', { uid, handle, isFriend, isAdmin, userEmail: S.profile?.email });
 
   // Admins can message anyone without being friends
   if(!isFriend && !isAdmin) return alert('You must be friends to start a direct message conversation.');
