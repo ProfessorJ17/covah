@@ -130,6 +130,21 @@
     .gradient-swatch { width: 24px; height: 24px; border-radius: 4px; cursor: pointer; border: 1.5px solid transparent; transition: transform 0.1s; }
     .gradient-swatch:hover { transform: scale(1.1); }
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+
+    /* ===== CHAT BACKGROUND THEMES ===== */
+    body.ct-gta6{background:linear-gradient(160deg,#0b1026 0%,#2a1a5e 30%,#7a1fa2 55%,#d63384 78%,#ff8a3d 100%) fixed}
+    body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
+    body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
+    body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
+    body.ct-matrix{background:linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%) fixed}
+    /* Keep panels translucent over the gradient so text stays legible */
+    body.chat-themed header,
+    body.chat-themed nav,
+    body.chat-themed aside,
+    body.chat-themed main{background-color:rgba(9,11,14,.76)!important}
+    body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.8)!important}
+    body.chat-themed #chanSearch,
+    body.chat-themed .field{background-color:rgba(5,6,8,.85)}
     .color-wheel-btn { width: 24px; height: 24px; border-radius: 4px; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); cursor: pointer; }
 
     /* Avatar wrappers - no rings */
@@ -337,7 +352,7 @@
         <div class="hidden md:flex items-center ml-1">
           <input type="text" id="chanSearch" placeholder="Search" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
         </div>
-        <button id="chanAdminBtn" onclick="openModal('chanSettings')" class="hidden w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        <button id="chanAdminBtn" onclick="openChanSettings()" class="hidden w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-ellipsis-vertical"></i></button>
       </div>
     </div>
 
@@ -892,6 +907,13 @@
         </select>
         <p class="text-[9px] text-slate-500 italic">Select a server tag from servers you're in to display next to your name.</p>
       </div>
+
+      <!-- CHAT BACKGROUND -->
+      <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
+        <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Chat Background</label>
+        <div class="flex flex-wrap gap-2" id="chatThemePicker"></div>
+        <p class="text-[9px] text-slate-500 italic">Applies to your view only. Panels stay dark enough for text to remain readable.</p>
+      </div>
     </div>
 
     <div class="flex gap-2 mt-6">
@@ -1125,9 +1147,9 @@
       <div id="ssp-danger" class="space-y-3 hidden">
         <div class="bg-red-950/20 border border-red-500/30 rounded-lg p-4 space-y-2">
           <button onclick="adminToggleLock()" class="w-full py-2 bg-carrot/20 text-carrot border border-carrot/40 rounded text-xs font-bold mono">Toggle Lock</button>
-          <button onclick="adminPurgeChannel()" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Purge Channel</button>
-          <button onclick="deleteCurrentChannel()" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Delete Channel</button>
-          <button onclick="deleteServer()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/50 rounded text-xs font-bold mono">DELETE SERVER</button>
+          <button onclick="adminPurgeChannel(S.channel)" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Purge Channel</button>
+          <button onclick="deleteCurrentChannel(S.channel)" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Delete Channel</button>
+          <button id="deleteServerSettingsBtn" onclick="deleteServer()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/50 rounded text-xs font-bold mono">DELETE SERVER</button>
         </div>
       </div>
     </div>
@@ -1139,6 +1161,10 @@
     <button onclick="closeModal('chanSettings')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
     <h2 class="font-bold text-white mb-4"># <span id="chanSettingsName"></span></h2>
     <div class="space-y-2">
+      <div class="flex gap-2">
+        <input type="text" id="chanRenameInput" placeholder="Rename channel…" maxlength="50" class="field flex-1 text-xs">
+        <button onclick="renameChannel()" class="btn-primary px-3 text-xs shrink-0">Rename</button>
+      </div>
       <button onclick="adminToggleLock()" class="w-full py-2 bg-carrot/20 text-carrot border border-carrot/40 rounded text-xs font-bold mono">Toggle Lock</button>
       <button onclick="adminPurgeChannel()" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Purge</button>
       <button onclick="deleteCurrentChannel()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/40 rounded text-xs font-bold mono">Delete Channel</button>
@@ -1597,11 +1623,52 @@ function parseEmojis(t){
 
 function parseLinks(t){
   if (typeof t !== 'string') return t || '';
-  // Match URLs and wrap them in anchor tags
-  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-  return t.replace(urlRegex, url => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline">${url}</a>`;
+  // Common TLDs so bare domains like discord.gg/invite get linkified like Discord.
+  // File-extension-colliding TLDs (py, pl, rs, md, sh, ps) intentionally excluded.
+  const tlds = 'com|net|org|io|dev|app|gg|co|me|tv|xyz|site|online|store|link|live|info|biz|us|uk|ca|au|de|fr|es|it|nl|jp|kr|cn|ru|br|in|za|nz|sg|hk|tw|il|ae|mx|ar|cl|ng|ke|eg|ma|tn|dz|gh|cm|sn|ci|rw|tz|ug|zm|zw|bw|mz|ao|cd|ml|bf|ne|td|mg|mu|sc|km|dj|er|so|bi|mw|ls|sz|na|cv|gm|gw|gn|gq|la|lb|lc|li|lk|lr|lt|lu|lv|ly|mc|mh|mk|mm|mn|mo|mp|mq|mr|ms|mt|mv|my|nc|nf|ni|np|nr|nu|om|pa|pe|pf|pg|ph|pk|pm|pn|pr|pt|pw|qa|re|ro|sa|sb|sd|se|si|sk|sl|sm|sn|sr|ss|st|sv|sx|sy|tc|tj|tk|tl|tm|to|tr|tt|ua|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt';
+  const urlRegex = new RegExp(`https?:\\/\\/[^\\s<]+|www\\.[^\\s<]+|\\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+(?:${tlds})(?::\\d{1,5})?(?:\\/[^\\s<]*)?`, 'gi');
+  return t.replace(urlRegex, raw => {
+    // Cut at escaped-HTML entities (never legit inside a URL) so pasted markup doesn't get swallowed
+    const cut = raw.search(/&(?:quot|lt|gt|#39|#x27);/i);
+    const head = cut >= 0 ? raw.slice(0, cut) : raw;
+    const tail = cut >= 0 ? raw.slice(cut) : '';
+    // Strip trailing punctuation that isn't part of the URL
+    const url = head.replace(/[.,!?;:'"()\[\]{}]+$/g, '');
+    if(!url) return raw;
+    const href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline break-all">${url}</a>` + tail;
   });
+}
+// Escape user content FIRST, then apply emoji/mention/link parsing so generated HTML survives
+function formatMsgContent(content){
+  return parseLinks(parseMentions(esc(parseEmojis(String(content||'')))));
+}
+
+// ===== CHAT BACKGROUND THEMES =====
+const CHAT_THEMES = [
+  { id:'',       name:'Default Dark', css:'#0f1218' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(160deg,#0b1026 0%,#2a1a5e 30%,#7a1fa2 55%,#d63384 78%,#ff8a3d 100%)' },
+  { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
+  { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
+  { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
+  { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)' },
+];
+function applyChatTheme(){
+  const t = localStorage.getItem('havoc_chat_theme') || '';
+  document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix');
+  if(t) document.body.classList.add('chat-themed','ct-'+t);
+}
+window.setChatTheme = (t) => {
+  localStorage.setItem('havoc_chat_theme', t || '');
+  applyChatTheme();
+  renderChatThemePicker();
+};
+function renderChatThemePicker(){
+  const el = $('chatThemePicker'); if(!el) return;
+  const cur = localStorage.getItem('havoc_chat_theme') || '';
+  el.innerHTML = CHAT_THEMES.map(t =>
+    `<div class="gradient-swatch theme-swatch ${cur===t.id?'active':''}" style="background:${t.css}" title="${esc(t.name)}" onclick="setChatTheme('${t.id}')"></div>`
+  ).join('');
 }
 
 function getMutes(){ try{ return JSON.parse(localStorage.getItem('havoc_mutes')||'{}'); }catch{ return {}; } }
@@ -1696,6 +1763,7 @@ window.openModal = id => {
 
     // Load server tags from servers the user is in
     loadServerTagsForProfile();
+    if(typeof renderChatThemePicker === 'function') renderChatThemePicker();
 
     // Load saved profile style
     if(S.profile.style){
@@ -1930,6 +1998,7 @@ window.openDMs = () => {
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
   if(S.unsubDms){ try{ S.unsubDms(); }catch(e){} S.unsubDms = null; }
   leaveVoice();
+  if(window.cancelReply) window.cancelReply();
   S.inDMs = true;
   S.server = null;
   S.channel = null;
@@ -3354,7 +3423,8 @@ function showServerContext(e, server){
   menu.innerHTML = `
     <div class="ctx-item" onclick="toggleMuteServer('${server.id}','server')"><i class="fa-solid fa-bell-slash w-4"></i> ${mutedServer?'Unmute Server':'Mute Server'}</div>
     <div class="ctx-item" onclick="toggleMuteServer('${server.id}','notif')"><i class="fa-solid fa-volume-xmark w-4"></i> ${mutedNotif?'Unmute Notifications':'Mute Notifications'}</div>
-    <div class="ctx-item" onclick="navigator.clipboard.writeText('${esc(server.id)}');hideCtx()"><i class="fa-solid fa-copy w-4"></i> Copy Server ID</div>`;
+    <div class="ctx-item" onclick="navigator.clipboard.writeText('${esc(server.id)}');hideCtx()"><i class="fa-solid fa-copy w-4"></i> Copy Server ID</div>
+    ${isSiteOwner() ? `<div class="ctx-item text-red-400" onclick="deleteServerFromRail('${esc(server.id)}','${esc((server.name||'').replace(/'/g,''))}');hideCtx()"><i class="fa-solid fa-trash w-4"></i> Delete Server</div>` : ''}`;
   menu.style.left = e.clientX+'px'; menu.style.top = e.clientY+'px'; menu.classList.remove('hidden');
 }
 window.toggleMuteServer = (id,type) => { setMute(id,type,!isServerMuted(id,type)); hideCtx(); loadMyServers(); };
@@ -3836,6 +3906,7 @@ function renderChannels(){
       btn.innerHTML = `
         <i class="fa-solid fa-volume-high text-[10px] ${S.channel === c.id ? 'text-bch-bright' : 'text-slate-600 group-hover:text-slate-400'}"></i>
         <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+        ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
       `;
       voiceList.appendChild(btn);
     } else {
@@ -3888,6 +3959,7 @@ function renderChannels(){
         ${dragHandle}
         <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
         <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+        ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
       `;
       textList.appendChild(btn);
     }
@@ -3918,6 +3990,7 @@ function renderVoiceArea(){
 }
 function switchChannel(c){
   leaveVoice();
+  if(window.cancelReply) window.cancelReply();
   S.channel = c.id; S.channelType = 'text';
 
   // Save last visited channel for this server
@@ -4250,7 +4323,7 @@ async function renderMsgs(msgs){
     // Ensure content is a string
     if (typeof content !== 'string') content = String(content || '');
     
-    let contentHtml = parseMentions(esc(parseLinks(parseEmojis(content))));
+    let contentHtml = formatMsgContent(content);
     if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-xs max-h-64 rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
     if(m.audioUrl) {
       const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
@@ -4462,10 +4535,14 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
         content: content || '',
         imageUrl: imageUrl||null,
         audioUrl: audioUrl||null,
-        ts: Date.now()
+        ts: Date.now(),
+        replyTo: S.replyingTo ? S.replyingTo.msgId : null,
+        replyHandle: S.replyingTo ? S.replyingTo.handle : null
       };
       console.log('Sending DM message:', messageData);
       await addDoc(collection(db,'dms',dmId,'messages'), messageData);
+      S.replyingTo = null;
+      if(window.cancelReply) window.cancelReply();
       console.log('DM message sent successfully to Firestore');
     } catch(e) {
       console.error('Failed to send DM message:', e);
@@ -4773,7 +4850,7 @@ window.showMessageContext = (e, msgId, handle, content) => {
   const menu = $('ctxMenu');
   menu.innerHTML = `
     <div class="ctx-item" onclick="startReply('${esc(msgId)}', '${esc(handle)}', '${esc(content.replace(/'/g,"").slice(0,80))}');hideCtx()"><i class="fa-solid fa-reply w-4"></i> Reply</div>
-    ${S.canManage ? `<div class="ctx-item text-red-400" onclick="deleteMsg('${esc(msgId)}');hideCtx()"><i class="fa-solid fa-trash w-4"></i> Delete</div>` : ''}
+    ${S.canManage ? `<div class="ctx-item text-red-400" onclick="deleteChannelMessage('${esc(msgId)}');hideCtx()"><i class="fa-solid fa-trash w-4"></i> Delete</div>` : ''}
   `;
   menu.style.left = Math.min(e.clientX, window.innerWidth-200)+'px';
   menu.style.top = Math.min(e.clientY, window.innerHeight-150)+'px';
@@ -5382,6 +5459,7 @@ window.startDM = function(uid, handle, avatar) {
 
 function loadDms(targetUid){
   const dmId = [S.user.uid, targetUid].sort().join('_');
+  if(window.cancelReply) window.cancelReply();
 
   // Clean up previous DM listener
   if (S.unsubDms) {
@@ -5425,7 +5503,7 @@ function loadDms(targetUid){
       // Ensure content is a string
       if (typeof content !== 'string') content = String(content || '');
 
-      let contentHtml = esc(parseLinks(parseEmojis(content)));
+      let contentHtml = formatMsgContent(content);
       if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-full rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
       if(m.audioUrl) {
         const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
@@ -5449,8 +5527,11 @@ function loadDms(targetUid){
     
     // Add delete button for own messages
     const deleteBtn = mine ? `<button onclick="deleteDMMessage('${m.id}')" class="ml-2 text-slate-500 hover:text-red-400 text-[10px]" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : '';
-    
-    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'}">${contentHtml}<div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${shortTime(m.ts)}${deleteBtn}</div></div>`;
+    const dmContentStr = String(content||'');
+    const replyBtn = `<button onclick="startReply('${m.id}','${esc((m.handle||'User').replace(/'/g,''))}','${esc(dmContentStr.replace(/'/g,'').slice(0,80))}')" class="hidden group-hover:inline text-slate-400 hover:text-bch mr-1 align-middle" title="Reply"><i class="fa-solid fa-reply"></i></button>`;
+    const replyLine = m.replyTo ? `<div class="text-[9px] text-slate-400 mb-1 flex items-center gap-1"><i class="fa-solid fa-reply"></i><span class="truncate">replying to ${esc(m.replyHandle||'someone')}</span></div>` : '';
+
+    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'} group">${replyLine}${contentHtml}<div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${replyBtn}${shortTime(m.ts)}${deleteBtn}</div></div>`;
     feed.appendChild(div);
   }
   const c = $('msgContainer'); c.scrollTop = c.scrollHeight;
@@ -5890,6 +5971,8 @@ window.sSettingsTab = tab => {
   if(tab === 'invites') renderInviteList();
   if(tab === 'members') renderServerMembers();
   if(tab === 'roles'){ loadRoles(S.server.id).then(renderRolesList); }
+  const dsb = $('deleteServerSettingsBtn');
+  if(dsb) dsb.classList.toggle('hidden', !isSiteOwner());
 };
 window.saveServerSettings = async () => {
   if(!S.canManage) return;
@@ -5982,45 +6065,114 @@ async function renderServerMembers(){
 }
 window.kickMember = async (uid, handle) => { if(!S.canManage) return; if(!confirm(`Kick ${handle}?`)) return; await deleteDoc(doc(db,'servers',S.server.id,'members',uid)); renderServerMembers(); };
 window.adminToggleLock = () => { S.locked = !S.locked; $('lockBadge').classList.toggle('hidden', !S.locked); closeModal('chanSettings'); closeModal('serverSettings'); };
-window.adminPurgeChannel = async () => {
-  if(!S.canManage || !S.server || S.channelType !== 'text') return;
-  if(!confirm('Delete ALL messages?')) return;
-  const snap = await getDocs(collection(db,'servers',S.server.id,'channels',S.channel,'messages'));
-  const batch = writeBatch(db); snap.forEach(d => batch.delete(d.ref)); await batch.commit();
-  closeModal('chanSettings'); closeModal('serverSettings');
+
+// ===== CHANNEL EDIT / DELETE (admin) =====
+S.chanEditId = null;
+window.openChanSettings = (id, name) => {
+  S.chanEditId = id || S.channel;
+  const ch = S_channels.find(x => x.id === S.chanEditId);
+  $('chanSettingsName').textContent = name || ch?.name || S.chanEditId || '';
+  const inp = $('chanRenameInput'); if(inp) inp.value = '';
+  openModal('chanSettings');
 };
-window.deleteCurrentChannel = async () => {
-  if(!S.canManage || !S.server) return;
-  if(S.channel === 'general') return alert('Cannot delete #general');
-  if(!confirm(`Delete #${S.channel}?`)) return;
-  await adminPurgeChannel();
-  await deleteDoc(doc(db,'servers',S.server.id,'channels',S.channel));
-  await loadChannels(S.server.id);
-  switchChannel({id:'general',name:'general',type:'text'});
-  closeModal('chanSettings'); closeModal('serverSettings');
-};
-window.deleteServer = async () => {
-  if(!S.canManage || !S.server) return;
-  if(!confirm(`PERMANENTLY delete "${S.server.name}"?`)) return;
-  if(!confirm('Are you sure?')) return;
-  const sid = S.server.id;
+window.renameChannel = async () => {
+  const cid = S.chanEditId || S.channel;
+  if(!S.canManage || !S.server || !cid) return;
+  const name = ($('chanRenameInput')?.value || '').trim().slice(0,50);
+  if(!name) return alert('Enter a channel name');
   try{
-    const chans = await getDocs(collection(db,'servers',sid,'channels'));
-    for(const ch of chans.docs){
-      const msgs = await getDocs(collection(db,'servers',sid,'channels',ch.id,'messages'));
-      const b = writeBatch(db); msgs.forEach(m => b.delete(m.ref)); await b.commit();
-      await deleteDoc(ch.ref);
-    }
-    const members = await getDocs(collection(db,'servers',sid,'members'));
-    const mb = writeBatch(db); members.forEach(m => mb.delete(m.ref)); await mb.commit();
-    await deleteDoc(doc(db,'servers',sid));
-  }catch(e){ console.error(e); }
-  S.server = null;
+    await updateDoc(doc(db,'servers',S.server.id,'channels',cid), {name});
+    await loadChannels(S.server.id);
+    if(S.channel === cid){ $('chanHeader').textContent = name; $('chanSettingsName').textContent = name; }
+    const inp = $('chanRenameInput'); if(inp) inp.value = '';
+  }catch(e){ alert(e.message); }
+};
+// Deletes all subcollections under a channel doc (messages, pins, threads, typing)
+async function deleteChannelDeep(sid, cid){
+  for(const sub of ['messages','pins','threads','typing']){
+    try{
+      const snap = await getDocs(collection(db,'servers',sid,'channels',cid,sub));
+      for(let i=0;i<snap.docs.length;i+=400){
+        const b = writeBatch(db);
+        snap.docs.slice(i,i+400).forEach(d => b.delete(d.ref));
+        await b.commit();
+      }
+    }catch(e){}
+  }
+}
+window.adminPurgeChannel = async (cid) => {
+  cid = cid || S.chanEditId || S.channel;
+  const ch = S_channels.find(x => x.id === cid);
+  if(!S.canManage || !S.server || !ch || ch.type !== 'text') return;
+  if(!confirm(`Delete ALL messages in #${ch.name||cid}?`)) return;
+  const snap = await getDocs(collection(db,'servers',S.server.id,'channels',cid,'messages'));
+  for(let i=0;i<snap.docs.length;i+=400){
+    const b = writeBatch(db); snap.docs.slice(i,i+400).forEach(d => b.delete(d.ref)); await b.commit();
+  }
+  closeModal('chanSettings'); closeModal('serverSettings');
+};
+window.deleteCurrentChannel = async (cid) => {
+  cid = cid || S.chanEditId || S.channel;
+  if(!S.canManage || !S.server) return;
+  if(cid === 'general') return alert('Cannot delete #general');
+  const ch = S_channels.find(x => x.id === cid);
+  if(!ch) return alert('Channel not found');
+  if(!confirm(`Delete #${ch.name||cid}? This cannot be undone.`)) return;
+  await deleteChannelDeep(S.server.id, cid);
+  await deleteDoc(doc(db,'servers',S.server.id,'channels',cid));
+  await loadChannels(S.server.id);
+  if(S.channel === cid) switchChannel({id:'general',name:'general',type:'text'});
+  closeModal('chanSettings'); closeModal('serverSettings');
+};
+function isSiteOwner(){
+  return S.profile?.email === ADMIN_EMAIL || S.isAdmin === true;
+}
+// Deletes an ENTIRE server: every channel + all channel subcollections, members, roles, and the server doc
+window.deleteServerById = async (sid) => {
+  if(!sid) return;
+  const chans = await getDocs(collection(db,'servers',sid,'channels'));
+  for(const ch of chans.docs){
+    await deleteChannelDeep(sid, ch.id);
+    await deleteDoc(ch.ref);
+  }
+  for(const sub of ['members','roles']){
+    try{
+      const snap = await getDocs(collection(db,'servers',sid,sub));
+      for(let i=0;i<snap.docs.length;i+=400){
+        const b = writeBatch(db);
+        snap.docs.slice(i,i+400).forEach(d => b.delete(d.ref));
+        await b.commit();
+      }
+    }catch(e){}
+  }
+  await deleteDoc(doc(db,'servers',sid));
+};
+function resetAfterServerDelete(){
+  S.server = null; S.channel = null; S.channelType = null;
   $('currentServerName').textContent = 'Select a Server';
   $('serverIconPreview').classList.add('hidden');
   $('channelsList').innerHTML = ''; $('voiceList').innerHTML = '';
-  closeModal('serverSettings');
-  await loadMyServers();
+  $('chanHeader').textContent = '—';
+  closeModal('serverSettings'); closeModal('chanSettings');
+  loadMyServers();
+}
+window.deleteServer = async () => {
+  if(!isSiteOwner()) return alert('Only the site owner (moddarkrevolt@gmail.com) can delete servers.');
+  if(!S.server) return;
+  if(!confirm(`PERMANENTLY delete "${S.server.name}" and ALL of its data?`)) return;
+  if(!confirm('This will delete every channel, message, member and role. This cannot be undone.')) return;
+  const sid = S.server.id;
+  try{ await deleteServerById(sid); }catch(e){ console.error(e); alert('Delete failed: '+e.message); return; }
+  resetAfterServerDelete();
+};
+// Right-click server rail → Delete Server (owner only)
+window.deleteServerFromRail = async (sid, name) => {
+  if(!isSiteOwner()) return alert('Only the site owner (moddarkrevolt@gmail.com) can delete servers.');
+  if(!confirm(`PERMANENTLY delete "${name||'this server'}" and ALL of its data?`)) return;
+  if(!confirm('This cannot be undone.')) return;
+  const wasCurrent = S.server?.id === sid;
+  try{ await deleteServerById(sid); }catch(e){ console.error(e); alert('Delete failed: '+e.message); return; }
+  if(wasCurrent) resetAfterServerDelete(); else loadMyServers();
 };
 window.adminTab = tab => {
   ['servers','users','blacklist','gifs','images','bans'].forEach(t => {
@@ -6178,6 +6330,7 @@ window.loadAdminServers = async () => {
           <div class="text-[10px] text-slate-500 mono">owner: ${esc(s.ownerHandle||'—')}</div>
         </div>
         <button onclick="adminEnterServer('${esc(d.id)}')" class="text-xs text-bch border border-bch/40 rounded px-2 py-1 hover:bg-bch/10">Enter</button>
+        <button onclick="adminDeleteServer('${esc(d.id)}','${esc((s.name||'').replace(/'/g,''))}')" class="text-xs text-red-400 border border-red-500/40 rounded px-2 py-1 hover:bg-red-500/10">Delete</button>
       `;
       el.appendChild(row);
     });
@@ -6186,6 +6339,14 @@ window.loadAdminServers = async () => {
   }
 };
 
+window.adminDeleteServer = async (id, name) => {
+  if(!isSiteOwner()) return alert('Only the site owner can delete servers.');
+  if(!confirm(`PERMANENTLY delete server "${name}" and ALL of its data?`)) return;
+  if(!confirm('This cannot be undone.')) return;
+  try{ await deleteServerById(id); }catch(e){ alert('Delete failed: '+e.message); }
+  if(S.server?.id === id) resetAfterServerDelete();
+  loadAdminServers();
+};
 window.adminSearchUsers = (q) => {
   S.adminUsers.search = q.trim().toLowerCase();
   S.adminUsers.page = 0;
@@ -6445,6 +6606,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFullTgifDataset();
   loadRemember();
   setupTypingInput();
+  applyChatTheme();
   
   // Custom status color sync
   const colorPicker = $('customStatusColor');
@@ -7034,7 +7196,7 @@ async function loadPins(){
         <span class="text-[10px] text-slate-600">${shortTime(pin.pinnedAt)}</span>
         ${S.canManage?`<button onclick="unpinMsg('${esc(pin.id)}')" class="ml-auto text-red-400 text-[10px]"><i class="fa-solid fa-xmark"></i></button>`:''}
       </div>
-      <div class="text-xs text-slate-300 break-words">${esc((pin.content||'').slice(0,200))}</div>`;
+      <div class="text-xs text-slate-300 break-words">${formatMsgContent((pin.content||'').slice(0,200))}</div>`;
       el.appendChild(div);
     });
   }catch(e){ el.innerHTML = '<p class="text-xs text-red-400">'+esc(e.message)+'</p>'; }
