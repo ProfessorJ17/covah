@@ -146,7 +146,10 @@
     body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.72)!important}
     body.chat-themed #chanSearch,
     body.chat-themed .field{background-color:rgba(5,6,8,.78)}
-    /* Every major surface goes translucent so the gradient shows through all sections (Discord-style) */
+    /* Every dark surface class goes translucent — one rule per shade so the whole UI themes together */
+    body.chat-themed .bg-dark-600{background-color:rgba(48,52,65,.5)!important}
+    body.chat-themed .bg-dark-700{background-color:rgba(36,40,51,.55)!important}
+    body.chat-themed .bg-dark-800{background-color:rgba(21,24,31,.62)!important}
     body.chat-themed .bg-dark-850{background-color:rgba(11,13,16,.7)!important}
     body.chat-themed .bg-dark-900{background-color:rgba(13,15,19,.74)!important}
     body.chat-themed .bg-dark-950{background-color:rgba(7,9,12,.74)!important}
@@ -752,7 +755,7 @@
 </div>
 
 <!-- GITHUB IMAGES PICKER -->
-<div id="modal-github" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+<div id="modal-github" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[70] flex items-center justify-center p-4 hidden">
   <div class="bg-dark-900 border border-dark-700 w-full max-w-2xl rounded-xl relative flex flex-col max-h-[85vh]">
     <div class="flex items-center justify-between p-4 border-b border-dark-700">
       <h2 class="font-bold text-white"><i class="fa-brands fa-github text-slate-300"></i> GitHub Images</h2>
@@ -762,6 +765,14 @@
       <div id="ghConnectBox">
         <p class="text-[10px] text-slate-400 mb-2">Connect GitHub to pick <em>and upload</em> images stored in <span class="mono text-bch">github.com/YOU/havoc/images</span>. Uses GitHub's official sign-in — no password needed.</p>
         <button onclick="connectGithub()" class="btn-primary px-4 py-1.5 text-xs"><i class="fa-brands fa-github"></i> Connect GitHub</button>
+        <details class="mt-3">
+          <summary class="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300">Device flow not working? Use a Personal Access Token instead</summary>
+          <div class="flex gap-1.5 mt-2">
+            <input type="password" id="ghPatInput" placeholder="github_pat_… or ghp_…" class="field flex-1 text-xs">
+            <button onclick="connectGithubPat()" class="btn-primary px-3 text-[10px] shrink-0">Connect</button>
+          </div>
+          <p class="text-[9px] text-slate-600 mt-1">Create at github.com → Settings → Developer settings → Personal access tokens. Classic token needs <b>public_repo</b> scope; fine-grained needs <b>Contents: Read &amp; write</b> on your havoc repo.</p>
+        </details>
       </div>
       <div id="ghConnectedBox" class="hidden items-center gap-2">
         <i class="fa-brands fa-github text-slate-300"></i>
@@ -3193,9 +3204,11 @@ window.connectGithub = async () => {
   }
   $('ghStatus').textContent = 'Requesting device code…';
   try{
-    // Device flow endpoints live on github.com (not api.github.com) and must be
-    // form-urlencoded — JSON triggers a CORS preflight GitHub doesn't answer.
-    const dRes = await fetch('https://github.com/login/device/code', {
+    // Device flow endpoints live on github.com (not api.github.com), send no CORS
+    // headers, and reject JSON preflights — route through a CORS proxy with a
+    // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
+    const GH_PROXY = 'https://cors.isomorphic-git.org/';
+    const dRes = await fetch(GH_PROXY + 'https://github.com/login/device/code', {
       method:'POST',
       headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
       body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
@@ -3208,7 +3221,7 @@ window.connectGithub = async () => {
     const poll = async () => {
       if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
       try{
-        const r = await fetch('https://github.com/login/oauth/access_token', {
+        const r = await fetch(GH_PROXY + 'https://github.com/login/oauth/access_token', {
           method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
           body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
         });
@@ -3232,6 +3245,23 @@ window.connectGithub = async () => {
     };
     setTimeout(poll, interval);
   }catch(e){ $('ghStatus').textContent = 'Could not start GitHub connect: '+e.message; }
+};
+
+window.connectGithubPat = async () => {
+  const tok = $('ghPatInput')?.value.trim();
+  if(!tok) return alert('Paste a GitHub token first');
+  $('ghStatus').textContent = 'Validating token…';
+  S.ghToken = tok;
+  try{
+    const me = await ghApi('/user');
+    S.ghLogin = me.login;
+    ghSaveToken();
+    if(S.profile && S.profile.github !== me.login){
+      try{ await updateDoc(doc(db,'users',S.user.uid), { github: me.login }); S.profile.github = me.login; }catch(e){}
+    }
+    S.ghRepoInfo = null;
+    renderGithubConnectState();
+  }catch(e){ ghForgetToken(); $('ghStatus').textContent = 'Token failed: '+e.message; }
 };
 
 window.disconnectGithub = () => {
@@ -3305,8 +3335,9 @@ window.ghUploadPick = (e) => {
   ghUploadFile(f).then(url => {
     st.textContent = 'Uploaded ✓';
     loadGithubImages();
-    // auto-attach the fresh upload like Discord does
-    setTimeout(()=>{ const img=[...$('ghGrid').children].pop()?.querySelector('img'); if(img) pickGithubImage(img.src); }, 800);
+    // auto-attach the fresh upload like Discord does (use the URL directly —
+    // the grid may not have re-rendered yet)
+    setTimeout(()=>{ S.ghMode = S.ghMode || 'attach'; pickGithubImage(url); }, 300);
   }).catch(err => { st.textContent = 'Upload failed: '+err.message; });
 };
 
@@ -5345,7 +5376,7 @@ S.call = null;
 let callSignalUnsub = null, callDocUnsub = null, incomingUnsub = null, pendingIncoming = null;
 function callDmId(targetUid){ return [S.user.uid, targetUid].sort().join('_'); }
 async function purgeCallSignals(dmId){
-  try{ const s = await getDocs(collection(db,'dms',dmId,'callSignals'));
+  try{ const s = await getDocs(collection(db,'calls',dmId,'signals'));
     for(const d of s.docs) await deleteDoc(d.ref);
   }catch(e){}
 }
@@ -5394,10 +5425,10 @@ window.startCall = async (type) => {
   try{
     const pc = new RTCPeerConnection(ICE);
     stream.getTracks().forEach(t=>pc.addTrack(t,stream));
-    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'dms',dmId,'callSignals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
+    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'calls',dmId,'signals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
     pc.ontrack = e => attachRemoteStream(e.streams[0]);
     const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-    const callRef = doc(db,'dms',dmId,'call','current');
+    const callRef = doc(db,'calls',dmId);
     await setDoc(callRef, { caller:S.user.uid, callee:targetUid, type, state:'ringing', offer:pc.localDescription, createdAt:Date.now() });
     S.call = { pc, stream, type, dmId, role:'caller', callRef, answered:false };
     callDocUnsub = onSnapshot(callRef, async snap => {
@@ -5408,7 +5439,7 @@ window.startCall = async (type) => {
         showCallUI(S.call.type, 'Connected');
       }
     });
-    callSignalUnsub = onSnapshot(collection(db,'dms',dmId,'callSignals'), snap => {
+    callSignalUnsub = onSnapshot(collection(db,'calls',dmId,'signals'), snap => {
       snap.docChanges().forEach(ch => { if(ch.type==='added'){ const s=ch.doc.data(); if(s.from!==S.user.uid && s.candidate) pc.addIceCandidate(s.candidate).catch(()=>{}); }});
     });
     showCallUI(type, 'Calling…');
@@ -5420,19 +5451,19 @@ window.acceptCall = async () => {
   const bar=$('incomingCallBar'); if(bar) bar.style.display='none';
   let stream;
   try{ stream = await navigator.mediaDevices.getUserMedia({audio:true, video:d.type==='video'}); }
-  catch(e){ try{ await updateDoc(doc(db,'dms',dmId,'call','current'), {state:'ended'}); }catch(_){} return alert('Mic/camera error: '+e.message); }
+  catch(e){ try{ await updateDoc(doc(db,'calls',dmId), {state:'ended'}); }catch(_){} return alert('Mic/camera error: '+e.message); }
   try{
     const pc = new RTCPeerConnection(ICE);
     stream.getTracks().forEach(t=>pc.addTrack(t,stream));
-    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'dms',dmId,'callSignals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
+    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'calls',dmId,'signals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
     pc.ontrack = e => attachRemoteStream(e.streams[0]);
     await pc.setRemoteDescription(d.offer);
     const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
-    const callRef = doc(db,'dms',dmId,'call','current');
+    const callRef = doc(db,'calls',dmId);
     await updateDoc(callRef, { answer:pc.localDescription, state:'active' });
     S.call = { pc, stream, type:d.type, dmId, role:'callee', callRef };
     callDocUnsub = onSnapshot(callRef, snap => { const x=snap.data(); if(x?.state==='ended' && S.call) endCall(false); });
-    callSignalUnsub = onSnapshot(collection(db,'dms',dmId,'callSignals'), snap => {
+    callSignalUnsub = onSnapshot(collection(db,'calls',dmId,'signals'), snap => {
       snap.docChanges().forEach(ch=>{ if(ch.type==='added'){ const s=ch.doc.data(); if(s.from!==S.user.uid && s.candidate) pc.addIceCandidate(s.candidate).catch(()=>{}); }});
     });
     showCallUI(d.type, 'Connected');
@@ -5442,7 +5473,7 @@ window.declineCall = async () => {
   if(!pendingIncoming) return;
   const { dmId } = pendingIncoming; pendingIncoming=null;
   const bar=$('incomingCallBar'); if(bar) bar.style.display='none';
-  try{ await updateDoc(doc(db,'dms',dmId,'call','current'), {state:'ended'}); }catch(e){}
+  try{ await updateDoc(doc(db,'calls',dmId), {state:'ended'}); }catch(e){}
 };
 window.endCall = async (updateState=true) => {
   const c = S.call;
@@ -5461,12 +5492,12 @@ window.toggleCallCam = () => {
 };
 window.listenIncomingCalls = () => {
   if(incomingUnsub || !S.user) return;
-  incomingUnsub = onSnapshot(query(collectionGroup(db,'call'), where('callee','==',S.user.uid)), snap => {
+  incomingUnsub = onSnapshot(query(collection(db,'calls'), where('callee','==',S.user.uid)), snap => {
     snap.docChanges().forEach(ch=>{
       if(ch.type!=='added') return;
       const d = ch.doc.data(); if(!d || d.state !== 'ringing' || d.caller===S.user.uid) return;
       if(Date.now()-(d.createdAt||0) > 90000) return;
-      pendingIncoming = { dmId: ch.doc.ref.parent.parent.id, data:d };
+      pendingIncoming = { dmId: ch.doc.id, data:d };
       const name = (S.friends||[]).find(f=>f.uid===d.caller)?.handle || S.profileCache?.[d.caller]?.handle || 'Someone';
       $('incomingCallText').textContent = `${name} is calling (${d.type==='video'?'video':'voice'})`;
       $('incomingCallBar').style.display='flex';
