@@ -49,6 +49,9 @@
     .btn-primary{background:#0AC18E;color:#000;font-weight:700;border-radius:8px}
     .btn-primary:hover{background:#00E5A3}
     .glow-text{text-shadow:0 0 10px rgba(0,229,163,.5)}
+    .havoc-gradient-text{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);-webkit-background-clip:text;background-clip:text;color:transparent}
+    #sidebarResize{transition:background .15s;background:rgba(74,63,108,.15)}
+    body.chat-themed #sidebarResize{background:rgba(74,63,108,.08)}
     .mention{background:rgba(10,193,142,.18);color:#00E5A3;padding:0 3px;border-radius:3px;font-weight:600}
     .mention-everyone{background:rgba(247,147,26,.2);color:#FFB347}
     .ctx-menu{position:fixed;z-index:300;background:#0f1218;border:1px solid #242b3b;border-radius:8px;padding:4px;min-width:190px;box-shadow:0 10px 30px rgba(0,0,0,.7)}
@@ -132,8 +135,8 @@
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    /* Official GTA6 vibrant gradient — bright, saturated, no dark base */
-    body.ct-gta6{background:linear-gradient(135deg,#1E2A78 0%,#3B63D6 18%,#9B55C6 38%,#F648AC 58%,#EB6A7C 76%,#E28F48 100%) fixed}
+    /* Dark horizontal gradient: deep navy/indigo left → dark plum/mauve right */
+    body.ct-gta6{background:linear-gradient(90deg,#0a0e1c 0%,#1a1f3a 25%,#2d1b3d 50%,#3d2a4a 75%,#2d1b3d 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
@@ -142,38 +145,61 @@
     body.chat-themed header,
     body.chat-themed nav,
     body.chat-themed aside,
-    body.chat-themed main{background-color:rgba(9,11,14,.04)!important}
-    body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.06)!important}
+    body.chat-themed main{background-color:transparent!important}
+    body.chat-themed .bg-dark-950.border-t{background-color:transparent!important}
     body.chat-themed #chanSearch,
-    body.chat-themed .field{background-color:rgba(5,6,8,.1)}
+    body.chat-themed .field{background-color:rgba(10,14,28,.15)}
     /* Every dark surface class goes translucent — one rule per shade so the whole UI themes together */
-    body.chat-themed .bg-dark-600{background-color:rgba(48,52,65,.04)!important}
-    body.chat-themed .bg-dark-700{background-color:rgba(36,40,51,.06)!important}
-    body.chat-themed .bg-dark-800{background-color:rgba(21,24,31,.08)!important}
-    body.chat-themed .bg-dark-850{background-color:rgba(11,13,16,.1)!important}
-    body.chat-themed .bg-dark-900{background-color:rgba(13,15,19,.12)!important}
-    body.chat-themed .bg-dark-950{background-color:rgba(7,9,12,.12)!important}
-    body.chat-themed .bg-dark-900\/80{background-color:rgba(13,15,19,.1)!important}
-    body.chat-themed .bg-dark-900\/90{background-color:rgba(13,15,19,.11)!important}
-    body.chat-themed .bg-dark-900\/40{background-color:rgba(13,15,19,.06)!important}
-    body.chat-themed .bg-dark-950\/80{background-color:rgba(7,9,12,.08)!important}
-    body.chat-themed .bg-dark-950\/60{background-color:rgba(7,9,12,.07)!important}
-    body.chat-themed .bg-dark-950\/50{background-color:rgba(7,9,12,.06)!important}
-    body.chat-themed .bg-dark-950\/40{background-color:rgba(7,9,12,.05)!important}
-    body.chat-themed .bg-dark-950\/30{background-color:rgba(7,9,12,.04)!important}
-    body.chat-themed .bg-black\/90{background-color:rgba(0,0,0,.06)!important}
-    body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.06)!important}
-    body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.05)!important}
+    body.chat-themed .bg-dark-600{background-color:rgba(45,43,58,.08)!important}
+    body.chat-themed .bg-dark-700{background-color:rgba(26,28,44,.06)!important}
+    body.chat-themed .bg-dark-800{background-color:rgba(16,18,32,.05)!important}
+    body.chat-themed .bg-dark-850{background-color:rgba(12,14,26,.04)!important}
+    body.chat-themed .bg-dark-900{background-color:rgba(10,12,22,.03)!important}
+    body.chat-themed .bg-dark-950{background-color:rgba(8,10,18,.02)!important}
+    body.chat-themed .bg-dark-900\/80{background-color:rgba(10,12,22,.025)!important}
+    body.chat-themed .bg-dark-900\/90{background-color:rgba(10,12,22,.028)!important}
+    body.chat-themed .bg-dark-900\/40{background-color:rgba(10,12,22,.015)!important}
+    body.chat-themed .bg-dark-950\/80{background-color:rgba(8,10,18,.02)!important}
+    body.chat-themed .bg-dark-950\/60{background-color:rgba(8,10,18,.018)!important}
+    body.chat-themed .bg-dark-950\/50{background-color:rgba(8,10,18,.015)!important}
+    body.chat-themed .bg-dark-950\/40{background-color:rgba(8,10,18,.012)!important}
+    body.chat-themed .bg-dark-950\/30{background-color:rgba(8,10,18,.01)!important}
+    body.chat-themed .bg-black\/90{background-color:rgba(0,0,0,.015)!important}
+    body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.015)!important}
+    body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.012)!important}
+    /* Remove borders and shadows when themed for seamless gradient */
+    body.chat-themed header,
+    body.chat-themed nav,
+    body.chat-themed aside,
+    body.chat-themed main,
+    body.chat-themed #sidebarResize{border-color:transparent!important;box-shadow:none!important}
+    body.chat-themed .border-t,
+    body.chat-themed .border-b,
+    body.chat-themed .border-l,
+    body.chat-themed .border-r{border-color:transparent!important}
+    /* Muted off-white/lavender text for dark contrast */
+    body.chat-themed .text-white{color:#e8e4f0!important}
+    body.chat-themed .text-slate-500{color:#a39cb5!important}
+    body.chat-themed .text-slate-400{color:#b8b4c6!important}
+    body.chat-themed .text-slate-600{color:#9d96a8!important}
+    /* Convert teal highlights to lavender/purple when themed */
+    body.chat-themed .text-bch,
+    body.chat-themed .text-bch-bright{color:#c4b8e0!important}
+    body.chat-themed .bg-bch\/20{background-color:rgba(74,63,108,.15)!important}
+    body.chat-themed .bg-bch\/30{background-color:rgba(74,63,108,.22)!important}
+    body.chat-themed .border-bch{border-color:rgba(74,63,108,.4)!important}
+    body.chat-themed .border-bch\/30{border-color:rgba(74,63,108,.25)!important}
+    body.chat-themed .border-bch\/40{border-color:rgba(74,63,108,.3)!important}
     /* Gradient accents: primary buttons (send etc.) + active channel highlight */
-    body.chat-themed .btn-primary{background:var(--ct-accent,#5865F2);color:#fff}
-    body.chat-themed .btn-primary:hover{filter:brightness(1.12)}
-    body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(88,101,242,.4),rgba(10,193,142,.28))!important}
-    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:var(--ct-accent,#5865F2)}
+    body.chat-themed .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);color:#e8e4f0}
+    body.chat-themed .btn-primary:hover{filter:brightness(1.15)}
+    body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(74,63,108,.3),rgba(107,90,138,.2))!important}
+    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);color:#e8e4f0}
     /* Message composer bar + input get a subtle themed surface */
-    body.chat-themed #msgForm{background:rgba(13,15,19,.4)!important;border-color:rgba(255,255,255,.12)}
-    body.chat-themed #msgForm:focus-within{border-color:#F648AC}
+    body.chat-themed #msgForm{background:rgba(10,14,28,.12)!important;border-color:rgba(120,110,160,.15)}
+    body.chat-themed #msgForm:focus-within{border-color:rgba(107,90,138,.4)}
     /* DM home button gets the theme gradient (Discord blurple-style) */
-    body.chat-themed #dmHomeBtn{background-image:var(--ct-gradient,#312e81)!important;background-color:transparent!important}
+    body.chat-themed #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
     body.chat-themed #dmHomeBtn:hover{filter:brightness(1.15)}
     /* Channel categories */
     .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
@@ -298,7 +324,7 @@
 
 <header class="h-11 bg-dark-950 border-b border-dark-700 flex items-center justify-between px-4 shrink-0 z-30">
   <div class="flex items-center gap-3">
-    <span class="font-extrabold tracking-widest text-bch-bright text-sm uppercase mono glow-text">havoc</span>
+    <span class="font-extrabold tracking-widest text-sm uppercase mono havoc-gradient-text">havoc</span>
     <span class="hidden md:inline text-slate-500 text-[11px] italic border-l border-dark-700 pl-3 mono">Post-Quantum Encrypted Community</span>
   </div>
   <div class="flex items-center gap-2" id="authBar">
@@ -331,7 +357,7 @@
   </nav>
 
   <!-- SIDEBAR -->
-  <aside class="w-60 bg-dark-900 border-r border-dark-700 flex flex-col shrink-0">
+  <aside id="sidebar" class="w-60 bg-dark-900 border-r border-dark-700 flex flex-col shrink-0 transition-all duration-200" style="width:240px">
     <div id="sidebarHeader" class="h-12 border-b border-dark-700 px-3 flex items-center justify-between">
       <div class="flex items-center gap-2 min-w-0 flex-1">
         <img id="serverIconPreview" src="" class="w-6 h-6 rounded-md hidden object-cover">
@@ -340,6 +366,7 @@
       <div class="flex items-center gap-1">
         <button id="inviteBtn" onclick="openInviteToFriends()" title="Invite Friends" class="hidden text-slate-500 hover:text-bch-bright text-xs p-1.5 rounded hover:bg-dark-800"><i class="fa-solid fa-user-plus"></i></button>
         <button id="serverSettingsBtn" onclick="openModal('serverSettings')" class="hidden text-slate-500 hover:text-bch-bright text-xs p-1.5 rounded hover:bg-dark-800"><i class="fa-solid fa-gear"></i></button>
+        <button id="sidebarToggleBtn" onclick="toggleSidebar()" title="Collapse Sidebar" class="text-slate-500 hover:text-bch-bright text-xs p-1.5 rounded hover:bg-dark-800"><i class="fa-solid fa-chevron-left"></i></button>
       </div>
     </div>
 
@@ -408,10 +435,14 @@
     </div>
   </aside>
 
+  <!-- RESIZE HANDLE -->
+  <div id="sidebarResize" class="w-1 bg-dark-700 hover:bg-bch cursor-col-resize shrink-0 z-20"></div>
+
   <!-- MAIN -->
   <main class="flex-1 flex flex-col bg-dark-850 min-w-0">
     <div class="h-12 border-b border-dark-700 px-4 flex items-center justify-between bg-dark-900/90 shrink-0 gap-2">
       <div class="flex items-center gap-2 min-w-0">
+        <button id="sidebarOpenBtn" onclick="toggleSidebar()" title="Open Sidebar" class="hidden text-slate-500 hover:text-bch-bright text-xs p-1.5 rounded hover:bg-dark-800"><i class="fa-solid fa-chevron-right"></i></button>
         <i id="chanIcon" class="fa-solid fa-hashtag text-slate-500 text-xs"></i>
         <div class="flex flex-col min-w-0">
           <div class="flex items-center gap-2">
@@ -1945,7 +1976,7 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(135deg,#1E2A78 0%,#3B63D6 18%,#9B55C6 38%,#F648AC 58%,#EB6A7C 76%,#E28F48 100%)', accent:'linear-gradient(135deg,#1E2A78 0%,#3B63D6 20%,#9B55C6 42%,#F648AC 65%,#EB6A7C 83%,#E28F48 100%)' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(90deg,#0a0e1c 0%,#1a1f3a 25%,#2d1b3d 50%,#3d2a4a 75%,#2d1b3d 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
   { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
   { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
@@ -1963,8 +1994,8 @@ function applyChatTheme(){
   document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix');
   if(t) document.body.classList.add('chat-themed','ct-'+t);
   const th = CHAT_THEMES.find(x=>x.id===t);
-  document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0f1218,#0f1218)');
-  document.body.style.setProperty('--ct-accent', th?.accent || th?.css || 'linear-gradient(#0f1218,#0f1218)');
+  document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0a0e1c,#2d1b3d)');
+  document.body.style.setProperty('--ct-accent', th?.accent || th?.css || 'linear-gradient(#4a3f6c,#6b5a8a)');
 }
 window.setChatTheme = (t) => {
   localStorage.setItem('havoc_chat_theme', t || '__dark');
@@ -4522,12 +4553,16 @@ function markChanRead(cid, ts){
   m[cid] = ts || Date.now();
   localStorage.setItem(`havoc_read_${S.server.id}`, JSON.stringify(m));
 }
-function chanHasUnread(c, readMap){
-  return c.type !== 'voice' && c.id !== S.channel && (c.lastTs||0) > (readMap[c.id]||0) && (c.lastTs||0) > 0;
-}
-
 // ===== CHANNEL CATEGORIES =====
 let S_categories = [];
+// Track latest message timestamp per channel for unread badges (cross-channel)
+let S_chanLastTs = {};
+
+function chanHasUnread(c, readMap){
+  if(c.type === 'voice' || c.id === S.channel) return false;
+  const lastTs = S_chanLastTs[c.id] || c.lastTs || 0;
+  return lastTs > (readMap[c.id]||0) && lastTs > 0;
+}
 async function loadCategories(serverId){
   try{
     const snap = await getDocs(collection(db,'servers',serverId,'categories'));
@@ -4731,6 +4766,9 @@ function switchChannel(c){
   $('chanIcon').className = 'fa-solid fa-hashtag text-slate-500 text-xs';
   $('chanHeader').textContent = c.name || c.id;
   $('chanSettingsName').textContent = c.name || c.id;
+  // Clear unread state for this channel immediately
+  delete S_chanLastTs[c.id];
+  renderChannels();
   $('textArea').classList.remove('hidden');
   $('voiceArea').classList.add('hidden');
   $('chatInput').disabled = !S.user;
@@ -4999,6 +5037,12 @@ function listenMessages(serverId, channelId){
     snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
     msgs.reverse(); // oldest → newest for display
 
+    // Update cross-channel lastTs from latest message in this channel
+    if(msgs.length > 0){
+      const latestTs = msgs[msgs.length-1].ts || 0;
+      S_chanLastTs[channelId] = Math.max(S_chanLastTs[channelId] || 0, latestTs);
+    }
+
     // Capture scroll position BEFORE render to detect "new messages" pill
     const cont = $('msgContainer');
     const nearBottom = !cont || (cont.scrollHeight - cont.scrollTop - cont.clientHeight < 120);
@@ -5010,6 +5054,10 @@ function listenMessages(serverId, channelId){
         if (change.type === 'added') {
           const m = { id: change.doc.id, ...change.doc.data() };
           if (m.uid !== S.user?.uid) { handleIncomingMessageNotif(m); newFromOthers = true; }
+          // Update cross-channel lastTs for unread badges
+          S_chanLastTs[channelId] = Math.max(S_chanLastTs[channelId] || 0, m.ts || 0);
+          // Re-render channels to update unread dots
+          renderChannels();
         }
       });
     }
@@ -8493,6 +8541,78 @@ function updateHideMutedLabel(){
   if($('hideMutedLabel')) $('hideMutedLabel').textContent = S.hideMutedChannels ? 'Show Muted Channels' : 'Hide Muted Channels';
   if($('hideMutedIcon')) $('hideMutedIcon').className = S.hideMutedChannels ? 'fa-solid fa-eye w-4' : 'fa-solid fa-eye-slash w-4';
 }
+
+// ===== SIDEBAR TOGGLE & RESIZE =====
+S.sidebarCollapsed = localStorage.getItem('havoc_sidebar_collapsed') === '1';
+S.sidebarWidth = parseInt(localStorage.getItem('havoc_sidebar_width') || '240', 10);
+
+function toggleSidebar(){
+  const sidebar = $('sidebar');
+  const toggleBtn = $('sidebarToggleBtn');
+  const openBtn = $('sidebarOpenBtn');
+  const resizeHandle = $('sidebarResize');
+  if(!sidebar) return;
+  S.sidebarCollapsed = !S.sidebarCollapsed;
+  localStorage.setItem('havoc_sidebar_collapsed', S.sidebarCollapsed ? '1' : '0');
+  if(S.sidebarCollapsed){
+    // Save current width before collapsing
+    const currentWidth = parseInt(sidebar.style.width || S.sidebarWidth, 10);
+    if(currentWidth > 0) S.sidebarWidth = currentWidth;
+    localStorage.setItem('havoc_sidebar_width', String(S.sidebarWidth));
+    sidebar.style.width = '0';
+    sidebar.style.padding = '0';
+    sidebar.style.overflow = 'hidden';
+    sidebar.style.border = 'none';
+    resizeHandle.style.display = 'none';
+    openBtn?.classList.remove('hidden');
+  } else {
+    sidebar.style.width = S.sidebarWidth + 'px';
+    sidebar.style.padding = '';
+    sidebar.style.overflow = '';
+    sidebar.style.border = '';
+    resizeHandle.style.display = '';
+    openBtn?.classList.add('hidden');
+  }
+  if(toggleBtn) toggleBtn.innerHTML = S.sidebarCollapsed ? '<i class="fa-solid fa-chevron-right"></i>' : '<i class="fa-solid fa-chevron-left"></i>';
+}
+
+// Sidebar resize drag
+let isResizing = false;
+document.addEventListener('mousemove', (e) => {
+  if(!isResizing) return;
+  const sidebar = $('sidebar');
+  if(!sidebar) return;
+  const newWidth = Math.max(180, Math.min(400, e.clientX));
+  sidebar.style.width = newWidth + 'px';
+  S.sidebarWidth = newWidth;
+  localStorage.setItem('havoc_sidebar_width', String(newWidth));
+});
+document.addEventListener('mouseup', () => {
+  if(isResizing){
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+});
+
+// Apply saved sidebar state on load
+document.addEventListener('DOMContentLoaded', () => {
+  if(S.sidebarCollapsed) toggleSidebar();
+  else {
+    const sidebar = $('sidebar');
+    if(sidebar) sidebar.style.width = S.sidebarWidth + 'px';
+  }
+  // Attach resize listener
+  const resizeHandle = $('sidebarResize');
+  if(resizeHandle){
+    resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+  }
+});
 
 // Initialize hide muted channels state
 S.hideMutedChannels = localStorage.getItem('havoc_hide_muted') === '1';
