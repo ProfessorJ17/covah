@@ -141,25 +141,30 @@
     body.chat-themed header,
     body.chat-themed nav,
     body.chat-themed aside,
-    body.chat-themed main{background-color:rgba(9,11,14,.76)!important}
-    body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.8)!important}
+    body.chat-themed main{background-color:rgba(9,11,14,.68)!important}
+    body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.72)!important}
     body.chat-themed #chanSearch,
-    body.chat-themed .field{background-color:rgba(5,6,8,.85)}
+    body.chat-themed .field{background-color:rgba(5,6,8,.78)}
     /* Every major surface goes translucent so the gradient shows through all sections (Discord-style) */
-    body.chat-themed .bg-dark-850{background-color:rgba(11,13,16,.78)!important}
-    body.chat-themed .bg-dark-900{background-color:rgba(13,15,19,.82)!important}
-    body.chat-themed .bg-dark-950{background-color:rgba(7,9,12,.82)!important}
-    body.chat-themed .bg-dark-900\/80{background-color:rgba(13,15,19,.78)!important}
-    body.chat-themed .bg-dark-900\/90{background-color:rgba(13,15,19,.8)!important}
-    body.chat-themed .bg-dark-900\/40{background-color:rgba(13,15,19,.5)!important}
-    body.chat-themed .bg-dark-950\/80{background-color:rgba(7,9,12,.72)!important}
-    body.chat-themed .bg-dark-950\/60{background-color:rgba(7,9,12,.66)!important}
-    body.chat-themed .bg-dark-950\/50{background-color:rgba(7,9,12,.62)!important}
-    body.chat-themed .bg-dark-950\/40{background-color:rgba(7,9,12,.55)!important}
-    body.chat-themed .bg-dark-950\/30{background-color:rgba(7,9,12,.5)!important}
-    body.chat-themed .bg-black\/90{background-color:rgba(0,0,0,.55)!important}
-    body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.55)!important}
-    body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.5)!important}
+    body.chat-themed .bg-dark-850{background-color:rgba(11,13,16,.7)!important}
+    body.chat-themed .bg-dark-900{background-color:rgba(13,15,19,.74)!important}
+    body.chat-themed .bg-dark-950{background-color:rgba(7,9,12,.74)!important}
+    body.chat-themed .bg-dark-900\/80{background-color:rgba(13,15,19,.7)!important}
+    body.chat-themed .bg-dark-900\/90{background-color:rgba(13,15,19,.72)!important}
+    body.chat-themed .bg-dark-900\/40{background-color:rgba(13,15,19,.45)!important}
+    body.chat-themed .bg-dark-950\/80{background-color:rgba(7,9,12,.64)!important}
+    body.chat-themed .bg-dark-950\/60{background-color:rgba(7,9,12,.58)!important}
+    body.chat-themed .bg-dark-950\/50{background-color:rgba(7,9,12,.54)!important}
+    body.chat-themed .bg-dark-950\/40{background-color:rgba(7,9,12,.48)!important}
+    body.chat-themed .bg-dark-950\/30{background-color:rgba(7,9,12,.44)!important}
+    body.chat-themed .bg-black\/90{background-color:rgba(0,0,0,.5)!important}
+    body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.5)!important}
+    body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.45)!important}
+    /* Gradient accents: primary buttons (send etc.) + active channel highlight */
+    body.chat-themed .btn-primary{background:linear-gradient(135deg,#5865F2,#0AC18E);color:#fff}
+    body.chat-themed .btn-primary:hover{filter:brightness(1.12)}
+    body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(88,101,242,.4),rgba(10,193,142,.28))!important}
+    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:linear-gradient(135deg,rgba(88,101,242,.4),rgba(217,70,239,.35))}
     /* DM home button gets the theme gradient (Discord blurple-style) */
     body.chat-themed #dmHomeBtn{background-image:var(--ct-gradient,#312e81)!important;background-color:transparent!important}
     body.chat-themed #dmHomeBtn:hover{filter:brightness(1.15)}
@@ -3171,7 +3176,14 @@ window.connectGithub = async () => {
   }
   $('ghStatus').textContent = 'Requesting device code…';
   try{
-    const d = await ghApi('/login/device/code', { method:'POST', json:{ client_id: GH_CLIENT_ID, scope: GH_SCOPE } });
+    // Device flow endpoints live on github.com (not api.github.com) and must be
+    // form-urlencoded — JSON triggers a CORS preflight GitHub doesn't answer.
+    const dRes = await fetch('https://github.com/login/device/code', {
+      method:'POST',
+      headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
+    });
+    const d = await dRes.json();
     if(!d.device_code) throw new Error(d.error_description || d.error || 'device flow failed');
     $('ghStatus').innerHTML = `Open <a class="text-bch hover:underline" href="${esc(d.verification_uri)}" target="_blank" rel="noopener">${esc(d.verification_uri)}</a> and enter code:<br><span class="text-2xl font-black text-white tracking-widest">${esc(d.user_code)}</span><br><span class="text-[10px] text-slate-500">Waiting for authorization…</span>`;
     const deadline = Date.now() + (d.expires_in||900)*1000;
@@ -3180,8 +3192,8 @@ window.connectGithub = async () => {
       if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
       try{
         const r = await fetch('https://github.com/login/oauth/access_token', {
-          method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'},
-          body: JSON.stringify({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
+          method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
         });
         const t = await r.json();
         if(t.access_token){
@@ -5289,6 +5301,7 @@ async function loadLinkPreviews(){
     const a = el.querySelector('a[href^="http"]');
     if(!a) return;
     const url = a.href;
+    if(/\.onion(\/|$)/i.test(url)) return;   // microlink can't reach onion services
     if(S.linkCache[url] !== undefined){ if(S.linkCache[url]) injectLinkPreview(el, S.linkCache[url]); return; }
     jobs.push((async()=>{
       try{
@@ -5425,10 +5438,10 @@ window.toggleCallCam = () => {
 };
 window.listenIncomingCalls = () => {
   if(incomingUnsub || !S.user) return;
-  incomingUnsub = onSnapshot(query(collectionGroup(db,'call'), where('state','==','ringing'), where('callee','==',S.user.uid)), snap => {
+  incomingUnsub = onSnapshot(query(collectionGroup(db,'call'), where('callee','==',S.user.uid)), snap => {
     snap.docChanges().forEach(ch=>{
       if(ch.type!=='added') return;
-      const d = ch.doc.data(); if(!d || d.callee!==S.user.uid || d.caller===S.user.uid) return;
+      const d = ch.doc.data(); if(!d || d.state !== 'ringing' || d.caller===S.user.uid) return;
       if(Date.now()-(d.createdAt||0) > 90000) return;
       pendingIncoming = { dmId: ch.doc.ref.parent.parent.id, data:d };
       const name = (S.friends||[]).find(f=>f.uid===d.caller)?.handle || S.profileCache?.[d.caller]?.handle || 'Someone';
@@ -6659,14 +6672,16 @@ async function checkDMNotifications() {
         const lastMsg = snap.docs[0].data();
         const lastReadTime = lastRead[friend.uid] || 0;
         
-        // Count unread messages (messages after last read time)
+        // Count unread messages (single-field range query avoids composite index;
+        // filter own messages client-side, cap at 50)
         const countQ = query(
           collection(db, 'dms', dmId, 'messages'),
           where('ts', '>', lastReadTime),
-          where('from', '!=', S.user.uid)
+          orderBy('ts', 'desc'),
+          limit(50)
         );
         const countSnap = await getDocs(countQ);
-        S.dmUnread[friend.uid] = countSnap.size;
+        S.dmUnread[friend.uid] = countSnap.docs.filter(d => d.data().from !== S.user.uid).length;
       }
     } catch(e) {
       console.error('Error checking DM notifications:', e);
