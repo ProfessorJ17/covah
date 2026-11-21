@@ -132,7 +132,7 @@
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    body.ct-gta6{background:linear-gradient(160deg,#0b1026 0%,#312e81 22%,#5865F2 40%,#a855f7 58%,#ec4899 76%,#f97316 90%,#facc15 100%) fixed}
+    body.ct-gta6{background:linear-gradient(150deg,#312e81 0%,#4338ca 18%,#5865F2 35%,#8b5cf6 52%,#d946ef 68%,#f472b6 82%,#fdba74 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
@@ -1914,29 +1914,34 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(160deg,#0b1026 0%,#312e81 22%,#5865F2 40%,#a855f7 58%,#ec4899 76%,#f97316 90%,#facc15 100%)' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(150deg,#312e81 0%,#4338ca 18%,#5865F2 35%,#8b5cf6 52%,#d946ef 68%,#f472b6 82%,#fdba74 100%)' },
   { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
   { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
   { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
   { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)' },
 ];
+// Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
+function currentChatThemeId(){
+  const r = localStorage.getItem('havoc_chat_theme');
+  if(r === null || r === '') return 'gta6';   // '' = legacy saved value, treat as unset
+  if(r === '__dark') return '';
+  return r;
+}
 function applyChatTheme(){
-  const raw = localStorage.getItem('havoc_chat_theme');
-  const t = raw === null ? 'gta6' : raw;   // GTA6 is the default theme
+  const t = currentChatThemeId();
   document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix');
   if(t) document.body.classList.add('chat-themed','ct-'+t);
   const th = CHAT_THEMES.find(x=>x.id===t);
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0f1218,#0f1218)');
 }
 window.setChatTheme = (t) => {
-  localStorage.setItem('havoc_chat_theme', t || '');
+  localStorage.setItem('havoc_chat_theme', t || '__dark');
   applyChatTheme();
   renderChatThemePicker();
 };
 function renderChatThemePicker(){
   const el = $('chatThemePicker'); if(!el) return;
-  const raw = localStorage.getItem('havoc_chat_theme');
-  const cur = raw === null ? 'gta6' : raw;
+  const cur = currentChatThemeId();
   el.innerHTML = CHAT_THEMES.map(t =>
     `<div class="gradient-swatch theme-swatch ${cur===t.id?'active':''}" style="background:${t.css}" title="${esc(t.name)}" onclick="setChatTheme('${t.id}')"></div>`
   ).join('');
@@ -4467,7 +4472,7 @@ function populateCategorySelects(){
   const opts = `<option value="">No category</option>` + S_categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   const a=$('chanCategory'), b=$('newChanCategory');
   if(a) a.innerHTML = opts;
-  if(b) b.innerHTML = opts;
+  if(b) b.innerHTML = opts + `<option value="__new">＋ Create Category</option>`;
 }
 window.createCategory = async () => {
   if(!S.canManage || !S.server) return;
@@ -4683,7 +4688,16 @@ window.createChan = async () => {
   if(!S.canManage || !S.server) return;
   const name = $('newChanName').value.trim().toLowerCase().replace(/[^a-z0-9\-]/g,'-').slice(0,30);
   if(!name) return;
-  const catId = $('newChanCategory')?.value || null;
+  let catId = $('newChanCategory')?.value || null;
+  if(catId === '__new'){
+    const cname = prompt('Category name:')?.trim();
+    if(cname){
+      const pos = S_categories.reduce((m,c)=>Math.max(m, c.position||0), 0) + 1;
+      const ref = await addDoc(collection(db,'servers',S.server.id,'categories'), {name:cname, position:pos, collapsed:false});
+      catId = ref.id;
+      await loadCategories(S.server.id);
+    } else catId = null;
+  }
   await setDoc(doc(db,'servers',S.server.id,'channels',name), {name,type:'text',createdAt:Date.now(),categoryId:catId});
   closeModal('createChan'); $('newChanName').value = '';
   // Reload channels to include the new one
