@@ -132,7 +132,8 @@
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    body.ct-gta6{background:linear-gradient(150deg,#312e81 0%,#4338ca 18%,#5865F2 35%,#8b5cf6 52%,#d946ef 68%,#f472b6 82%,#fdba74 100%) fixed}
+    /* Official GTA6/Rockstar dark UI gradient (Deep Twilight Plum → Sunset Coral) */
+    body.ct-gta6{background:linear-gradient(135deg,#1A0B2E 0%,#13111C 18%,#1F1B36 42%,#38234C 68%,#5C2849 87%,#6E353B 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
@@ -161,10 +162,13 @@
     body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.5)!important}
     body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.45)!important}
     /* Gradient accents: primary buttons (send etc.) + active channel highlight */
-    body.chat-themed .btn-primary{background:linear-gradient(135deg,#5865F2,#0AC18E);color:#fff}
+    body.chat-themed .btn-primary{background:var(--ct-accent,#5865F2);color:#fff}
     body.chat-themed .btn-primary:hover{filter:brightness(1.12)}
     body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(88,101,242,.4),rgba(10,193,142,.28))!important}
-    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:linear-gradient(135deg,rgba(88,101,242,.4),rgba(217,70,239,.35))}
+    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:var(--ct-accent,#5865F2)}
+    /* Message composer bar + input get a subtle themed surface */
+    body.chat-themed #msgForm{background:rgba(13,15,19,.55)!important;border-color:rgba(255,255,255,.1)}
+    body.chat-themed #msgForm:focus-within{border-color:#F648AC}
     /* DM home button gets the theme gradient (Discord blurple-style) */
     body.chat-themed #dmHomeBtn{background-image:var(--ct-gradient,#312e81)!important;background-color:transparent!important}
     body.chat-themed #dmHomeBtn:hover{filter:brightness(1.15)}
@@ -176,6 +180,9 @@
     .cat-header:hover .cat-name{color:#c9cdd4}
     .cat-children{margin-left:14px;border-left:1px solid rgba(255,255,255,.07);padding-left:4px}
     .cat-count{font-size:9px;color:#6d6f78;font-weight:600}
+    /* Discord-style "+" button for image fields (opens GitHub picker) */
+    .gh-add-btn{width:34px;height:34px;min-width:34px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid #323c52;color:#b5bac1;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;cursor:pointer;transition:all .15s}
+    .gh-add-btn:hover{border-color:#0AC18E;color:#0AC18E;background:rgba(10,193,142,.08)}
 
     /* ===== MARKDOWN / MESSAGE FORMATTING ===== */
     .md-pre{background:#050608;border:1px solid #242b3b;border-radius:8px;padding:8px 10px;margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px;overflow-x:auto;white-space:pre;max-width:100%}
@@ -437,7 +444,7 @@
         <form id="msgForm" onsubmit="sendMsg(event)" class="bg-dark-800 border border-dark-700 focus-within:border-bch rounded-xl px-3 py-2.5 flex items-center gap-2">
           <button type="button" id="imgUploadBtn" onclick="triggerImageUpload()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Image URL"><i class="fa-brands fa-image"></i></button>
           <button type="button" id="fileBtn" onclick="document.getElementById('fileInput').click()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Attach file"><i class="fa-solid fa-paperclip"></i></button>
-          <button type="button" id="ghBtn" onclick="openGithubPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GitHub Images"><i class="fa-brands fa-github"></i></button>
+          <button type="button" id="ghBtn" onclick="openGithubPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Add image — GitHub connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
           <button type="button" id="gifBtn" onclick="openGifPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GIF"><span class="text-[10px] font-bold">GIF</span></button>
           <button type="button" id="emojiBtn" onclick="openEmojiPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
           <button type="button" id="audioClipBtn" onclick="toggleAudioRecord()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Record audio clip"><i class="fa-solid fa-microphone"></i></button>
@@ -921,6 +928,11 @@
 
 
 
+    <!-- GITHUB CONNECT (powers all "+" image buttons) -->
+    <button type="button" id="profileGhBtn" onclick="openGithubPicker('attach')" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-dark-600 bg-dark-800/60 text-slate-300 hover:border-bch hover:text-white text-[10px] mono mb-4 transition-all">
+      <i class="fa-brands fa-github"></i> <span id="profileGhLabel">GitHub Images</span>
+    </button>
+
     <!-- AVATAR CONTROLS -->
     <div id="avatarSeedBox" class="mb-4">
       <label class="field-label mb-1">Avatar Seed</label>
@@ -929,14 +941,17 @@
     <div id="avatarUrlBox" class="hidden mb-4">
       <label class="field-label mb-1">Avatar URL</label>
       <div class="flex gap-1">
+        <button type="button" onclick="openGithubPicker('avatar')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
         <input type="url" id="profileAvatarUrl" placeholder="https://... (PNG, JPG, WEBP)" oninput="previewFromUrl(this.value)" class="field text-xs flex-1">
-        <button type="button" onclick="openGithubPicker('avatar')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
       </div>
     </div>
     <div id="avatarGifBox" class="hidden mb-4">
       <label class="field-label mb-1">Avatar GIF</label>
       <p class="text-[10px] text-slate-500 mb-2">Click the GIF button above to select an animated avatar</p>
-      <input type="text" id="profileAvatarGif" placeholder="GIF URL will appear here" readonly class="field text-xs bg-dark-950">
+      <div class="flex gap-1">
+        <button type="button" onclick="openGithubPicker('avatar')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
+        <input type="text" id="profileAvatarGif" placeholder="GIF URL will appear here" readonly class="field text-xs bg-dark-950 flex-1">
+      </div>
     </div>
 
     <!-- BANNER CONTROLS -->
@@ -958,8 +973,8 @@
     </div>
     <div id="bannerUrlBox" class="hidden mb-4">
       <div class="flex gap-1">
+        <button type="button" onclick="openGithubPicker('banner')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
         <input type="url" id="profileBannerUrl" placeholder="Banner Image/GIF URL" oninput="previewBannerUrl(this.value)" class="field text-xs flex-1">
-        <button type="button" onclick="openGithubPicker('banner')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
       </div>
     </div>
 
@@ -1208,8 +1223,8 @@
               </div>
               <div id="ssIconUrlBox" class="hidden">
                 <div class="flex gap-1">
+                  <button type="button" onclick="openGithubPicker('serverIcon')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
                   <input type="url" id="ssIconUrl" placeholder="https://..." oninput="previewSsIcon(this.value)" class="field text-xs flex-1">
-                  <button type="button" onclick="openGithubPicker('serverIcon')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
                 </div>
               </div>
             </div>
@@ -1257,8 +1272,8 @@
           <div>
             <label class="field-label">Server Banner URL (URL only)</label>
             <div class="flex gap-1">
+              <button type="button" onclick="openGithubPicker('serverBanner')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
               <input type="text" id="ssBannerUrl" placeholder="Image/GIF Banner URL" class="field text-xs flex-1">
-              <button type="button" onclick="openGithubPicker('serverBanner')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
             </div>
           </div>
         </div>
@@ -1272,8 +1287,8 @@
           <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Server Emojis <span class="normal-case text-slate-600">(type :name: in chat)</span></label>
           <div class="flex gap-1.5 mt-2">
             <input type="text" id="newEmojiName" placeholder="party" class="field flex-1 text-xs">
+            <button type="button" onclick="openGithubPicker('emoji')" class="gh-add-btn" title="GitHub images — connect, upload or pick"><i class="fa-solid fa-plus"></i></button>
             <input type="url" id="newEmojiUrl" placeholder="https://… image/GIF" class="field flex-[2] text-xs">
-            <button type="button" onclick="openGithubPicker('emoji')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px]" title="Pick from GitHub"><i class="fa-brands fa-github"></i></button>
             <button onclick="addServerEmoji()" class="btn-primary px-3 text-xs shrink-0">Add</button>
           </div>
           <div id="serverEmojiList" class="flex flex-wrap gap-1.5 mt-2"></div>
@@ -1919,7 +1934,7 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(150deg,#312e81 0%,#4338ca 18%,#5865F2 35%,#8b5cf6 52%,#d946ef 68%,#f472b6 82%,#fdba74 100%)' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(135deg,#1A0B2E 0%,#13111C 18%,#1F1B36 42%,#38234C 68%,#5C2849 87%,#6E353B 100%)', accent:'linear-gradient(135deg,#1E2A78 0%,#3B63D6 20%,#9B55C6 42%,#F648AC 65%,#EB6A7C 83%,#E28F48 100%)' },
   { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
   { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
   { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
@@ -1938,6 +1953,7 @@ function applyChatTheme(){
   if(t) document.body.classList.add('chat-themed','ct-'+t);
   const th = CHAT_THEMES.find(x=>x.id===t);
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0f1218,#0f1218)');
+  document.body.style.setProperty('--ct-accent', th?.accent || th?.css || 'linear-gradient(#0f1218,#0f1218)');
 }
 window.setChatTheme = (t) => {
   localStorage.setItem('havoc_chat_theme', t || '__dark');
@@ -2010,6 +2026,7 @@ const S = {
 window.openModal = id => {
   $(`modal-${id}`)?.classList.remove('hidden');
   if(id === 'createChan' && typeof populateCategorySelects === 'function') populateCategorySelects();
+  if(id === 'profile' && typeof updateProfileGhBtn === 'function') updateProfileGhBtn();
   
   // Initialize modal content based on type
   if(id === 'serverSettings' && S.canManage && typeof ssIconMethod === 'function'){
@@ -3318,7 +3335,13 @@ function renderGithubConnectState(){
     // If a github username is saved but no token, offer one-click device connect
     const btn = $('ghDeviceBtn'); if(btn) btn.classList.remove('hidden');
   }
+  if(typeof updateProfileGhBtn === 'function') updateProfileGhBtn();
 }
+window.updateProfileGhBtn = () => {
+  ghLoadToken();
+  const l = $('profileGhLabel'); if(!l) return;
+  l.textContent = S.ghToken ? `GitHub: @${S.ghLogin || ghUsername() || 'connected'}` : 'Connect GitHub';
+};
 window.loadGithubImages = async () => {
   if(!S.ghToken){ $('ghGrid').innerHTML=''; $('ghStatus').textContent='Connect GitHub to browse your images.'; return; }
   const grid=$('ghGrid'), status=$('ghStatus');
