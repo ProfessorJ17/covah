@@ -132,7 +132,7 @@
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    body.ct-gta6{background:linear-gradient(160deg,#0b1026 0%,#2a1a5e 30%,#7a1fa2 55%,#d63384 78%,#ff8a3d 100%) fixed}
+    body.ct-gta6{background:linear-gradient(160deg,#0b1026 0%,#312e81 22%,#5865F2 40%,#a855f7 58%,#ec4899 76%,#f97316 90%,#facc15 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
@@ -149,12 +149,28 @@
     body.chat-themed .bg-dark-850{background-color:rgba(11,13,16,.78)!important}
     body.chat-themed .bg-dark-900{background-color:rgba(13,15,19,.82)!important}
     body.chat-themed .bg-dark-950{background-color:rgba(7,9,12,.82)!important}
+    body.chat-themed .bg-dark-900\/80{background-color:rgba(13,15,19,.78)!important}
     body.chat-themed .bg-dark-900\/90{background-color:rgba(13,15,19,.8)!important}
+    body.chat-themed .bg-dark-900\/40{background-color:rgba(13,15,19,.5)!important}
     body.chat-themed .bg-dark-950\/80{background-color:rgba(7,9,12,.72)!important}
+    body.chat-themed .bg-dark-950\/60{background-color:rgba(7,9,12,.66)!important}
     body.chat-themed .bg-dark-950\/50{background-color:rgba(7,9,12,.62)!important}
     body.chat-themed .bg-dark-950\/40{background-color:rgba(7,9,12,.55)!important}
+    body.chat-themed .bg-dark-950\/30{background-color:rgba(7,9,12,.5)!important}
     body.chat-themed .bg-black\/90{background-color:rgba(0,0,0,.55)!important}
+    body.chat-themed .bg-black\/85{background-color:rgba(0,0,0,.55)!important}
     body.chat-themed .bg-black\/80{background-color:rgba(0,0,0,.5)!important}
+    /* DM home button gets the theme gradient (Discord blurple-style) */
+    body.chat-themed #dmHomeBtn{background-image:var(--ct-gradient,#312e81)!important;background-color:transparent!important}
+    body.chat-themed #dmHomeBtn:hover{filter:brightness(1.15)}
+    /* Channel categories */
+    .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
+    .cat-header:hover{background:rgba(255,255,255,.04)}
+    .cat-header .cat-caret{font-size:9px;color:#80848e;transition:transform .15s;width:10px;text-align:center}
+    .cat-header .cat-name{font-size:10px;font-weight:800;color:#949ba4;text-transform:uppercase;letter-spacing:.04em;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cat-header:hover .cat-name{color:#c9cdd4}
+    .cat-children{margin-left:14px;border-left:1px solid rgba(255,255,255,.07);padding-left:4px}
+    .cat-count{font-size:9px;color:#6d6f78;font-weight:600}
 
     /* ===== MARKDOWN / MESSAGE FORMATTING ===== */
     .md-pre{background:#050608;border:1px solid #242b3b;border-radius:8px;padding:8px 10px;margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px;overflow-x:auto;white-space:pre;max-width:100%}
@@ -313,16 +329,11 @@
     </div>
 
     <div id="channelsView" class="hidden flex-1 overflow-y-auto px-2 py-3">
-      <div class="flex items-center justify-between px-2 mb-1.5" oncontextmenu="showChannelContextMenu(event)">
-        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mono">Text Channels</span>
+      <div class="flex items-center justify-between px-2 mb-1.5">
+        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mono">Channels</span>
         <button id="addChanBtn" onclick="openModal('createChan')" class="hidden text-bch hover:text-bch-bright text-xs"><i class="fa-solid fa-plus"></i></button>
       </div>
-      <div id="channelsList" class="space-y-0.5 mb-5"></div>
-      <div class="flex items-center justify-between px-2 mb-1.5" oncontextmenu="showChannelContextMenu(event)">
-        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mono">Voice Channels</span>
-        <button id="addVoiceBtn" onclick="createVoiceChannel()" class="hidden text-bch hover:text-bch-bright text-xs"><i class="fa-solid fa-plus"></i></button>
-      </div>
-      <div id="voiceList" class="space-y-0.5"></div>
+      <div id="channelsList" class="space-y-0.5"></div>
     </div>
 
     <div id="dmView" class="flex-1 overflow-y-auto flex flex-col">
@@ -1144,6 +1155,7 @@
     <button onclick="closeModal('createChan')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
     <h2 class="font-bold text-white mb-4"><i class="fa-solid fa-hashtag text-bch"></i> Add Text Channel</h2>
     <input type="text" id="newChanName" placeholder="channel-name" class="field mb-3">
+    <select id="newChanCategory" class="field w-full text-xs mb-3"></select>
     <button onclick="createChan()" class="w-full py-2.5 btn-primary text-sm">Create</button>
   </div>
 </div>
@@ -1289,6 +1301,10 @@
         <button onclick="renameChannel()" class="btn-primary px-3 text-xs shrink-0">Rename</button>
       </div>
       <div>
+        <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Category</label>
+        <select id="chanCategory" class="field w-full text-xs mt-1"></select>
+      </div>
+      <div>
         <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Channel Topic</label>
         <input type="text" id="chanTopicInput" placeholder="What's this channel about?" maxlength="1024" class="field w-full text-xs mt-1">
       </div>
@@ -1300,10 +1316,22 @@
         <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Who can post <span class="normal-case text-slate-600">(@everyone = no restriction)</span></label>
         <div id="chanPostRoles" class="flex flex-wrap gap-x-3 gap-y-1 mt-1"></div>
       </div>
-      <button onclick="saveChanExtras()" class="w-full py-2 bg-dark-800 text-white border border-dark-600 rounded text-xs font-bold mono hover:border-bch">Save Topic &amp; Slowmode</button>
+      <button onclick="saveChanExtras()" class="w-full py-2 bg-dark-800 text-white border border-dark-600 rounded text-xs font-bold mono hover:border-bch">Save Topic, Category &amp; Slowmode</button>
       <button onclick="adminToggleLock()" class="w-full py-2 bg-carrot/20 text-carrot border border-carrot/40 rounded text-xs font-bold mono">Toggle Lock</button>
       <button onclick="adminPurgeChannel()" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Purge</button>
       <button onclick="deleteCurrentChannel()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/40 rounded text-xs font-bold mono">Delete Channel</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-catSettings" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-dark-900 border border-dark-700 w-full max-w-sm rounded-xl p-5 relative">
+    <button onclick="closeModal('catSettings')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    <h2 class="font-bold text-white mb-4"><i class="fa-solid fa-folder text-bch"></i> Category</h2>
+    <div class="space-y-2">
+      <input type="text" id="catRenameInput" placeholder="Category name…" maxlength="50" class="field w-full text-xs">
+      <button onclick="saveCatSettings()" class="w-full py-2 bg-dark-800 text-white border border-dark-600 rounded text-xs font-bold mono hover:border-bch">Save</button>
+      <button onclick="deleteCategory()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/40 rounded text-xs font-bold mono">Delete Category</button>
     </div>
   </div>
 </div>
@@ -1885,17 +1913,20 @@ function formatMsgContent(content){
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
-  { id:'',       name:'Default Dark', css:'#0f1218' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(160deg,#0b1026 0%,#2a1a5e 30%,#7a1fa2 55%,#d63384 78%,#ff8a3d 100%)' },
+  { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(160deg,#0b1026 0%,#312e81 22%,#5865F2 40%,#a855f7 58%,#ec4899 76%,#f97316 90%,#facc15 100%)' },
   { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
   { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
   { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
   { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)' },
 ];
 function applyChatTheme(){
-  const t = localStorage.getItem('havoc_chat_theme') || '';
+  const raw = localStorage.getItem('havoc_chat_theme');
+  const t = raw === null ? 'gta6' : raw;   // GTA6 is the default theme
   document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix');
   if(t) document.body.classList.add('chat-themed','ct-'+t);
+  const th = CHAT_THEMES.find(x=>x.id===t);
+  document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0f1218,#0f1218)');
 }
 window.setChatTheme = (t) => {
   localStorage.setItem('havoc_chat_theme', t || '');
@@ -1904,7 +1935,8 @@ window.setChatTheme = (t) => {
 };
 function renderChatThemePicker(){
   const el = $('chatThemePicker'); if(!el) return;
-  const cur = localStorage.getItem('havoc_chat_theme') || '';
+  const raw = localStorage.getItem('havoc_chat_theme');
+  const cur = raw === null ? 'gta6' : raw;
   el.innerHTML = CHAT_THEMES.map(t =>
     `<div class="gradient-swatch theme-swatch ${cur===t.id?'active':''}" style="background:${t.css}" title="${esc(t.name)}" onclick="setChatTheme('${t.id}')"></div>`
   ).join('');
@@ -1967,6 +1999,7 @@ const S = {
 // Modal helpers (must be defined early for HTML onclick handlers)
 window.openModal = id => {
   $(`modal-${id}`)?.classList.remove('hidden');
+  if(id === 'createChan' && typeof populateCategorySelects === 'function') populateCategorySelects();
   
   // Initialize modal content based on type
   if(id === 'serverSettings' && S.canManage && typeof ssIconMethod === 'function'){
@@ -2220,11 +2253,11 @@ window.doSignOut = async () => {
 
   $('currentServerName').textContent='Select a Server';
   $('serverIconPreview').classList.add('hidden');
-  $('channelsList').innerHTML=''; $('voiceList').innerHTML='';
+  $('channelsList').innerHTML=''; if($('voiceList')) $('voiceList').innerHTML='';
   $('msgFeed').innerHTML='<div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>';
   $('membersList').innerHTML=''; $('friendsList').innerHTML=''; $('dmList').innerHTML='';
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
-  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
+  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn')?.classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
   showChannelsView(); closeModal('profile'); closeModal('serverSettings');
   updateUserUI();
@@ -2259,7 +2292,7 @@ window.openDMs = () => {
   $('currentServerName').textContent = 'Direct Messages';
   $('serverIconPreview').classList.add('hidden');
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
-  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
+  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn')?.classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
   showDMView();
   $('chanIcon').className = 'fa-solid fa-at text-slate-500 text-xs';
@@ -4373,7 +4406,7 @@ async function switchServer(s){
   $('serverSettingsBtn').classList.toggle('hidden', !S.canManage);
   $('inviteBtn').classList.remove('hidden');
   $('addChanBtn').classList.toggle('hidden', !S.canManage);
-  $('addVoiceBtn').classList.toggle('hidden', !S.canManage);
+  $('addVoiceBtn')?.classList.toggle('hidden', !S.canManage);
   $('typingIndicator').classList.add('hidden');
   if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
   if(serverTypingUnsub){ try{ serverTypingUnsub(); }catch(e){} serverTypingUnsub = null; }
@@ -4402,6 +4435,8 @@ async function loadChannels(serverId){
     S_channels = [];
     snap.forEach(d => S_channels.push({id:d.id, ...d.data()}));
     if(!S_channels.find(c => c.id === 'general')) S_channels.push({id:'general',name:'general',type:'text'});
+    await loadCategories(serverId);
+    populateCategorySelects();
     renderChannels();
   }catch(e){ console.error(e); }
 }
@@ -4420,91 +4455,173 @@ function chanHasUnread(c, readMap){
   return c.type !== 'voice' && c.id !== S.channel && (c.lastTs||0) > (readMap[c.id]||0) && (c.lastTs||0) > 0;
 }
 
+// ===== CHANNEL CATEGORIES =====
+let S_categories = [];
+async function loadCategories(serverId){
+  try{
+    const snap = await getDocs(collection(db,'servers',serverId,'categories'));
+    S_categories = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  }catch(e){ S_categories = []; }
+}
+function populateCategorySelects(){
+  const opts = `<option value="">No category</option>` + S_categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const a=$('chanCategory'), b=$('newChanCategory');
+  if(a) a.innerHTML = opts;
+  if(b) b.innerHTML = opts;
+}
+window.createCategory = async () => {
+  if(!S.canManage || !S.server) return;
+  const name = prompt('Category name:')?.trim();
+  if(!name) return;
+  const pos = S_categories.reduce((m,c)=>Math.max(m, c.position||0), 0) + 1;
+  await addDoc(collection(db,'servers',S.server.id,'categories'), {name, position:pos, collapsed:false});
+  await loadCategories(S.server.id);
+  renderChannels();
+  $('channelContextMenu')?.classList.add('hidden');
+};
+window.toggleCategory = async (catId) => {
+  const cat = S_categories.find(c=>c.id===catId); if(!cat) return;
+  cat.collapsed = !cat.collapsed;
+  renderChannels();
+  try{ await updateDoc(doc(db,'servers',S.server.id,'categories',catId), {collapsed:cat.collapsed}); }catch(e){}
+};
+S.catEditId = null;
+window.openCatSettings = (catId) => {
+  S.catEditId = catId;
+  const cat = S_categories.find(c=>c.id===catId);
+  $('catRenameInput').value = cat?.name || '';
+  openModal('catSettings');
+};
+window.saveCatSettings = async () => {
+  const catId = S.catEditId; if(!catId || !S.server) return;
+  const name = $('catRenameInput').value.trim(); if(!name) return;
+  try{ await updateDoc(doc(db,'servers',S.server.id,'categories',catId), {name}); }catch(e){ return alert(e.message); }
+  const cat = S_categories.find(c=>c.id===catId); if(cat) cat.name = name;
+  closeModal('catSettings'); renderChannels();
+};
+window.deleteCategory = async () => {
+  const catId = S.catEditId; if(!catId || !S.server) return;
+  if(!confirm('Delete this category? Channels inside will become uncategorized.')) return;
+  try{
+    await deleteDoc(doc(db,'servers',S.server.id,'categories',catId));
+    for(const c of S_channels.filter(x=>x.categoryId===catId)){
+      await updateDoc(doc(db,'servers',S.server.id,'channels',c.id), {categoryId:null});
+      c.categoryId = null;
+    }
+  }catch(e){ return alert(e.message); }
+  closeModal('catSettings'); await loadCategories(S.server.id); renderChannels();
+};
+
+function buildChanBtn(c, readMap){
+  const index = S_channels.indexOf(c);
+  const btn = document.createElement('button');
+  btn.className = `w-full flex items-center gap-2 px-2 py-1 rounded text-sm transition-all group ${S.channel === c.id ? 'bg-dark-700 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-slate-200'}`;
+  btn.dataset.channelId = c.id;
+  btn.dataset.index = index;
+
+  if(c.type === 'voice'){
+    btn.onclick = () => joinVoice(c);
+    btn.innerHTML = `
+      <i class="fa-solid fa-volume-high text-[10px] ${S.channel === c.id ? 'text-bch-bright' : 'text-slate-600 group-hover:text-slate-400'}"></i>
+      <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+      ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
+    `;
+    return btn;
+  }
+
+  btn.onclick = () => {
+    console.log('Clicked channel:', c);
+    switchChannel(c);
+  };
+
+  // Add drag handle for admins
+  const dragHandle = S.canManage ? `<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600 cursor-grab hover:text-slate-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>` : '';
+
+  // Make draggable for admins
+  if(S.canManage) {
+    btn.draggable = true;
+    btn.ondragstart = (e) => {
+      e.dataTransfer.setData('text/plain', index);
+      e.dataTransfer.effectAllowed = 'move';
+      btn.classList.add('opacity-50');
+    };
+    btn.ondragend = () => {
+      btn.classList.remove('opacity-50');
+    };
+    btn.ondragover = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    };
+    btn.ondrop = async (e) => {
+      e.preventDefault();
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = index;
+      if(fromIndex === toIndex) return;
+
+      // Reorder array
+      const movedChannel = S_channels.splice(fromIndex, 1)[0];
+      S_channels.splice(toIndex, 0, movedChannel);
+
+      // Update positions in Firestore
+      for(let i = 0; i < S_channels.length; i++) {
+        await updateDoc(doc(db, 'servers', S.server.id, 'channels', S_channels[i].id), { position: i });
+      }
+
+      // Re-render
+      renderChannels();
+    };
+  }
+
+  const unread = chanHasUnread(c, readMap);
+  if(unread) btn.classList.add('chan-unread');
+  btn.innerHTML = `
+    ${dragHandle}
+    <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
+    ${unread?'<span class="unread-dot"></span>':''}
+    <span class="chan-name truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+    ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
+  `;
+  return btn;
+}
+
 function renderChannels(){
-  const textList = $('channelsList'), voiceList = $('voiceList');
-  if(!textList || !voiceList) return;
-  textList.innerHTML = ''; voiceList.innerHTML = '';
+  const textList = $('channelsList');
+  if(!textList) return;
+  textList.innerHTML = '';
   const readMap = chanReadMap();
 
-  // Sort channels by position if available
+  // Sort channels and categories by position
   S_channels.sort((a, b) => (a.position || 0) - (b.position || 0));
+  S_categories.sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  S_channels.forEach((c, index) => {
-    // Skip muted channels if hide muted is enabled
-    if(S.hideMutedChannels && isServerMuted(S.server?.id, c.id)) return;
-    
-    const btn = document.createElement('button');
-    btn.className = `w-full flex items-center gap-2 px-2 py-1 rounded text-sm transition-all group ${S.channel === c.id ? 'bg-dark-700 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-slate-200'}`;
-    btn.dataset.channelId = c.id;
-    btn.dataset.index = index;
-    
-    if(c.type === 'voice'){
-      btn.onclick = () => joinVoice(c);
-      btn.innerHTML = `
-        <i class="fa-solid fa-volume-high text-[10px] ${S.channel === c.id ? 'text-bch-bright' : 'text-slate-600 group-hover:text-slate-400'}"></i>
-        <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
-        ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
-      `;
-      voiceList.appendChild(btn);
-    } else {
-      btn.onclick = () => {
-        console.log('Clicked channel:', c);
-        switchChannel(c);
-      };
-      
-      // Add drag handle for admins
-      const dragHandle = S.canManage ? `<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600 cursor-grab hover:text-slate-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>` : '';
-      
-      // Make draggable for admins
-      if(S.canManage) {
-        btn.draggable = true;
-        btn.ondragstart = (e) => {
-          e.dataTransfer.setData('text/plain', index);
-          e.dataTransfer.effectAllowed = 'move';
-          btn.classList.add('opacity-50');
-        };
-        btn.ondragend = () => {
-          btn.classList.remove('opacity-50');
-        };
-        btn.ondragover = (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        };
-        btn.ondrop = async (e) => {
-          e.preventDefault();
-          const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-          const toIndex = index;
-          if(fromIndex === toIndex) return;
-          
-          // Reorder array
-          const movedChannel = S_channels.splice(fromIndex, 1)[0];
-          S_channels.splice(toIndex, 0, movedChannel);
-          
-          // Update positions in Firestore
-          for(let i = 0; i < S_channels.length; i++) {
-            if(S_channels[i].type === 'text') {
-              await updateDoc(doc(db, 'servers', S.server.id, 'channels', S_channels[i].id), { position: i });
-            }
-          }
-          
-          // Re-render
-          renderChannels();
-        };
-      }
-      
-      const unread = chanHasUnread(c, readMap);
-      if(unread) btn.classList.add('chan-unread');
-      btn.innerHTML = `
-        ${dragHandle}
-        <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
-        ${unread?'<span class="unread-dot"></span>':''}
-        <span class="chan-name truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
-        ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
-      `;
-      textList.appendChild(btn);
+  const visible = c => !(S.hideMutedChannels && isServerMuted(S.server?.id, c.id));
+
+  // Uncategorized channels first (Discord-style)
+  S_channels.filter(c => !c.categoryId && visible(c)).forEach(c => textList.appendChild(buildChanBtn(c, readMap)));
+
+  // Then each category with its channels (text + voice mixed, like Discord)
+  S_categories.forEach(cat => {
+    const kids = S_channels.filter(c => c.categoryId === cat.id && visible(c));
+    const header = document.createElement('div');
+    header.className = 'cat-header group';
+    header.innerHTML = `
+      <i class="fa-solid ${cat.collapsed ? 'fa-chevron-right' : 'fa-chevron-down'} cat-caret"></i>
+      <i class="fa-solid fa-folder text-[10px] text-slate-500"></i>
+      <span class="cat-name">${esc(cat.name)}</span>
+      <span class="cat-count">${kids.length}</span>
+      ${S.canManage ? `<span onclick="event.stopPropagation();openCatSettings('${esc(cat.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] px-1 shrink-0" title="Edit Category"><i class="fa-solid fa-pen"></i></span>` : ''}
+    `;
+    header.onclick = () => toggleCategory(cat.id);
+    header.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); if(S.canManage) openCatSettings(cat.id); };
+    textList.appendChild(header);
+    if(!cat.collapsed){
+      const wrap = document.createElement('div');
+      wrap.className = 'cat-children space-y-0.5';
+      kids.forEach(c => wrap.appendChild(buildChanBtn(c, readMap)));
+      textList.appendChild(wrap);
     }
   });
-  
+
   renderVoiceArea();
 }
 
@@ -4566,7 +4683,8 @@ window.createChan = async () => {
   if(!S.canManage || !S.server) return;
   const name = $('newChanName').value.trim().toLowerCase().replace(/[^a-z0-9\-]/g,'-').slice(0,30);
   if(!name) return;
-  await setDoc(doc(db,'servers',S.server.id,'channels',name), {name,type:'text',createdAt:Date.now()});
+  const catId = $('newChanCategory')?.value || null;
+  await setDoc(doc(db,'servers',S.server.id,'channels',name), {name,type:'text',createdAt:Date.now(),categoryId:catId});
   closeModal('createChan'); $('newChanName').value = '';
   // Reload channels to include the new one
   await loadChannels(S.server.id);
@@ -6133,7 +6251,7 @@ window.startDM = (uid, handle, avatar) => {
   $('serverSettingsBtn').classList.add('hidden');
   $('inviteBtn').classList.add('hidden');
   $('addChanBtn').classList.add('hidden');
-  $('addVoiceBtn').classList.add('hidden');
+  $('addVoiceBtn')?.classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
   showDMView();
   $('chanIcon').className = 'fa-solid fa-at text-bch-bright text-xs';
@@ -6992,6 +7110,8 @@ window.openChanSettings = (id, name) => {
   const inp = $('chanRenameInput'); if(inp) inp.value = '';
   const topicInp = $('chanTopicInput'); if(topicInp) topicInp.value = ch?.topic || '';
   const slowInp = $('chanSlowmodeInput'); if(slowInp) slowInp.value = ch?.slowmode || 0;
+  populateCategorySelects();
+  const catSel = $('chanCategory'); if(catSel) catSel.value = ch?.categoryId || '';
   // Post-permission role checkboxes (postRoles undefined/null = unrestricted)
   const pr = $('chanPostRoles');
   if(pr){
@@ -7011,11 +7131,13 @@ window.saveChanExtras = async () => {
   const slowmode = Math.max(0, Math.min(21600, parseInt($('chanSlowmodeInput')?.value)||0));
   const cbs = [...document.querySelectorAll('.post-role-cb:checked')].map(c=>c.value);
   const postRoles = cbs.includes('everyone') ? null : cbs;
+  const categoryId = $('chanCategory')?.value || null;
   try{
-    await updateDoc(doc(db,'servers',S.server.id,'channels',cid), {topic, slowmode, postRoles});
+    await updateDoc(doc(db,'servers',S.server.id,'channels',cid), {topic, slowmode, postRoles, categoryId});
     const ch = S_channels.find(x=>x.id===cid);
-    if(ch){ ch.topic = topic; ch.slowmode = slowmode; ch.postRoles = postRoles; }
+    if(ch){ ch.topic = topic; ch.slowmode = slowmode; ch.postRoles = postRoles; ch.categoryId = categoryId; }
     if(S.channel === cid) showChanTopic(topic);
+    renderChannels();
     closeModal('chanSettings');
   }catch(e){ alert(e.message); }
 };
@@ -7084,7 +7206,7 @@ window.deleteServerById = async (sid) => {
     await deleteChannelDeep(sid, ch.id);
     await deleteDoc(ch.ref);
   }
-  for(const sub of ['members','roles']){
+  for(const sub of ['members','roles','categories']){
     try{
       const snap = await getDocs(collection(db,'servers',sid,sub));
       for(let i=0;i<snap.docs.length;i+=400){
@@ -7108,14 +7230,14 @@ function resetAfterServerDelete(){
   if(window.cancelReply) window.cancelReply();
   $('currentServerName').textContent = 'Select a Server';
   $('serverIconPreview').classList.add('hidden');
-  $('channelsList').innerHTML = ''; $('voiceList').innerHTML = '';
+  $('channelsList').innerHTML = ''; if($('voiceList')) $('voiceList').innerHTML = '';
   $('chanHeader').textContent = '—';
   $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>';
   $('chatInput').disabled = true;
   $('chatInput').placeholder = 'Select a channel to chat…';
   $('chanAdminBtn').classList.add('hidden');
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
-  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
+  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn')?.classList.add('hidden');
   $('textArea').classList.remove('hidden');
   $('voiceArea').classList.add('hidden');
   closeModal('serverSettings'); closeModal('chanSettings');
@@ -8274,14 +8396,7 @@ window.showChannelContextMenu = (e) => {
   updateHideMutedLabel();
 };
 
-window.createCategory = () => {
-  if(!S.canManage || !S.server) return;
-  const name = prompt('Category name:')?.trim();
-  if(!name) return;
-  // For now, categories are just visual - channels can be grouped by a category field
-  alert('Category support coming soon - for now channels are grouped by type (text/voice)');
-  $('channelContextMenu')?.classList.add('hidden');
-};
+// createCategory is implemented near renderChannels (categories subcollection)
 
 window.toggleHideMuted = () => {
   S.hideMutedChannels = !S.hideMutedChannels;
