@@ -145,6 +145,42 @@
     body.chat-themed .bg-dark-950.border-t{background-color:rgba(5,6,8,.8)!important}
     body.chat-themed #chanSearch,
     body.chat-themed .field{background-color:rgba(5,6,8,.85)}
+
+    /* ===== MARKDOWN / MESSAGE FORMATTING ===== */
+    .md-pre{background:#050608;border:1px solid #242b3b;border-radius:8px;padding:8px 10px;margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px;overflow-x:auto;white-space:pre;max-width:100%}
+    .md-code{background:rgba(255,255,255,.09);border-radius:4px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:11px}
+    .md-spoiler{background:#1c222e;border-radius:4px;padding:0 4px;cursor:pointer;transition:background .15s}
+    .md-spoiler:hover,.md-spoiler.revealed{background:transparent}
+    .md-quote{border-left:3px solid #4e5058;padding-left:8px;color:#b5bac1;margin:2px 0}
+    .md-h1,.md-h2,.md-h3,.md-h4,.md-h5,.md-h6{font-weight:800;color:#fff;margin:4px 0 2px;line-height:1.25}
+    .md-h1{font-size:1.45em}.md-h2{font-size:1.3em}.md-h3{font-size:1.15em}.md-h4,.md-h5,.md-h6{font-size:1.02em}
+    .md-ul,.md-ol{margin:2px 0 2px 20px}
+    .md-ul{list-style:disc}.md-ol{list-style:decimal}
+    .md-ul li,.md-ol li{margin:1px 0}
+    .md-hr{border:none;border-top:1px solid #323c52;margin:6px 0}
+    .mention-role{background:rgba(88,101,242,.28);color:#c9cdfb;padding:0 3px;border-radius:3px;font-weight:700}
+    .unread-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#f23f43;margin-left:5px;vertical-align:middle;flex-shrink:0}
+    .chan-unread .chan-name{color:#fff!important;font-weight:700}
+    .msg-edit-input{width:100%;background:#050608;border:1px solid #0AC18E;border-radius:6px;color:#fff;font-size:12px;padding:6px 8px;outline:none;resize:vertical;min-height:34px;font-family:inherit;line-height:1.4}
+    .file-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid #323c52;border-radius:8px;padding:6px 10px;margin-top:6px;text-decoration:none;color:#e3e5e8;max-width:340px}
+    .file-chip:hover{border-color:#0AC18E}
+    .file-chip .fname{font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .file-chip .fsize{font-size:10px;color:#949ba4}
+    #chanTopic{font-size:10px;color:#949ba4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
+    #newMsgPill{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:#0AC18E;color:#000;font-weight:700;font-size:11px;padding:6px 16px;border-radius:14px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.55);z-index:60;display:none}
+    #newMsgPill:hover{background:#00E5A3}
+    .server-emoji{height:1.35em;width:auto;vertical-align:-0.25em;display:inline}
+    .link-preview{display:flex;gap:10px;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid #323c52;border-left:4px solid #0AC18E;border-radius:8px;padding:8px 10px;max-width:420px;text-decoration:none;color:inherit}
+    .link-preview:hover{background:rgba(255,255,255,.07)}
+    .link-preview img{width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#0a0c10}
+    .lp-body{min-width:0}
+    .lp-title{font-size:11px;font-weight:700;color:#e3e5e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .lp-desc{font-size:10px;color:#949ba4;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    #callOverlay{position:fixed;inset:0;background:rgba(5,6,8,.92);z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    #callOverlay video{max-width:70vw;max-height:55vh;border-radius:12px;background:#000}
+    .call-btn{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .15s}
+    .call-btn:hover{transform:scale(1.08)}
+    #incomingCallBar{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0AC18E;color:#000;font-weight:800;font-size:13px;padding:10px 20px;border-radius:12px;z-index:90;display:none;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
     .color-wheel-btn { width: 24px; height: 24px; border-radius: 4px; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); cursor: pointer; }
 
     /* Avatar wrappers - no rings */
@@ -341,8 +377,13 @@
     <div class="h-12 border-b border-dark-700 px-4 flex items-center justify-between bg-dark-900/90 shrink-0 gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <i id="chanIcon" class="fa-solid fa-hashtag text-slate-500 text-xs"></i>
-        <span id="chanHeader" class="font-bold text-white text-sm truncate">—</span>
-        <div id="lockBadge" class="hidden bg-carrot/20 text-carrot border border-carrot/40 text-[10px] mono px-1.5 py-0.5 rounded shrink-0"><i class="fa-solid fa-lock text-[9px]"></i> locked</div>
+        <div class="flex flex-col min-w-0">
+          <div class="flex items-center gap-2">
+            <span id="chanHeader" class="font-bold text-white text-sm truncate">—</span>
+            <div id="lockBadge" class="hidden bg-carrot/20 text-carrot border border-carrot/40 text-[10px] mono px-1.5 py-0.5 rounded shrink-0"><i class="fa-solid fa-lock text-[9px]"></i> locked</div>
+          </div>
+          <span id="chanTopic" class="text-[10px] text-slate-500 truncate hidden"></span>
+        </div>
       </div>
       <div class="flex items-center gap-0.5 shrink-0">
         <button onclick="openThreadsPanel()" title="Threads" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-comments"></i></button>
@@ -350,9 +391,11 @@
         <button onclick="openPinsPanel()" title="Pinned Messages" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-thumbtack"></i></button>
         <button onclick="toggleMembersPanel()" title="Hide Member List" id="membersToggleBtn" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-user-group"></i></button>
         <div class="hidden md:flex items-center ml-1">
-          <input type="text" id="chanSearch" placeholder="Search" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
+          <input type="text" id="chanSearch" placeholder="Search" oninput="filterChanSearch(this.value)" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
         </div>
         <button id="chanAdminBtn" onclick="openChanSettings()" class="hidden w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        <button id="dmVoiceBtn" onclick="startCall('voice')" class="hidden w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-green-400 flex items-center justify-center text-sm" title="Voice Call"><i class="fa-solid fa-phone"></i></button>
+        <button id="dmVideoBtn" onclick="startCall('video')" class="hidden w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-blue-400 flex items-center justify-center text-sm" title="Video Call"><i class="fa-solid fa-video"></i></button>
       </div>
     </div>
 
@@ -362,14 +405,18 @@
           <div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>
         </div>
       </div>
+      <div id="newMsgPill" onclick="jumpToLatest()">New messages</div>
       <div class="px-4 pb-4 pt-2 bg-dark-900/80 border-t border-dark-700 shrink-0">
         <div id="replyBar" class="hidden"></div>
         <form id="msgForm" onsubmit="sendMsg(event)" class="bg-dark-800 border border-dark-700 focus-within:border-bch rounded-xl px-3 py-2.5 flex items-center gap-2">
-          <button type="button" id="imgUploadBtn" onclick="triggerImageUpload()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Image URL"><i class="fa-solid fa-image"></i></button>
+          <button type="button" id="imgUploadBtn" onclick="triggerImageUpload()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Image URL"><i class="fa-brands fa-image"></i></button>
+          <button type="button" id="fileBtn" onclick="document.getElementById('fileInput').click()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Attach file"><i class="fa-solid fa-paperclip"></i></button>
+          <button type="button" id="ghBtn" onclick="openGithubPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GitHub Images"><i class="fa-brands fa-github"></i></button>
           <button type="button" id="gifBtn" onclick="openGifPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="GIF"><span class="text-[10px] font-bold">GIF</span></button>
           <button type="button" id="emojiBtn" onclick="openEmojiPicker()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
           <button type="button" id="audioClipBtn" onclick="toggleAudioRecord()" class="hidden text-slate-500 hover:text-bch-bright p-1.5 rounded" title="Record audio clip"><i class="fa-solid fa-microphone"></i></button>
           <input type="file" id="imgFileInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+          <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
           <input type="text" id="chatInput" placeholder="Select a channel to chat…" autocomplete="off" class="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-slate-600 min-w-0" disabled>
           <button type="submit" class="btn-primary px-3 py-1.5 text-xs"><i class="fa-solid fa-paper-plane"></i></button>
         </form>
@@ -385,6 +432,7 @@
           <img id="imgPreviewSrc" class="h-16 rounded-lg border border-dark-600 object-cover">
           <button onclick="clearImagePreview()" class="text-red-400 text-xs"><i class="fa-solid fa-xmark"></i> Remove</button>
         </div>
+        <div id="filePreview" class="hidden mt-2"></div>
         <div id="audioPreview" class="hidden mt-2 flex items-center gap-3 text-xs text-bch bg-dark-950/40 p-2 rounded-xl border border-dark-700/50 backdrop-blur-sm">
           <div class="flex items-center gap-3 flex-1 min-w-0">
             <div id="recIndicator" class="relative flex items-center justify-center shrink-0">
@@ -670,6 +718,33 @@
   </div>
 </div>
 
+<!-- GITHUB IMAGES PICKER -->
+<div id="modal-github" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-dark-900 border border-dark-700 w-full max-w-2xl rounded-xl relative flex flex-col max-h-[85vh]">
+    <div class="flex items-center justify-between p-4 border-b border-dark-700">
+      <h2 class="font-bold text-white"><i class="fa-brands fa-github text-slate-300"></i> GitHub Images</h2>
+      <button onclick="closeModal('github')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-3 border-b border-dark-700">
+      <div id="ghConnectBox">
+        <p class="text-[10px] text-slate-400 mb-2">Connect GitHub to pick <em>and upload</em> images stored in <span class="mono text-bch">github.com/YOU/havoc/images</span>. Uses GitHub's official sign-in — no password needed.</p>
+        <button onclick="connectGithub()" class="btn-primary px-4 py-1.5 text-xs"><i class="fa-brands fa-github"></i> Connect GitHub</button>
+      </div>
+      <div id="ghConnectedBox" class="hidden items-center gap-2">
+        <i class="fa-brands fa-github text-slate-300"></i>
+        <span class="text-xs text-slate-300">Connected as <strong id="ghUserLabel" class="text-white"></strong></span>
+        <button onclick="document.getElementById('ghFileInput').click()" id="ghUploadBtn" class="ml-auto text-[10px] text-bch border border-bch/40 rounded px-2 py-0.5 hover:bg-bch/10"><i class="fa-solid fa-upload"></i> Upload</button>
+        <button onclick="disconnectGithub()" class="text-[10px] text-red-400 border border-red-500/30 rounded px-2 py-0.5 hover:bg-red-500/10">Disconnect</button>
+      </div>
+      <input type="file" id="ghFileInput" accept="image/*,.gif" class="hidden" onchange="ghUploadPick(event)">
+    </div>
+    <div class="flex-1 overflow-y-auto p-3">
+      <div id="ghStatus" class="text-[10px] text-slate-500 mono py-6 text-center">Connect a GitHub account to browse images.</div>
+      <div id="ghGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+    </div>
+  </div>
+</div>
+
 <!-- GIF EDITOR / CROPPER -->
 <div id="modal-gif-editor" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[60] flex items-center justify-center p-4 hidden">
   <div class="bg-dark-900 border border-bch/30 w-full max-w-lg rounded-2xl relative flex flex-col max-h-[90vh] overflow-hidden">
@@ -827,7 +902,10 @@
     </div>
     <div id="avatarUrlBox" class="hidden mb-4">
       <label class="field-label mb-1">Avatar URL</label>
-      <input type="url" id="profileAvatarUrl" placeholder="https://... (PNG, JPG, WEBP)" oninput="previewFromUrl(this.value)" class="field text-xs">
+      <div class="flex gap-1">
+        <input type="url" id="profileAvatarUrl" placeholder="https://... (PNG, JPG, WEBP)" oninput="previewFromUrl(this.value)" class="field text-xs flex-1">
+        <button type="button" onclick="openGithubPicker('avatar')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
+      </div>
     </div>
     <div id="avatarGifBox" class="hidden mb-4">
       <label class="field-label mb-1">Avatar GIF</label>
@@ -853,7 +931,10 @@
       </div>
     </div>
     <div id="bannerUrlBox" class="hidden mb-4">
-      <input type="url" id="profileBannerUrl" placeholder="Banner Image/GIF URL" oninput="previewBannerUrl(this.value)" class="field text-xs">
+      <div class="flex gap-1">
+        <input type="url" id="profileBannerUrl" placeholder="Banner Image/GIF URL" oninput="previewBannerUrl(this.value)" class="field text-xs flex-1">
+        <button type="button" onclick="openGithubPicker('banner')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
+      </div>
     </div>
 
     <!-- USER INFO -->
@@ -906,6 +987,22 @@
           <option value="">No Tag</option>
         </select>
         <p class="text-[9px] text-slate-500 italic">Select a server tag from servers you're in to display next to your name.</p>
+      </div>
+
+      <!-- GITHUB (self-hosted images) -->
+      <div>
+        <label for="profileGithub" class="field-label">GitHub Username</label>
+        <input type="text" id="profileGithub" placeholder="username — images from github.com/username/havoc/images" class="field text-xs">
+        <p class="text-[9px] text-slate-500 mt-1 italic">Public repo named <span class="mono">havoc</span> with an <span class="mono">images/</span> folder. Powers the GitHub image picker in chat.</p>
+      </div>
+
+      <!-- BADGE -->
+      <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
+        <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Badge</label>
+        <select id="profileBadge" class="field text-xs bg-dark-900 border-dark-700"></select>
+        <div id="profileBadgeDisplay" class="hidden px-3 py-2 rounded-lg border border-dark-700 text-xs font-bold">
+          <span id="profileBadgeSymbol" class="mr-2"></span><span class="text-[10px] text-slate-400 font-normal">Selected badge preview</span>
+        </div>
       </div>
 
       <!-- CHAT BACKGROUND -->
@@ -1083,7 +1180,10 @@
                 <input type="text" id="ssSeed" placeholder="server seed" oninput="previewSsSeed(this.value)" class="field text-xs">
               </div>
               <div id="ssIconUrlBox" class="hidden">
-                <input type="url" id="ssIconUrl" placeholder="https://..." oninput="previewSsIcon(this.value)" class="field text-xs">
+                <div class="flex gap-1">
+                  <input type="url" id="ssIconUrl" placeholder="https://..." oninput="previewSsIcon(this.value)" class="field text-xs flex-1">
+                  <button type="button" onclick="openGithubPicker('serverIcon')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
+                </div>
               </div>
             </div>
           </div>
@@ -1129,7 +1229,10 @@
           </div>
           <div>
             <label class="field-label">Server Banner URL (URL only)</label>
-            <input type="text" id="ssBannerUrl" placeholder="Image/GIF Banner URL" class="field text-xs">
+            <div class="flex gap-1">
+              <input type="text" id="ssBannerUrl" placeholder="Image/GIF Banner URL" class="field text-xs flex-1">
+              <button type="button" onclick="openGithubPicker('serverBanner')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px] shrink-0" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
+            </div>
           </div>
         </div>
         
@@ -1138,6 +1241,16 @@
       <div id="ssp-roles" class="space-y-4 hidden">
         <div class="flex gap-2"><input type="text" id="newRoleName" placeholder="Role name" class="field flex-1 text-xs"><input type="color" id="newRoleColor" value="#0AC18E" class="w-10 h-9 rounded"><button onclick="createRole()" class="btn-primary px-3 text-xs">Add</button></div>
         <div id="rolesList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+        <div class="border-t border-dark-700 pt-3">
+          <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Server Emojis <span class="normal-case text-slate-600">(type :name: in chat)</span></label>
+          <div class="flex gap-1.5 mt-2">
+            <input type="text" id="newEmojiName" placeholder="party" class="field flex-1 text-xs">
+            <input type="url" id="newEmojiUrl" placeholder="https://… image/GIF" class="field flex-[2] text-xs">
+            <button type="button" onclick="openGithubPicker('emoji')" class="px-2 rounded bg-dark-800 border border-dark-600 text-slate-400 hover:text-white text-[10px]" title="Pick from GitHub"><i class="fa-brands fa-github"></i></button>
+            <button onclick="addServerEmoji()" class="btn-primary px-3 text-xs shrink-0">Add</button>
+          </div>
+          <div id="serverEmojiList" class="flex flex-wrap gap-1.5 mt-2"></div>
+        </div>
       </div>
       <div id="ssp-invites" class="space-y-3 hidden">
         <div class="flex gap-2"><input type="number" id="ssInviteUses" min="1" max="100" value="10" class="field w-24 text-center"><button onclick="createInvite()" class="py-2 px-4 btn-primary text-xs">Generate</button></div>
@@ -1165,6 +1278,19 @@
         <input type="text" id="chanRenameInput" placeholder="Rename channel…" maxlength="50" class="field flex-1 text-xs">
         <button onclick="renameChannel()" class="btn-primary px-3 text-xs shrink-0">Rename</button>
       </div>
+      <div>
+        <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Channel Topic</label>
+        <input type="text" id="chanTopicInput" placeholder="What's this channel about?" maxlength="1024" class="field w-full text-xs mt-1">
+      </div>
+      <div>
+        <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Slowmode (seconds, 0 = off)</label>
+        <input type="number" id="chanSlowmodeInput" min="0" max="21600" placeholder="0" class="field w-full text-xs mt-1">
+      </div>
+      <div>
+        <label class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold">Who can post <span class="normal-case text-slate-600">(@everyone = no restriction)</span></label>
+        <div id="chanPostRoles" class="flex flex-wrap gap-x-3 gap-y-1 mt-1"></div>
+      </div>
+      <button onclick="saveChanExtras()" class="w-full py-2 bg-dark-800 text-white border border-dark-600 rounded text-xs font-bold mono hover:border-bch">Save Topic &amp; Slowmode</button>
       <button onclick="adminToggleLock()" class="w-full py-2 bg-carrot/20 text-carrot border border-carrot/40 rounded text-xs font-bold mono">Toggle Lock</button>
       <button onclick="adminPurgeChannel()" class="w-full py-2 bg-red-900/30 text-red-300 border border-red-500/30 rounded text-xs font-bold mono">Purge</button>
       <button onclick="deleteCurrentChannel()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/40 rounded text-xs font-bold mono">Delete Channel</button>
@@ -1247,7 +1373,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, addDoc, getDocs, query, where, writeBatch,
+  collection, collectionGroup, addDoc, getDocs, query, where, writeBatch,
   orderBy, startAfter, limit, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js';
@@ -1639,10 +1765,113 @@ function parseLinks(t){
     return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline break-all">${url}</a>` + tail;
   });
 }
-// Escape user content FIRST, then apply emoji/mention/link parsing so generated HTML survives
-function formatMsgContent(content){
-  return parseLinks(parseMentions(esc(parseEmojis(String(content||'')))));
+// ===== MARKDOWN RENDERER (Discord-style) =====
+// MD_STASH holds generated HTML (code blocks, inline code) so later passes
+// (mentions, autolinks) cannot mangle or inject into it. Placeholders use PUA
+// chars that survive esc() and cannot collide with real message text.
+const MD_STASH = [];
+const PH = i => '' + i + '';
+function mdStash(html){ MD_STASH.push(html); return PH(MD_STASH.length-1); }
+function mdRestore(t){ return t.replace(/(\d+)/g,(m,i)=>MD_STASH[+i]||m); }
+const isPhLine = l => /^\d+$/.test(l.trim());
+const ANCHOR_PH = i => '' + i + '';
+
+function inlineMd(t){
+  // Order matters: strike/bold/underline before italic so ** and __ win over * and _
+  t = t.replace(/\|\|([^\n|](?:[^\n|]*[^\n|])?)\|\|/g,
+    '<span class="md-spoiler">$1</span>');
+  t = t.replace(/~~([^~\n]+)~~/g,'<del>$1</del>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/__([^_\n]+)__/g,'<u>$1</u>');
+  t = t.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+  t = t.replace(/(?<![A-Za-z0-9])_([^_\n]+)_(?![A-Za-z0-9])/g,'<em>$1</em>');
+  // Masked links [text](https://...) - http(s)/mailto only, no javascript:
+  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,
+    (m,txt,u)=>`<a href="${u}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline break-all">${txt}</a>`);
+  return t;
 }
+
+function isMdBlockStart(line){
+  return isPhLine(line)
+    || /^#{1,6}\s/.test(line)
+    || /^&gt;/.test(line)
+    || /^\s*[-*•]\s+/.test(line)
+    || /^\s*\d{1,9}[.)]\s+/.test(line)
+    || /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line);
+}
+
+function parseMarkdownBlocks(t){
+  const lines = t.split('\n');
+  let out = '', i = 0, listType = null;
+  const closeList = () => { if(listType){ out += listType==='ul' ? '</ul>' : '</ol>'; listType = null; } };
+  while(i < lines.length){
+    const line = lines[i];
+    if(isPhLine(line)){ closeList(); out += line + '\n'; i++; continue; }
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if(h){ closeList(); out += `<div class="md-h md-h${h[1].length}">${inlineMd(h[2])}</div>\n`; i++; continue; }
+    if(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)){ closeList(); out += '<hr class="md-hr">\n'; i++; continue; }
+    if(/^&gt;/.test(line)){
+      closeList();
+      let q = '';
+      while(i < lines.length && /^&gt;/.test(lines[i])){
+        q += (q ? '<br>' : '') + inlineMd(lines[i].replace(/^(?:&gt;\s?)+/,''));
+        i++;
+      }
+      out += `<div class="md-quote">${q}</div>\n`;
+      continue;
+    }
+    const ul = line.match(/^\s*[-*•]\s+(.*)$/);
+    const ol = line.match(/^\s*\d{1,9}[.)]\s+(.*)$/);
+    if(ul || ol){
+      const type = ul ? 'ul' : 'ol';
+      if(listType !== type){ closeList(); out += type==='ul' ? '<ul class="md-ul">' : '<ol class="md-ol">'; listType = type; }
+      out += `<li>${inlineMd((ul||ol)[1])}</li>`;
+      i++; continue;
+    }
+    closeList();
+    let txtRun = '';
+    while(i < lines.length && !isMdBlockStart(lines[i])){
+      txtRun += (txtRun ? '<br>' : '') + inlineMd(lines[i]);
+      i++;
+    }
+    if(txtRun) out += txtRun + '\n';
+  }
+  closeList();
+  return out;
+}
+
+// Escape user content FIRST, then apply emoji/markdown/mention/link parsing
+// so generated HTML survives and user input can never inject markup.
+function formatMsgContent(content){
+  MD_STASH.length = 0;
+  let t = esc(String(content||''));
+  // 1. Fenced code blocks ```...``` -> stash (content already escaped)
+  t = t.replace(/```(\w*)\n?([\s\S]*?)(?:```|$)/g, (m,lang,code)=>
+    mdStash(`<pre class="md-pre"><code>${code.replace(/\n$/,'')}</code></pre>`));
+  // 2. Inline code `...` -> stash
+  t = t.replace(/`([^`\n]+)`/g, (m,c)=> mdStash(`<code class="md-code">${c}</code>`));
+  // 3. Emoji shortcodes
+  t = parseEmojis(t);
+  // 3b. Custom server emojis :name: → image (server doc `emojis` array)
+  if(S.server?.emojis?.length){
+    for(const e of S.server.emojis){
+      if(e?.name && e?.url) t = t.split(':'+e.name+':').join(`<img class="server-emoji" src="${esc(e.url)}" alt=":${esc(e.name)}:" title=":${esc(e.name)}:" loading="lazy">`);
+    }
+  }
+  // 4. Block + inline markdown
+  t = parseMarkdownBlocks(t);
+  // 5. Protect generated <a>/<img> tags so mentions/autolinks can't hit hrefs/srcs
+  const anchors = [];
+  t = t.replace(/<a\b[^>]*>[\s\S]*?<\/a>|<img\b[^>]*>/g, m => { anchors.push(m); return ANCHOR_PH(anchors.length-1); });
+  // 6. Mentions (everyone/here/roles/users)
+  t = parseMentions(t);
+  // 7. Autolink bare URLs, restore anchors, restore code stash
+  t = parseLinks(t);
+  t = t.replace(/(\d+)/g,(m,i)=>anchors[+i]||m);
+  t = mdRestore(t);
+  return t;
+}
+
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
@@ -1754,12 +1983,13 @@ window.openModal = id => {
   if(id === 'profile' && S.profile && typeof loadServerTagsForProfile === 'function'){
     $('profileHandle').value = safe(S.profile?.handle,'');
     $('profileBio').value = safe(S.profile.bio,'');
-    $('profileStatus').value = safe(S.profile.status,'');
+    const psEl = $('profileStatus'); if(psEl) psEl.value = safe(S.profile.status,'');
     const avatarUrl = safe(S.profile.avatar, userAvatar('Guest'));
     $('profileAvatarPreview').src = avatarUrl;
     $('profileAvatarPreview').style.objectPosition = 'center';
     $('profileAvatarPreview').style.transform = 'none';
     $('profileUserTag').value = S.profile.userTag || '';
+    const ghEl = $('profileGithub'); if(ghEl) ghEl.value = S.profile.github || '';
 
     // Load server tags from servers the user is in
     loadServerTagsForProfile();
@@ -1853,6 +2083,8 @@ onAuthStateChanged(auth, async user => {
     $('adminBtn').classList.toggle('hidden', !S.isAdmin);
     $('imgUploadBtn').classList.toggle('hidden', user.isAnonymous);
     $('gifBtn') && $('gifBtn').classList.toggle('hidden', user.isAnonymous);
+    $('ghBtn') && $('ghBtn').classList.toggle('hidden', user.isAnonymous);
+    $('fileBtn') && $('fileBtn').classList.toggle('hidden', user.isAnonymous);
     $('emojiBtn') && $('emojiBtn').classList.toggle('hidden', user.isAnonymous);
     $('audioClipBtn').classList.toggle('hidden', user.isAnonymous);
     // Load status from profile first, then localStorage as backup
@@ -1873,6 +2105,7 @@ onAuthStateChanged(auth, async user => {
     // Start periodic DM notification check
     setInterval(checkDMNotifications, 30000); // Check every 30 seconds
     loadFriends();
+    listenIncomingCalls();
 
     // Update UI first before loading server (so user sees they're logged in)
     updateUserUI();
@@ -1902,6 +2135,8 @@ onAuthStateChanged(auth, async user => {
     $('adminBtn').classList.add('hidden');
     $('imgUploadBtn').classList.add('hidden');
     $('gifBtn') && $('gifBtn').classList.add('hidden');
+    $('ghBtn') && $('ghBtn').classList.add('hidden');
+    $('fileBtn') && $('fileBtn').classList.add('hidden');
     $('emojiBtn') && $('emojiBtn').classList.add('hidden');
     $('audioClipBtn').classList.add('hidden');
   }
@@ -1999,6 +2234,11 @@ window.openDMs = () => {
   if(S.unsubDms){ try{ S.unsubDms(); }catch(e){} S.unsubDms = null; }
   leaveVoice();
   if(window.cancelReply) window.cancelReply();
+  if(window.hideNewMsgPill) window.hideNewMsgPill();
+  const cs = $('chanSearch'); if(cs) cs.value = '';
+  showChanTopic('');
+  $('dmVoiceBtn')?.classList.add('hidden');
+  $('dmVideoBtn')?.classList.add('hidden');
   S.inDMs = true;
   S.server = null;
   S.channel = null;
@@ -2214,15 +2454,17 @@ window.initProfileEditor = () => {
   // Load avatar crop settings
   if(S.profileStyle.avatarCrop) {
     const c = S.profileStyle.avatarCrop;
-    $('cropX').value = c.x || 0;
-    $('cropY').value = c.y || 0;
-    $('cropZoom').value = c.zoom || 1;
-    $('zoomVal').textContent = Math.round((c.zoom || 1) * 100) + '%';
+    const cx=$('cropX'), cy=$('cropY'), cz=$('cropZoom'), zv=$('zoomVal');
+    if(cx) cx.value = c.x || 0;
+    if(cy) cy.value = c.y || 0;
+    if(cz) cz.value = c.zoom || 1;
+    if(zv) zv.textContent = Math.round((c.zoom || 1) * 100) + '%';
   }
   // Load name color
   if(S.profileStyle.nameColor) {
     const colorPicker = $('nameColorPicker');
     if(colorPicker) colorPicker.value = S.profileStyle.nameColor;
+    const nh = $('nameHex'); if(nh) nh.value = S.profileStyle.nameColor;
   }
   // Load custom gradient
   if(S.profileStyle.customGradient && S.profileStyle.customGradient.length > 0) {
@@ -2672,7 +2914,8 @@ window.saveProfile = async () => {
   if(!S.user) return showProfileMsg('Login required', true);
   const handle = $('profileHandle').value.trim();
   const bio = $('profileBio').value.trim();
-  const status = $('profileStatus').value.trim();
+  const statusEl = $('profileStatus');
+  const status = (statusEl ? statusEl.value : (S.profile?.status || '')).trim();
   const userTag = $('profileUserTag').value;
   if(!handle) return showProfileMsg('Handle required', true);
   if(handle.length < 2 || handle.length > 24) return showProfileMsg('Handle must be 2-24 chars', true);
@@ -2705,7 +2948,8 @@ window.saveProfile = async () => {
     await setDoc(doc(db,'usernames', handleKey), { uid:S.user.uid, handle, updatedAt:Date.now() });
     
     // Handle badges
-    const selectedBadge = $('profileBadge').value;
+    const badgeEl = $('profileBadge');
+    const selectedBadge = badgeEl ? badgeEl.value : (S.profile?.selectedBadge || '');
     const isAdmin = S.canManage || S.isAdmin;
     let badges = S.profile?.badges || [];
     
@@ -2729,7 +2973,8 @@ window.saveProfile = async () => {
       }
     }
     
-    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag, badges, selectedBadge };
+    const github = ($('profileGithub')?.value || '').trim().replace(/^@/,'');
+    const updates = { handle, bio, status, avatar, style: S.profileStyle, userTag, badges, selectedBadge, github };
     if(!S.profile.createdAt) updates.createdAt = Date.now();
     
     // Sign profile update with post-quantum signature
@@ -2812,6 +3057,272 @@ window.triggerImageUpload = () => {
   $('imgPreview').classList.remove('hidden');
 };
 window.clearImagePreview = () => { S.pendingImageUrl=null; S.pendingImage=null; $('imgPreview').classList.add('hidden'); };
+
+// ===== FILE ATTACHMENTS =====
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+function fmtSize(b){ if(b<1024) return b+' B'; if(b<1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+window.handleFileSelect = (e) => {
+  const f = e.target.files?.[0];
+  e.target.value = '';
+  if(!f || !S.user || S.user.isAnonymous) return;
+  if(f.size > MAX_FILE_SIZE) return alert('File too large (max 25MB)');
+  S.pendingFile = f;
+  const pv = $('filePreview');
+  pv.innerHTML = `<a class="file-chip" href="#" onclick="return false">
+      <i class="fa-solid fa-file text-bch"></i>
+      <span class="fname">${esc(f.name)}</span>
+      <span class="fsize">${fmtSize(f.size)}</span>
+    </a>
+    <button onclick="clearFilePreview()" class="text-red-400 text-xs ml-2"><i class="fa-solid fa-xmark"></i> Remove</button>`;
+  pv.classList.remove('hidden');
+};
+window.clearFilePreview = () => { S.pendingFile = null; $('filePreview')?.classList.add('hidden'); $('filePreview') && ($('filePreview').innerHTML=''); };
+
+// ===== GITHUB INTEGRATION (OAuth device flow + self-hosted images) =====
+// PASTE YOUR OAUTH APP CLIENT ID HERE (github.com → Settings → Developer settings → OAuth Apps)
+// No client secret needed — device flow only requires the client_id.
+const GH_CLIENT_ID = '';
+const GH_SCOPE = 'public_repo';           // public repos only — images must be world-readable anyway
+const GH_REPO_NAME = 'havoc';
+const GH_IMAGE_DIR = 'havoc/images';
+const GH_MAX_UPLOAD = 50 * 1024 * 1024;   // GitHub recommends <50MB files
+
+S.ghToken = null; S.ghLogin = null; S.ghRepoInfo = null; S.ghMode = 'attach'; S.ghPollTimer = null;
+
+function ghTokenKey(){ return `havoc_gh_token_${S.user?.uid||'anon'}`; }
+function ghLoadToken(){
+  try{ const d = JSON.parse(localStorage.getItem(ghTokenKey())||'null'); if(d?.token){ S.ghToken=d.token; S.ghLogin=d.login||null; } }catch(e){}
+}
+function ghSaveToken(){
+  if(S.ghToken) localStorage.setItem(ghTokenKey(), JSON.stringify({token:S.ghToken, login:S.ghLogin}));
+  else localStorage.removeItem(ghTokenKey());
+}
+
+async function ghApi(path, opts = {}){
+  const headers = { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+  if(S.ghToken) headers['Authorization'] = 'Bearer ' + S.ghToken;
+  let body;
+  if(opts.json !== undefined){ headers['Content-Type']='application/json'; body = JSON.stringify(opts.json); }
+  const res = await fetch('https://api.github.com'+path, { method: opts.method||'GET', headers, body });
+  if(res.status === 401 || res.status === 403){
+    const txt = await res.text().catch(()=> '');
+    if(res.status === 401){ ghForgetToken(); throw new Error('GitHub token expired — please reconnect.'); }
+    throw new Error('GitHub API '+res.status+': '+txt.slice(0,160));
+  }
+  if(!res.ok) throw new Error('GitHub API '+res.status+': '+(await res.text().catch(()=>'')).slice(0,160));
+  return res.status === 204 ? null : res.json();
+}
+function ghForgetToken(){ S.ghToken=null; S.ghLogin=null; S.ghRepoInfo=null; ghSaveToken(); }
+
+// Device flow: user enters a code at github.com/login/device — no client secret, no redirect
+window.connectGithub = async () => {
+  if(!S.user || S.user.isAnonymous) return alert('Login to use GitHub');
+  if(!GH_CLIENT_ID) {
+    $('ghStatus').innerHTML = 'GitHub OAuth is not configured yet.<br><span class="text-slate-500">Admin needs to create an OAuth App and paste the Client ID into the GH_CLIENT_ID constant in index.html.</span>';
+    return;
+  }
+  $('ghStatus').textContent = 'Requesting device code…';
+  try{
+    const d = await ghApi('/login/device/code', { method:'POST', json:{ client_id: GH_CLIENT_ID, scope: GH_SCOPE } });
+    if(!d.device_code) throw new Error(d.error_description || d.error || 'device flow failed');
+    $('ghStatus').innerHTML = `Open <a class="text-bch hover:underline" href="${esc(d.verification_uri)}" target="_blank" rel="noopener">${esc(d.verification_uri)}</a> and enter code:<br><span class="text-2xl font-black text-white tracking-widest">${esc(d.user_code)}</span><br><span class="text-[10px] text-slate-500">Waiting for authorization…</span>`;
+    const deadline = Date.now() + (d.expires_in||900)*1000;
+    const interval = (d.interval||5)*1000;
+    const poll = async () => {
+      if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
+      try{
+        const r = await fetch('https://github.com/login/oauth/access_token', {
+          method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'},
+          body: JSON.stringify({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
+        });
+        const t = await r.json();
+        if(t.access_token){
+          S.ghToken = t.access_token;
+          const me = await ghApi('/user');
+          S.ghLogin = me.login;
+          ghSaveToken();
+          if(S.profile && S.profile.github !== me.login){
+            try{ await updateDoc(doc(db,'users',S.user.uid), { github: me.login }); S.profile.github = me.login; }catch(e){}
+          }
+          S.ghRepoInfo = null;
+          renderGithubConnectState();
+          return;
+        }
+        if(t.error === 'authorization_pending'){ setTimeout(poll, interval); return; }
+        if(t.error === 'slow_down'){ setTimeout(poll, interval+5000); return; }
+        $('ghStatus').textContent = 'Authorization failed: '+(t.error_description||t.error||'unknown');
+      }catch(e){ setTimeout(poll, interval); }
+    };
+    setTimeout(poll, interval);
+  }catch(e){ $('ghStatus').textContent = 'Could not start GitHub connect: '+e.message; }
+};
+
+window.disconnectGithub = () => {
+  ghForgetToken();
+  if(S.profile) S.profile.github = '';
+  renderGithubConnectState();
+};
+
+// Resolve (and optionally auto-create) the public havoc repo
+async function ghRepoInfo(){
+  if(S.ghRepoInfo) return S.ghRepoInfo;
+  const login = S.ghLogin; if(!login) throw new Error('Not connected to GitHub');
+  try{
+    const r = await ghApi(`/repos/${login}/${GH_REPO_NAME}`);
+    S.ghRepoInfo = { owner: login, repo: r.name, branch: r.default_branch||'main', private: !!r.private };
+  }catch(e){
+    if(!/404/.test(e.message)) throw e;
+    S.ghRepoInfo = { owner: login, repo: GH_REPO_NAME, branch: 'main', private: false, missing: true };
+  }
+  return S.ghRepoInfo;
+}
+window.ghCreateRepo = async () => {
+  $('ghStatus').textContent = 'Creating public repo "havoc"…';
+  try{
+    await ghApi('/user/repos', { method:'POST', json:{ name: GH_REPO_NAME, private: false, auto_init: true, description: 'Havoc community images' } });
+    S.ghRepoInfo = null;
+    await ghRepoInfo();
+    renderGithubConnectState();
+    loadGithubImages();
+  }catch(e){ $('ghStatus').textContent = 'Repo create failed: '+e.message; }
+};
+
+function toBase64(buf){
+  const u = new Uint8Array(buf); let s = '';
+  for(let i=0;i<u.length;i+=0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i+0x8000));
+  return btoa(s);
+}
+function ghSanitize(name){
+  const ext = (name.match(/\.[a-z0-9]{2,5}$/i)||[''])[0];
+  const base = name.replace(/\.[a-z0-9]{2,5}$/i,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40) || 'image';
+  return `${Date.now()}-${base}${ext}`;
+}
+
+// Upload via Git Data API (blob→tree→commit→ref) — same mechanism github.com uses,
+// supports files far beyond the 1MB Contents API limit.
+async function ghUploadFile(file){
+  const info = await ghRepoInfo();
+  if(info.missing) throw new Error(`Repo ${info.owner}/${GH_REPO_NAME} doesn't exist — click "Create repo" first`);
+  if(info.private) throw new Error('The havoc repo is private — images won\'t display for other users. Make it public first.');
+  if(file.size > GH_MAX_UPLOAD) throw new Error('File too large for GitHub ('+fmtSize(file.size)+', max 50MB)');
+  const path = `${GH_IMAGE_DIR}/${ghSanitize(file.name||'image.png')}`;
+  const b64 = toBase64(await file.arrayBuffer());
+  const ref = await ghApi(`/repos/${info.owner}/${info.repo}/git/ref/heads/${info.branch}`);
+  const commitSha = ref.object.sha;
+  const commit = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits/${commitSha}`);
+  const blob = await ghApi(`/repos/${info.owner}/${info.repo}/git/blobs`, { method:'POST', json:{ content:b64, encoding:'base64' } });
+  const tree = await ghApi(`/repos/${info.owner}/${info.repo}/git/trees`, { method:'POST', json:{
+    base_tree: commit.tree.sha,
+    tree: [{ path, mode:'100644', type:'blob', sha: blob.sha }]
+  }});
+  const nc = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits`, { method:'POST', json:{
+    message: `Add ${path.split('/').pop()}`, tree: tree.sha, parents: [commitSha]
+  }});
+  await ghApi(`/repos/${info.owner}/${info.repo}/git/refs/heads/${info.branch}`, { method:'PATCH', json:{ sha: nc.sha } });
+  return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${path}`;
+}
+window.ghUploadPick = (e) => {
+  const f = e.target.files?.[0]; e.target.value='';
+  if(!f) return;
+  const st = $('ghStatus'); st.textContent = `Uploading ${f.name} (${fmtSize(f.size)})…`;
+  ghUploadFile(f).then(url => {
+    st.textContent = 'Uploaded ✓';
+    loadGithubImages();
+    // auto-attach the fresh upload like Discord does
+    setTimeout(()=>{ const img=[...$('ghGrid').children].pop()?.querySelector('img'); if(img) pickGithubImage(img.src); }, 800);
+  }).catch(err => { st.textContent = 'Upload failed: '+err.message; });
+};
+
+// mode: 'attach' (chat), 'avatar', 'banner', 'serverIcon', 'serverBanner'
+window.openGithubPicker = (mode) => {
+  if(!S.user || S.user.isAnonymous) return alert('Login to use GitHub images');
+  S.ghMode = mode || 'attach';
+  openModal('github');
+  ghLoadToken();
+  renderGithubConnectState();
+};
+function ghUsername(){ return S.ghLogin || (S.profile?.github||'').trim(); }
+function renderGithubConnectState(){
+  const connected = !!S.ghToken;
+  $('ghConnectBox')?.classList.toggle('hidden', connected);
+  $('ghConnectedBox')?.classList.toggle('hidden', !connected);
+  const uploadBtn = $('ghUploadBtn'); if(uploadBtn) uploadBtn.classList.toggle('hidden', !connected);
+  if(connected){
+    $('ghUserLabel').textContent = S.ghLogin || ghUsername() || 'connected';
+    loadGithubImages();
+  } else {
+    $('ghGrid').innerHTML='';
+    $('ghStatus').innerHTML = S.profile?.github
+      ? `Signed in as <b>${esc(S.profile.github)}</b> (username only — click Connect to authorize uploads).`
+      : 'Connect your GitHub account to browse and upload images.';
+    // If a github username is saved but no token, offer one-click device connect
+    const btn = $('ghDeviceBtn'); if(btn) btn.classList.remove('hidden');
+  }
+}
+window.loadGithubImages = async () => {
+  if(!S.ghToken){ $('ghGrid').innerHTML=''; $('ghStatus').textContent='Connect GitHub to browse your images.'; return; }
+  const grid=$('ghGrid'), status=$('ghStatus');
+  if(!grid||!status) return;
+  grid.innerHTML=''; status.textContent='Loading images from havoc/images …';
+  try{
+    const info = await ghRepoInfo();
+    if(info.missing){
+      status.innerHTML = `No <b>${esc(info.owner)}/${GH_REPO_NAME}</b> repo yet.<br><button onclick="ghCreateRepo()" class="btn-primary px-4 py-1.5 text-xs mt-2">Create public repo "havoc"</button>`;
+      return;
+    }
+    if(info.private){
+      status.innerHTML = `<span class="text-amber-400">⚠ ${esc(info.owner)}/${GH_REPO_NAME} is private — images won't display for other users. <a class="text-bch hover:underline" href="https://github.com/${esc(info.owner)}/${GH_REPO_NAME}/settings" target="_blank" rel="noopener">Make it public</a> or keep images elsewhere.</span>`;
+    }
+    const exts = /\.(png|jpe?g|gif|webp|svg|avif|bmp)$/i;
+    let files=null;
+    try{
+      files = await ghApi(`/repos/${info.owner}/${info.repo}/contents/${GH_IMAGE_DIR}?ref=${info.branch}`);
+    }catch(e){
+      if(/404/.test(e.message)){ status.innerHTML=`The <b>images/</b> folder doesn't exist yet — upload any image below and it will be created automatically.`; return; }
+      throw e;
+    }
+    if(!Array.isArray(files)){ status.textContent='images/ is not a folder.'; return; }
+    const imgs = files.filter(f=>f.type==='file' && exts.test(f.name));
+    if(!imgs.length){ status.textContent='The images/ folder exists but has no image files — upload some below.'; return; }
+    status.textContent = `${imgs.length} image${imgs.length>1?'s':''} in ${info.owner}/${GH_REPO_NAME}/${GH_IMAGE_DIR} — click to use`;
+    imgs.sort((a,b)=>b.name.localeCompare(a.name)); // newest first (timestamp prefix)
+    imgs.forEach(f=>{
+      const url = `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${GH_IMAGE_DIR}/${encodeURIComponent(f.name)}`;
+      const d=document.createElement('div');
+      d.className='aspect-square rounded-lg overflow-hidden border border-dark-700 hover:border-bch cursor-pointer transition-all bg-dark-950';
+      d.innerHTML=`<img src="${esc(url)}" loading="lazy" class="w-full h-full object-cover">`;
+      d.title=f.name;
+      d.onclick=()=>pickGithubImage(url);
+      grid.appendChild(d);
+    });
+  }catch(e){ status.textContent = 'GitHub error: '+e.message; }
+};
+window.pickGithubImage = (url) => {
+  const isGif = /\.gif(\?|$)/i.test(url);
+  if(S.ghMode === 'avatar'){
+    if(typeof avatarMethod === 'function') avatarMethod(isGif ? 'gif' : 'url');
+    if(isGif && $('profileAvatarGif')) $('profileAvatarGif').value = url;
+    if($('profileAvatarUrl')){ $('profileAvatarUrl').value = url; previewFromUrl?.(url); }
+  } else if(S.ghMode === 'banner'){
+    if(typeof bannerMethod === 'function') bannerMethod('url');
+    if($('profileBannerUrl')){ $('profileBannerUrl').value = url; previewBannerUrl?.(url); }
+  } else if(S.ghMode === 'serverIcon'){
+    if(typeof ssIconMethod === 'function') ssIconMethod('url');
+    if($('ssIconUrl')){ $('ssIconUrl').value = url; previewSsIcon?.(url); }
+  } else if(S.ghMode === 'serverBanner'){
+    if($('ssBannerUrl')) $('ssBannerUrl').value = url;
+  } else if(S.ghMode === 'emoji'){
+    if($('newEmojiUrl')) $('newEmojiUrl').value = url;
+  } else {
+    S.pendingImageUrl = url;
+    $('imgPreviewSrc').src = url;
+    $('imgPreview').classList.remove('hidden');
+  }
+  S.ghMode = 'attach';
+  closeModal('github');
+};
+
+
 S.gifPage = 0;
 S.gifPerPage = 4;
 S.gifCache = [];
@@ -3884,10 +4395,26 @@ async function loadChannels(serverId){
     renderChannels();
   }catch(e){ console.error(e); }
 }
+// ===== UNREAD / LAST-READ TRACKING (per server, localStorage) =====
+function chanReadMap(){
+  try{ return JSON.parse(localStorage.getItem(`havoc_read_${S.server?.id||''}`)||'{}'); }
+  catch(e){ return {}; }
+}
+function markChanRead(cid, ts){
+  if(!S.server?.id || !cid) return;
+  const m = chanReadMap();
+  m[cid] = ts || Date.now();
+  localStorage.setItem(`havoc_read_${S.server.id}`, JSON.stringify(m));
+}
+function chanHasUnread(c, readMap){
+  return c.type !== 'voice' && c.id !== S.channel && (c.lastTs||0) > (readMap[c.id]||0) && (c.lastTs||0) > 0;
+}
+
 function renderChannels(){
   const textList = $('channelsList'), voiceList = $('voiceList');
   if(!textList || !voiceList) return;
   textList.innerHTML = ''; voiceList.innerHTML = '';
+  const readMap = chanReadMap();
 
   // Sort channels by position if available
   S_channels.sort((a, b) => (a.position || 0) - (b.position || 0));
@@ -3955,10 +4482,13 @@ function renderChannels(){
         };
       }
       
+      const unread = chanHasUnread(c, readMap);
+      if(unread) btn.classList.add('chan-unread');
       btn.innerHTML = `
         ${dragHandle}
         <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
-        <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+        ${unread?'<span class="unread-dot"></span>':''}
+        <span class="chan-name truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
         ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
       `;
       textList.appendChild(btn);
@@ -3991,6 +4521,8 @@ function renderVoiceArea(){
 function switchChannel(c){
   leaveVoice();
   if(window.cancelReply) window.cancelReply();
+  if(window.hideNewMsgPill) window.hideNewMsgPill();
+  const cs = $('chanSearch'); if(cs) cs.value = '';
   S.channel = c.id; S.channelType = 'text';
 
   // Save last visited channel for this server
@@ -4006,6 +4538,11 @@ function switchChannel(c){
   $('chatInput').disabled = !S.user;
   $('chatInput').placeholder = S.user ? `Message #${c.name||c.id}` : 'Login to post…';
   $('chanAdminBtn').classList.toggle('hidden', !S.canManage);
+  $('dmVoiceBtn')?.classList.add('hidden');
+  $('dmVideoBtn')?.classList.add('hidden');
+  showChanTopic(c.topic || '');
+  // Mark channel as read
+  markChanRead(c.id);
   renderChannels();
   if(S.server) listenMessages(S.server.id, c.id);
   listenForTyping();
@@ -4115,6 +4652,38 @@ async function renderRolesList(){
   });
 }
 window.deleteRole = async id => { if(!confirm('Delete role?')) return; await deleteDoc(doc(db,'servers',S.server.id,'roles',id)); await loadRoles(S.server.id); renderRolesList(); };
+
+// ===== SERVER EMOJIS =====
+async function renderServerEmojis(){
+  const el = $('serverEmojiList'); if(!el || !S.server) return;
+  const emojis = S.server.emojis || [];
+  el.innerHTML = emojis.map(e => `
+    <div class="flex items-center gap-1 bg-dark-950 border border-dark-700 rounded px-1.5 py-1">
+      <img src="${esc(e.url)}" class="w-5 h-5 object-contain" loading="lazy">
+      <span class="text-[10px] mono text-slate-400">:${esc(e.name)}:</span>
+      <button onclick="deleteServerEmoji('${esc(e.id)}')" class="text-red-400 text-[10px] hover:text-red-300"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('') || '<span class="text-[10px] text-slate-600">No custom emojis yet</span>';
+}
+window.addServerEmoji = async () => {
+  if(!S.canManage || !S.server) return;
+  const name = ($('newEmojiName')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_+-]/g,'').slice(0,32);
+  const url = ($('newEmojiUrl')?.value||'').trim();
+  if(!name || !url.startsWith('http')) return alert('Enter an emoji name and image URL');
+  const emojis = [...(S.server.emojis||[])];
+  if(emojis.find(e=>e.name===name)) return alert('Emoji name already taken');
+  emojis.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, url });
+  try{
+    await updateDoc(doc(db,'servers',S.server.id), { emojis });
+    S.server.emojis = emojis;
+    $('newEmojiName').value=''; $('newEmojiUrl').value='';
+    renderServerEmojis();
+  }catch(e){ alert(e.message); }
+};
+window.deleteServerEmoji = async (id) => {
+  if(!S.canManage || !S.server) return;
+  const emojis = (S.server.emojis||[]).filter(e=>e.id!==id);
+  try{ await updateDoc(doc(db,'servers',S.server.id), { emojis }); S.server.emojis=emojis; renderServerEmojis(); }catch(e){ alert(e.message); }
+};
 function getMemberColor(member){
   if(!member?.roles?.length || !S.roles.length) return null;
   for(const role of S.roles) if(member.roles.includes(role.id)) return role.color;
@@ -4183,10 +4752,23 @@ window.revokeInvite = async code => { if(!confirm(`Revoke ${code}?`)) return; aw
 
 // ========== MESSAGES + REACTIONS ==========
 function parseMentions(text){
-  text = text.replace(/@everyone/gi, '<span class="mention mention-everyone">@everyone</span>');
-  text = text.replace(/@here/gi, '<span class="mention mention-everyone">@here</span>');
-  text = text.replace(/@([a-zA-Z0-9_]+)/g, (m,name) => `<span class="mention">@${esc(name)}</span>`);
-  return text;
+  // Stash generated mention spans so later regexes can't re-match inside them
+  const stash = [];
+  const keep = s => { stash.push(s); return `${stash.length-1}`; };
+  text = text.replace(/@everyone/gi, keep('<span class="mention mention-everyone">@everyone</span>'));
+  text = text.replace(/@here/gi, keep('<span class="mention mention-everyone">@here</span>'));
+  // Role mentions — longest names first so "@Admin Team" beats "@Admin"
+  if(S.roles && S.roles.length){
+    const names = [...new Set(S.roles.map(r=>r.name).filter(n=>n && !n.startsWith('@')))].sort((a,b)=>b.length-a.length);
+    for(const name of names){
+      const re = new RegExp('@'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![\\w])','gi');
+      const role = S.roles.find(r=>r.name===name);
+      const col = role?.color || '#5865F2';
+      text = text.replace(re, keep(`<span class="mention mention-role" style="color:${esc(col)};background:${esc(col)}33;border:1px solid ${esc(col)}55">@${esc(name)}</span>`));
+    }
+  }
+  text = text.replace(/@([a-zA-Z0-9_]+)/g, (m,name) => keep(`<span class="mention">@${esc(name)}</span>`));
+  return text.replace(/(\d+)/g,(m,i)=>stash[+i]||m);
 }
 function listenMessages(serverId, channelId){
   if (S.unsubMsgs) {
@@ -4209,19 +4791,32 @@ function listenMessages(serverId, channelId){
     snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
     msgs.reverse(); // oldest → newest for display
 
+    // Capture scroll position BEFORE render to detect "new messages" pill
+    const cont = $('msgContainer');
+    const nearBottom = !cont || (cont.scrollHeight - cont.scrollTop - cont.clientHeight < 120);
+
     // Notification handling for newly added messages (skip first snapshot)
+    let newFromOthers = false;
     if (!isFirstSnapshot) {
       snap.docChanges().forEach(change => {
         if (change.type === 'added') {
           const m = { id: change.doc.id, ...change.doc.data() };
-          if (m.uid !== S.user?.uid) handleIncomingMessageNotif(m);
+          if (m.uid !== S.user?.uid) { handleIncomingMessageNotif(m); newFromOthers = true; }
         }
       });
     }
     isFirstSnapshot = false;
 
     await renderMsgs(msgs);
-    
+
+    // Channel is open → mark as read up to latest message
+    markChanRead(channelId, msgs.length ? (msgs[msgs.length-1].ts || Date.now()) : Date.now());
+    renderChannels();
+
+    // "New messages" pill when scrolled up
+    if(newFromOthers && !nearBottom) showNewMsgPill();
+    loadLinkPreviews();
+
     // Scroll to bottom after messages render
     setTimeout(() => {
       const container = $('msgContainer');
@@ -4298,13 +4893,22 @@ function renderStatusDot(profile) {
   return `<span class="member-status-dot ${dotClass} z-20"></span>`;
 }
 
+function fileChipHtml(m){
+  if(!m.fileUrl) return '';
+  return `<a href="${esc(m.fileUrl)}" target="_blank" rel="noopener noreferrer" class="file-chip">
+    <i class="fa-solid fa-file text-bch"></i>
+    <span class="fname">${esc(m.fileName||'file')}</span>
+    <span class="fsize">${m.fileSize?fmtSize(m.fileSize):''}</span>
+  </a>`;
+}
+
 async function renderMsgs(msgs){
   const feed = $('msgFeed'); feed.innerHTML = '';
   if(!msgs.length){ feed.innerHTML = '<div class="text-center py-12 text-slate-600 mono text-xs">No messages yet.</div>'; return; }
   await resolveProfiles(msgs.map(m => m.uid));
   for (const m of msgs) {
     const live = S.profileCache[m.uid] || {};
-    const displayHandle = live.handle || m.handle || 'User';
+    const displayHandle = (S.membersCache||[]).find(x=>x.uid===m.uid)?.nick || live.handle || m.handle || 'User';
     const displayAvatar = live.avatar || m.avatar || userAvatar(m.uid||'x');
     const isOwner = m.uid === S.server?.ownerUid;
     const member = S.membersCache.find(x => x.uid === m.uid);
@@ -4322,9 +4926,12 @@ async function renderMsgs(msgs){
     }
     // Ensure content is a string
     if (typeof content !== 'string') content = String(content || '');
-    
+    S.msgText = S.msgText || {};
+    S.msgText[m.id] = content;
+
     let contentHtml = formatMsgContent(content);
     if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-xs max-h-64 rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
+    contentHtml += fileChipHtml(m);
     if(m.audioUrl) {
       const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
       contentHtml += `
@@ -4366,9 +4973,10 @@ async function renderMsgs(msgs){
         }).join('') + '</div>';
       }
     }
-    const contentStr = typeof m.content === 'string' ? m.content : '';
+    const contentStr = S.msgText?.[m.id] || (typeof m.content === 'string' ? m.content : '');
     const mentionsMe = contentStr.toLowerCase().includes('@'+(S.profile?.handle||'').toLowerCase()) || /@(everyone|here)/i.test(contentStr);
     const div = document.createElement('div');
+    div.dataset.mid = m.id;
     div.className = `flex items-start gap-4 hover:bg-dark-800/40 px-4 py-2.5 rounded-lg group relative ${mentionsMe&&!isServerMuted(S.server?.id,'notif')?'bg-bch/5 border-l-2 border-bch':''}`;
 
     const avatarStyle = getAvatarStyleString(live);
@@ -4387,16 +4995,17 @@ async function renderMsgs(msgs){
           ${renderUserTag(live)}
           ${isNewMember(m.uid)?'<span class="new-member-leaf" title="New member (joined within the last week)"><i class="fa-solid fa-seedling"></i></span>':''}
           ${isOwner?'<span class="badge-owner">OWNER</span>':''}
-          <span class="text-[10px] text-slate-600 mono">${shortTime(m.ts)}</span>
+          <span class="text-[10px] text-slate-600 mono">${shortTime(m.ts)}${m.edited?' <span class="italic">(edited)</span>':''}</span>
           <button onclick="startReply('${esc(m.id)}','${esc(displayHandle)}','${esc(contentStr.slice(0,80))}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Reply"><i class="fa-solid fa-reply"></i></button>
           <button onclick="showReactionPicker(event,'${esc(m.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Add reaction"><i class="fa-regular fa-face-smile"></i></button>
           <button onclick="pinMessage('${esc(m.id)}','${esc(contentStr.replace(/'/g,"").slice(0,150))}','${esc(displayHandle)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Pin Message"><i class="fa-solid fa-thumbtack"></i></button>
+          ${m.uid === S.user?.uid || S.canManage ? `<button onclick="startEditMsg('${esc(m.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-bch text-[11px] ml-1" title="Edit Message"><i class="fa-solid fa-pen"></i></button>` : ''}
           ${m.uid === S.user?.uid || S.canManage ? `<button onclick="deleteChannelMessage('${esc(m.id)}')" class="hidden group-hover:inline text-red-500 text-[10px] ml-auto" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : ''}
         </div>
         ${m.replyTo ? `<div class="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
           <i class="fa-solid fa-reply"></i> replying to <span class="text-bch">${esc(m.replyHandle || 'someone')}</span>
         </div>` : ''}
-        <div class="text-xs text-slate-200 mt-0.5 break-words leading-relaxed">${contentHtml}</div>
+        <div class="msg-content text-xs text-slate-200 mt-0.5 break-words leading-relaxed">${contentHtml}</div>
         ${reactHtml}
       </div>`;
     feed.appendChild(div);
@@ -4503,7 +5112,238 @@ window.toggleReaction = async (msgId, emoji) => {
     await updateDoc(ref, { reactions });
   }catch(err){ console.error(err); }
 };
-async function actuallySendMessage(content, imageUrl, audioUrl){
+
+// ===== NEW MESSAGE PILL =====
+window.showNewMsgPill = () => { const p = $('newMsgPill'); if(p) p.style.display = 'block'; };
+window.hideNewMsgPill = () => { const p = $('newMsgPill'); if(p) p.style.display = 'none'; };
+window.jumpToLatest = () => {
+  const c = $('msgContainer'); if(c) c.scrollTop = c.scrollHeight;
+  hideNewMsgPill();
+};
+
+// ===== CHANNEL SEARCH (filters rendered messages) =====
+window.filterChanSearch = (q) => {
+  q = (q||'').trim().toLowerCase();
+  const feed = $('msgFeed'); if(!feed) return;
+  feed.querySelectorAll(':scope > div').forEach(el => {
+    el.style.display = (!q || el.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+};
+
+// ===== LINK PREVIEWS (via microlink.io, cached per URL) =====
+S.linkCache = S.linkCache || {};
+function injectLinkPreview(contentEl, p){
+  if(contentEl.querySelector('.link-preview')) return;
+  const card = document.createElement('a');
+  card.className = 'link-preview';
+  card.href = p.url; card.target = '_blank'; card.rel = 'noopener noreferrer';
+  card.innerHTML = `${p.img?`<img src="${esc(p.img)}" loading="lazy" alt="">`:''}<div class="lp-body"><div class="lp-title">${esc(p.title||p.url)}</div>${p.desc?`<div class="lp-desc">${esc(String(p.desc).slice(0,140))}</div>`:''}</div>`;
+  contentEl.appendChild(card);
+}
+async function loadLinkPreviews(){
+  const rows = document.querySelectorAll('#msgFeed [data-mid] .msg-content');
+  const jobs = [];
+  rows.forEach(el => {
+    const a = el.querySelector('a[href^="http"]');
+    if(!a) return;
+    const url = a.href;
+    if(S.linkCache[url] !== undefined){ if(S.linkCache[url]) injectLinkPreview(el, S.linkCache[url]); return; }
+    jobs.push((async()=>{
+      try{
+        const r = await fetch('https://api.microlink.io/?url='+encodeURIComponent(url)+'&screenshot=false&meta=false&palette=false');
+        const j = await r.json();
+        const d = j?.data;
+        const prev = d && (d.title || d.description || d.image?.url) ? { title:d.title, desc:d.description, img:d.image?.url, url:d.url||url } : null;
+        S.linkCache[url] = prev;
+        if(prev) injectLinkPreview(el, prev);
+      }catch(e){ S.linkCache[url] = null; }
+    })());
+  });
+  await Promise.all(jobs.slice(0, 8));
+}
+
+// ===== DM CALLS (WebRTC P2P, signaling via Firestore) =====
+S.call = null;
+let callSignalUnsub = null, callDocUnsub = null, incomingUnsub = null, pendingIncoming = null;
+function callDmId(targetUid){ return [S.user.uid, targetUid].sort().join('_'); }
+async function purgeCallSignals(dmId){
+  try{ const s = await getDocs(collection(db,'dms',dmId,'callSignals'));
+    for(const d of s.docs) await deleteDoc(d.ref);
+  }catch(e){}
+}
+function attachRemoteStream(stream){
+  if(!stream) return;
+  let a = $('callRemoteAudio');
+  if(!a){ a=document.createElement('audio'); a.id='callRemoteAudio'; a.autoplay=true; a.playsInline=true; document.body.appendChild(a); }
+  a.srcObject = stream;
+  const vid = $('callRemoteVideo');
+  if(vid && !vid.classList.contains('hidden')) vid.srcObject = stream;
+}
+function showCallUI(type, status){
+  const ov=$('callOverlay'); if(!ov) return;
+  ov.style.display='flex';
+  const st=$('callStatus'); if(st) st.textContent = status;
+  const isVid = type==='video';
+  $('callRemoteVideo').classList.toggle('hidden', !isVid);
+  $('callLocalVideo').classList.toggle('hidden', !isVid);
+  $('callCamBtn').classList.toggle('hidden', !isVid);
+  if(isVid && S.call?.stream){ $('callLocalVideo').srcObject = S.call.stream; }
+}
+function callCleanup(){
+  try{ callSignalUnsub?.(); }catch(e){}
+  try{ callDocUnsub?.(); }catch(e){}
+  callSignalUnsub = callDocUnsub = null;
+  if(S.call?.pc){ try{S.call.pc.close();}catch(e){} }
+  S.call?.stream?.getTracks().forEach(t=>t.stop());
+  const dmId = S.call?.dmId;
+  S.call = null;
+  const ov=$('callOverlay'); if(ov) ov.style.display='none';
+  const ca=$('callRemoteAudio'); if(ca) ca.srcObject=null;
+  const rv=$('callRemoteVideo'); if(rv) rv.srcObject=null;
+  const lv=$('callLocalVideo'); if(lv) lv.srcObject=null;
+  const mb=$('callMuteBtn'); if(mb) mb.innerHTML='<i class="fa-solid fa-microphone"></i>';
+  const cb=$('callCamBtn'); if(cb) cb.innerHTML='<i class="fa-solid fa-video"></i>';
+  if(dmId) purgeCallSignals(dmId);
+}
+window.startCall = async (type) => {
+  if(!S.inDMs || !S.dmTarget || S.call) return;
+  const targetUid = typeof S.dmTarget==='string' ? S.dmTarget : S.dmTarget.uid;
+  if(!targetUid) return;
+  const dmId = callDmId(targetUid);
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true, video:type==='video'}); }
+  catch(e){ return alert('Could not access '+(type==='video'?'camera/microphone':'microphone')+': '+e.message); }
+  try{
+    const pc = new RTCPeerConnection(ICE);
+    stream.getTracks().forEach(t=>pc.addTrack(t,stream));
+    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'dms',dmId,'callSignals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
+    pc.ontrack = e => attachRemoteStream(e.streams[0]);
+    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    const callRef = doc(db,'dms',dmId,'call','current');
+    await setDoc(callRef, { caller:S.user.uid, callee:targetUid, type, state:'ringing', offer:pc.localDescription, createdAt:Date.now() });
+    S.call = { pc, stream, type, dmId, role:'caller', callRef, answered:false };
+    callDocUnsub = onSnapshot(callRef, async snap => {
+      const d = snap.data(); if(!d || !S.call) return;
+      if(d.state === 'ended'){ endCall(false); return; }
+      if(d.state === 'active'){
+        if(d.answer && !pc.currentRemoteDescription){ try{ await pc.setRemoteDescription(d.answer); }catch(e){} }
+        showCallUI(S.call.type, 'Connected');
+      }
+    });
+    callSignalUnsub = onSnapshot(collection(db,'dms',dmId,'callSignals'), snap => {
+      snap.docChanges().forEach(ch => { if(ch.type==='added'){ const s=ch.doc.data(); if(s.from!==S.user.uid && s.candidate) pc.addIceCandidate(s.candidate).catch(()=>{}); }});
+    });
+    showCallUI(type, 'Calling…');
+  }catch(e){ stream.getTracks().forEach(t=>t.stop()); alert('Call failed: '+e.message); }
+};
+window.acceptCall = async () => {
+  if(!pendingIncoming) return;
+  const { dmId, data:d } = pendingIncoming; pendingIncoming=null;
+  const bar=$('incomingCallBar'); if(bar) bar.style.display='none';
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true, video:d.type==='video'}); }
+  catch(e){ try{ await updateDoc(doc(db,'dms',dmId,'call','current'), {state:'ended'}); }catch(_){} return alert('Mic/camera error: '+e.message); }
+  try{
+    const pc = new RTCPeerConnection(ICE);
+    stream.getTracks().forEach(t=>pc.addTrack(t,stream));
+    pc.onicecandidate = e => { if(e.candidate) addDoc(collection(db,'dms',dmId,'callSignals'), {from:S.user.uid, candidate:e.candidate.toJSON()}).catch(()=>{}); };
+    pc.ontrack = e => attachRemoteStream(e.streams[0]);
+    await pc.setRemoteDescription(d.offer);
+    const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
+    const callRef = doc(db,'dms',dmId,'call','current');
+    await updateDoc(callRef, { answer:pc.localDescription, state:'active' });
+    S.call = { pc, stream, type:d.type, dmId, role:'callee', callRef };
+    callDocUnsub = onSnapshot(callRef, snap => { const x=snap.data(); if(x?.state==='ended' && S.call) endCall(false); });
+    callSignalUnsub = onSnapshot(collection(db,'dms',dmId,'callSignals'), snap => {
+      snap.docChanges().forEach(ch=>{ if(ch.type==='added'){ const s=ch.doc.data(); if(s.from!==S.user.uid && s.candidate) pc.addIceCandidate(s.candidate).catch(()=>{}); }});
+    });
+    showCallUI(d.type, 'Connected');
+  }catch(e){ stream.getTracks().forEach(t=>t.stop()); alert('Answer failed: '+e.message); }
+};
+window.declineCall = async () => {
+  if(!pendingIncoming) return;
+  const { dmId } = pendingIncoming; pendingIncoming=null;
+  const bar=$('incomingCallBar'); if(bar) bar.style.display='none';
+  try{ await updateDoc(doc(db,'dms',dmId,'call','current'), {state:'ended'}); }catch(e){}
+};
+window.endCall = async (updateState=true) => {
+  const c = S.call;
+  if(updateState && c){ try{ await updateDoc(c.callRef,{state:'ended'}); }catch(e){} }
+  callCleanup();
+};
+window.toggleCallMute = () => {
+  const t = S.call?.stream?.getAudioTracks?.()[0]; if(!t) return;
+  t.enabled = !t.enabled;
+  $('callMuteBtn').innerHTML = t.enabled ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+};
+window.toggleCallCam = () => {
+  const t = S.call?.stream?.getVideoTracks?.()[0]; if(!t) return;
+  t.enabled = !t.enabled;
+  $('callCamBtn').innerHTML = t.enabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+};
+window.listenIncomingCalls = () => {
+  if(incomingUnsub || !S.user) return;
+  incomingUnsub = onSnapshot(query(collectionGroup(db,'call'), where('state','==','ringing'), where('callee','==',S.user.uid)), snap => {
+    snap.docChanges().forEach(ch=>{
+      if(ch.type!=='added') return;
+      const d = ch.doc.data(); if(!d || d.callee!==S.user.uid || d.caller===S.user.uid) return;
+      if(Date.now()-(d.createdAt||0) > 90000) return;
+      pendingIncoming = { dmId: ch.doc.ref.parent.parent.id, data:d };
+      const name = (S.friends||[]).find(f=>f.uid===d.caller)?.handle || S.profileCache?.[d.caller]?.handle || 'Someone';
+      $('incomingCallText').textContent = `${name} is calling (${d.type==='video'?'video':'voice'})`;
+      $('incomingCallBar').style.display='flex';
+    });
+  }, err => console.warn('incoming call listener:', err));
+};
+
+// ===== MESSAGE EDITING =====
+window.startEditMsg = (msgId) => {
+  const row = document.querySelector(`#msgFeed [data-mid="${CSS.escape(msgId)}"]`);
+  const contentEl = row?.querySelector('.msg-content');
+  if(!contentEl) return;
+  const orig = S.msgText?.[msgId] ?? '';
+  contentEl.dataset.origHtml = contentEl.innerHTML;
+  contentEl.innerHTML = `<textarea class="msg-edit-input" rows="1">${esc(orig)}</textarea>
+    <div class="flex items-center gap-3 mt-1.5">
+      <span class="text-[9px] text-slate-500">escape to cancel • enter to save</span>
+      <button class="text-[10px] text-bch hover:underline font-bold" onclick="saveEditMsg('${esc(msgId)}')">Save</button>
+      <button class="text-[10px] text-slate-400 hover:underline" onclick="cancelEditMsg('${esc(msgId)}')">Cancel</button>
+    </div>`;
+  const ta = contentEl.querySelector('textarea');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.oninput = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 200)+'px'; };
+  ta.onkeydown = e => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); saveEditMsg(msgId); }
+    if(e.key === 'Escape'){ e.preventDefault(); cancelEditMsg(msgId); }
+  };
+};
+window.cancelEditMsg = (msgId) => {
+  const row = document.querySelector(`#msgFeed [data-mid="${CSS.escape(msgId)}"]`);
+  const contentEl = row?.querySelector('.msg-content');
+  if(contentEl && contentEl.dataset.origHtml != null) contentEl.innerHTML = contentEl.dataset.origHtml;
+};
+window.saveEditMsg = async (msgId) => {
+  const row = document.querySelector(`#msgFeed [data-mid="${CSS.escape(msgId)}"]`);
+  const contentEl = row?.querySelector('.msg-content');
+  const ta = contentEl?.querySelector('textarea');
+  if(!ta) return;
+  const txt = ta.value.trim();
+  if(!txt){ cancelEditMsg(msgId); return; }
+  try{
+    if(S.inDMs && S.dmTarget){
+      const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
+      const dmId = [S.user.uid, targetUid].sort().join('_');
+      await updateDoc(doc(db,'dms',dmId,'messages',msgId), { content: txt, edited: true });
+      if(S.msgText) S.msgText[msgId] = txt;
+    } else if(S.server && S.channel){
+      // Channel messages store content encrypted — use the secure wrapper
+      await PQFirestore.secureUpdateDoc(doc(db,'servers',S.server.id,'channels',S.channel,'messages',msgId), { content: txt, edited: true });
+      if(S.msgText) S.msgText[msgId] = txt;
+    }
+  }catch(e){ alert('Edit failed: ' + e.message); }
+};
+async function actuallySendMessage(content, imageUrl, audioUrl, fileMeta){
   if(S.inDMs && S.dmTarget){
     const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget.uid;
     const isFriend = S.friends.some(f => f.uid === targetUid);
@@ -4535,6 +5375,9 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
         content: content || '',
         imageUrl: imageUrl||null,
         audioUrl: audioUrl||null,
+        fileUrl: fileMeta?.url || null,
+        fileName: fileMeta?.name || null,
+        fileSize: fileMeta?.size || null,
         ts: Date.now(),
         replyTo: S.replyingTo ? S.replyingTo.msgId : null,
         replyHandle: S.replyingTo ? S.replyingTo.handle : null
@@ -4557,6 +5400,7 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
     uid:S.user.uid, handle:safe(S.profile?.handle,'User'),
     avatar:safe(S.profile?.avatar, userAvatar(S.user.uid)),
     content: content||'', imageUrl: imageUrl||null, audioUrl: audioUrl||null,
+    fileUrl: fileMeta?.url || null, fileName: fileMeta?.name || null, fileSize: fileMeta?.size || null,
     reactions: {}, ts: Date.now(),
     replyTo: S.replyingTo ? S.replyingTo.msgId : null,
     replyHandle: S.replyingTo ? S.replyingTo.handle : null
@@ -4576,6 +5420,9 @@ async function actuallySendMessage(content, imageUrl, audioUrl){
 
   // Send using secure wrapper
   await PQFirestore.secureAddDoc(collection(db,'servers',S.server.id,'channels',S.channel,'messages'), data);
+  // Track last activity for unread badges + enforce slowmode timestamp
+  try{ await setDoc(doc(db,'servers',S.server.id,'channels',S.channel), {lastTs: Date.now()}, {merge:true}); }catch(e){}
+  localStorage.setItem(`havoc_slow_${S.server.id}_${S.channel}`, String(Date.now()));
 }
 window.playAudioMsg = (url, aid) => {
   const icon = $(`icon-${aid}`);
@@ -4648,7 +5495,7 @@ window.sendMsg = async e => {
   e.preventDefault();
   const input = $('chatInput');
   const content = input.value.trim();
-  if((!content && !S.pendingImage && !S.pendingImageUrl && !S.pendingAudio) || !S.user) return;
+  if((!content && !S.pendingImage && !S.pendingImageUrl && !S.pendingAudio && !S.pendingFile) || !S.user) return;
 
   console.log('sendMsg called:', { 
     inDMs: S.inDMs, 
@@ -4665,6 +5512,24 @@ window.sendMsg = async e => {
   }
   if(!S.inDMs && (!S.server || S.channelType !== 'text')) return;
   if(!S.inDMs && S.locked && !S.canManage) return alert('Channel is locked');
+
+  // Slowmode (per-channel, client-side)
+  if(!S.inDMs && !S.canManage){
+    const ch = S_channels.find(c => c.id === S.channel);
+    const slow = ch?.slowmode || 0;
+    if(slow > 0){
+      const last = +(localStorage.getItem(`havoc_slow_${S.server.id}_${S.channel}`) || 0);
+      const remain = slow*1000 - (Date.now() - last);
+      if(remain > 0) return alert(`Slowmode: please wait ${Math.ceil(remain/1000)}s`);
+    }
+    // Post permission (role allowlist; null = unrestricted)
+    if(ch?.postRoles){
+      const member = (S.membersCache||[]).find(x=>x.uid===S.user.uid);
+      const myRoles = member?.roles || [];
+      const ok = ch.postRoles.includes('everyone') || ch.postRoles.some(r=>myRoles.includes(r));
+      if(!ok) return alert('You don\'t have permission to post in this channel');
+    }
+  }
 
   // Rate limiting (400ms cooldown)
   if (S._lastSend && Date.now() - S._lastSend < 400) return;
@@ -4686,8 +5551,17 @@ window.sendMsg = async e => {
       await registerImage(imageUrl);
       clearImagePreview(); 
     }
+    let fileMeta = null;
+    if(S.pendingFile){
+      const targetUid = typeof S.dmTarget === 'string' ? S.dmTarget : S.dmTarget?.uid;
+      const fname = S.pendingFile.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,80);
+      const path = (S.inDMs ? `dms/${[S.user.uid, targetUid].sort().join('_')}` : `files/${S.server.id}/${S.channel}`) + `/${Date.now()}_${fname}`;
+      const fileUrl = await uploadImage(S.pendingFile, path);
+      fileMeta = { url: fileUrl, name: S.pendingFile.name, size: S.pendingFile.size };
+      clearFilePreview();
+    }
     console.log('Calling actuallySendMessage...');
-    await actuallySendMessage(content, imageUrl, null);
+    await actuallySendMessage(content, imageUrl, null, fileMeta);
     console.log('Message sent successfully');
   }catch(err){ 
     console.error('Send failed:', err);
@@ -4708,6 +5582,7 @@ window.deleteChannelMessage = async id => {
   
   if(!confirm('Delete this message?')) return;
   await deleteDoc(msgRef);
+  const c = $('msgContainer'); if(c) c.scrollTop = c.scrollHeight;
 };
 
 // ========== MEMBERS ==========
@@ -4791,7 +5666,7 @@ function listenMembers(serverId){
           </div>
           <div class="min-w-0 flex-1">
             <div class="font-bold text-xs truncate flex items-center member-name" style="${nameStyle}">
-              <span>${esc(m.handle)}</span>
+              <span>${esc(m.nick || m.handle)}</span>
               ${renderUserTag(S.profileCache[m.uid])}
               ${isNewMember(m.uid)?' <i class="fa-solid fa-seedling new-member-leaf ml-1" title="New member"></i>':''}
             </div>
@@ -4845,11 +5720,18 @@ window.showUserContext = (e, uid, handle, avatar) => {
   menu.classList.remove('hidden');
 };
 window.copyUserId = (uid) => { navigator.clipboard.writeText(uid); };
+window.copyMsgText = (msgId) => {
+  const txt = S.msgText?.[msgId] ?? '';
+  navigator.clipboard.writeText(txt).catch(()=>{});
+};
+window.copyMsgId = (msgId) => { navigator.clipboard.writeText(msgId).catch(()=>{}); };
 window.showMessageContext = (e, msgId, handle, content) => {
   e.preventDefault(); e.stopPropagation();
   const menu = $('ctxMenu');
   menu.innerHTML = `
     <div class="ctx-item" onclick="startReply('${esc(msgId)}', '${esc(handle)}', '${esc(content.replace(/'/g,"").slice(0,80))}');hideCtx()"><i class="fa-solid fa-reply w-4"></i> Reply</div>
+    <div class="ctx-item" onclick="copyMsgText('${esc(msgId)}');hideCtx()"><i class="fa-solid fa-copy w-4"></i> Copy Text</div>
+    <div class="ctx-item" onclick="copyMsgId('${esc(msgId)}');hideCtx()"><i class="fa-solid fa-fingerprint w-4"></i> Copy Message ID</div>
     ${S.canManage ? `<div class="ctx-item text-red-400" onclick="deleteChannelMessage('${esc(msgId)}');hideCtx()"><i class="fa-solid fa-trash w-4"></i> Delete</div>` : ''}
   `;
   menu.style.left = Math.min(e.clientX, window.innerWidth-200)+'px';
@@ -5218,6 +6100,8 @@ window.startDM = (uid, handle, avatar) => {
   if (S.unsubMsgs) { try { S.unsubMsgs(); } catch(e) {} S.unsubMsgs = null; }
   if (S.unsubDms) { try { S.unsubDms(); } catch(e) {} S.unsubDms = null; }
   if (S.unsubTyping) { try { S.unsubTyping(); } catch(e) {} S.unsubTyping = null; }
+  if(window.hideNewMsgPill) window.hideNewMsgPill();
+  const cs = $('chanSearch'); if(cs) cs.value = '';
 
   // Set DM state
   S.inDMs = true;
@@ -5228,6 +6112,8 @@ window.startDM = (uid, handle, avatar) => {
   
   // Mark DM as read
   markDMAsRead(uid);
+  $('dmVoiceBtn')?.classList.remove('hidden');
+  $('dmVideoBtn')?.classList.remove('hidden');
 
   // Update UI
   $('dmHomeBtn').classList.add('dm-active');
@@ -5502,9 +6388,12 @@ function loadDms(targetUid){
       }
       // Ensure content is a string
       if (typeof content !== 'string') content = String(content || '');
+      S.msgText = S.msgText || {};
+      S.msgText[m.id] = content;
 
       let contentHtml = formatMsgContent(content);
       if(m.imageUrl) contentHtml += `<div class="mt-2"><img src="${esc(m.imageUrl)}" class="max-w-full rounded-lg border border-dark-600 cursor-pointer" onclick="window.open('${esc(m.imageUrl)}')"></div>`;
+      contentHtml += fileChipHtml(m);
       if(m.audioUrl) {
         const aid = `audio-${Math.random().toString(36).slice(2,11)}`;
         contentHtml += `
@@ -5525,15 +6414,19 @@ function loadDms(targetUid){
       `;
     }
     
-    // Add delete button for own messages
+    // Add delete/edit buttons for own messages
     const deleteBtn = mine ? `<button onclick="deleteDMMessage('${m.id}')" class="ml-2 text-slate-500 hover:text-red-400 text-[10px]" title="Delete Message"><i class="fa-solid fa-trash"></i></button>` : '';
+    const editBtn = mine ? `<button onclick="startEditMsg('${m.id}')" class="ml-1 text-slate-500 hover:text-bch text-[10px]" title="Edit Message"><i class="fa-solid fa-pen"></i></button>` : '';
+    const editedMark = m.edited ? ' <span class="italic">(edited)</span>' : '';
     const dmContentStr = String(content||'');
     const replyBtn = `<button onclick="startReply('${m.id}','${esc((m.handle||'User').replace(/'/g,''))}','${esc(dmContentStr.replace(/'/g,'').slice(0,80))}')" class="hidden group-hover:inline text-slate-400 hover:text-bch mr-1 align-middle" title="Reply"><i class="fa-solid fa-reply"></i></button>`;
     const replyLine = m.replyTo ? `<div class="text-[9px] text-slate-400 mb-1 flex items-center gap-1"><i class="fa-solid fa-reply"></i><span class="truncate">replying to ${esc(m.replyHandle||'someone')}</span></div>` : '';
 
-    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'} group">${replyLine}${contentHtml}<div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${replyBtn}${shortTime(m.ts)}${deleteBtn}</div></div>`;
+    div.dataset.mid = m.id;
+    div.innerHTML = `<div class="max-w-[70%] px-3 py-2 rounded-xl text-xs ${mine?'bg-bch/20 text-bch-bright':'bg-dark-800 text-slate-200'} group">${replyLine}<div class="msg-content">${contentHtml}</div><div class="text-[9px] text-slate-500 mt-1 ${mine?'text-right':''}">${replyBtn}${shortTime(m.ts)}${editedMark}${editBtn}${deleteBtn}</div></div>`;
     feed.appendChild(div);
   }
+  loadLinkPreviews();
   const c = $('msgContainer'); c.scrollTop = c.scrollHeight;
   }, err => console.error('loadDms error:', err));
 }
@@ -5548,6 +6441,7 @@ window.deleteDMMessage = async (messageId) => {
   
   try {
     await deleteDoc(doc(db, 'dms', dmId, 'messages', messageId));
+    const c = $('msgContainer'); if(c) c.scrollTop = c.scrollHeight;
   } catch(e) {
     console.error('Error deleting DM message:', e);
     alert('Error deleting message');
@@ -5970,7 +6864,7 @@ window.sSettingsTab = tab => {
   $(`sst-${tab}`)?.classList.add('tab-active'); $(`sst-${tab}`)?.classList.remove('tab-inactive');
   if(tab === 'invites') renderInviteList();
   if(tab === 'members') renderServerMembers();
-  if(tab === 'roles'){ loadRoles(S.server.id).then(renderRolesList); }
+  if(tab === 'roles'){ loadRoles(S.server.id).then(renderRolesList); renderServerEmojis(); }
   const dsb = $('deleteServerSettingsBtn');
   if(dsb) dsb.classList.toggle('hidden', !isSiteOwner());
 };
@@ -6056,14 +6950,27 @@ async function renderServerMembers(){
         <img src="${esc(avatar)}" class="w-full h-full rounded-full object-cover" style="${avatarStyle}">
       </div>
       <div class="flex-1 min-w-0">
-        <div class="font-bold text-xs truncate" style="${userStyle}">${esc(handle)}</div>
-        <div class="text-[10px] text-slate-500 mono">${esc(m.role||'member')}</div>
+        <div class="font-bold text-xs truncate" style="${userStyle}">${esc(m.nick || handle)}</div>
+        <div class="text-[10px] text-slate-500 mono">${esc(m.role||'member')}${m.nick?` · @${esc(handle)}`:''}</div>
       </div>
-      ${m.role!=='owner'?`<button onclick="kickMember('${esc(m.uid)}','${esc(handle)}')" class="text-amber-500 text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>`:'<span class="badge-owner">OWNER</span>'}`;
+      ${m.role!=='owner'?`<button onclick="kickMember('${esc(m.uid)}','${esc(handle)}')" class="text-amber-500 text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>`:'<span class="badge-owner">OWNER</span>'}
+      ${(m.uid===S.user?.uid||S.canManage)?`<button onclick="editNick('${esc(m.uid)}')" class="text-slate-500 hover:text-bch text-xs" title="Change Nickname"><i class="fa-solid fa-pen"></i></button>`:''}`;
     el.appendChild(row);
   }
 }
 window.kickMember = async (uid, handle) => { if(!S.canManage) return; if(!confirm(`Kick ${handle}?`)) return; await deleteDoc(doc(db,'servers',S.server.id,'members',uid)); renderServerMembers(); };
+window.editNick = async (uid) => {
+  if(!S.server) return;
+  if(uid !== S.user?.uid && !S.canManage) return;
+  try{
+    const snap = await getDoc(doc(db,'servers',S.server.id,'members',uid));
+    const cur = snap.exists() ? (snap.data().nick || '') : '';
+    const v = prompt('Server nickname (empty = use global name):', cur);
+    if(v === null) return;
+    await updateDoc(doc(db,'servers',S.server.id,'members',uid), { nick: v.trim() || null });
+    renderServerMembers();
+  }catch(e){ alert(e.message); }
+};
 window.adminToggleLock = () => { S.locked = !S.locked; $('lockBadge').classList.toggle('hidden', !S.locked); closeModal('chanSettings'); closeModal('serverSettings'); };
 
 // ===== CHANNEL EDIT / DELETE (admin) =====
@@ -6073,8 +6980,40 @@ window.openChanSettings = (id, name) => {
   const ch = S_channels.find(x => x.id === S.chanEditId);
   $('chanSettingsName').textContent = name || ch?.name || S.chanEditId || '';
   const inp = $('chanRenameInput'); if(inp) inp.value = '';
+  const topicInp = $('chanTopicInput'); if(topicInp) topicInp.value = ch?.topic || '';
+  const slowInp = $('chanSlowmodeInput'); if(slowInp) slowInp.value = ch?.slowmode || 0;
+  // Post-permission role checkboxes (postRoles undefined/null = unrestricted)
+  const pr = $('chanPostRoles');
+  if(pr){
+    const cur = ch?.postRoles;
+    const everyoneOn = !cur || cur.includes('everyone');
+    pr.innerHTML = `<label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" class="post-role-cb" value="everyone" ${everyoneOn?'checked':''}> <span class="mention mention-everyone">@everyone</span></label>` +
+      (S.roles||[]).filter(r=>r.id!=='everyone').map(r=>
+        `<label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" class="post-role-cb" value="${esc(r.id)}" ${cur && !cur.includes('everyone') && cur.includes(r.id)?'checked':''} style="accent-color:${esc(r.color||'#0AC18E')}"> ${esc(r.name)}</label>`
+      ).join('');
+  }
   openModal('chanSettings');
 };
+window.saveChanExtras = async () => {
+  const cid = S.chanEditId || S.channel;
+  if(!S.canManage || !S.server || !cid) return;
+  const topic = ($('chanTopicInput')?.value || '').trim().slice(0,1024);
+  const slowmode = Math.max(0, Math.min(21600, parseInt($('chanSlowmodeInput')?.value)||0));
+  const cbs = [...document.querySelectorAll('.post-role-cb:checked')].map(c=>c.value);
+  const postRoles = cbs.includes('everyone') ? null : cbs;
+  try{
+    await updateDoc(doc(db,'servers',S.server.id,'channels',cid), {topic, slowmode, postRoles});
+    const ch = S_channels.find(x=>x.id===cid);
+    if(ch){ ch.topic = topic; ch.slowmode = slowmode; ch.postRoles = postRoles; }
+    if(S.channel === cid) showChanTopic(topic);
+    closeModal('chanSettings');
+  }catch(e){ alert(e.message); }
+};
+function showChanTopic(topic){
+  const el = $('chanTopic'); if(!el) return;
+  if(topic){ el.textContent = topic; el.classList.remove('hidden'); }
+  else el.classList.add('hidden');
+}
 window.renameChannel = async () => {
   const cid = S.chanEditId || S.channel;
   if(!S.canManage || !S.server || !cid) return;
@@ -6148,11 +7087,27 @@ window.deleteServerById = async (sid) => {
   await deleteDoc(doc(db,'servers',sid));
 };
 function resetAfterServerDelete(){
-  S.server = null; S.channel = null; S.channelType = null;
+  S.server = null; S.channel = null; S.channelType = null; S.canManage = false;
+  // Stop all live listeners so the deleted server's data can't keep rendering
+  if(S.unsubMsgs){ try{ S.unsubMsgs(); }catch(e){} S.unsubMsgs = null; }
+  if(S.unsubTyping){ try{ S.unsubTyping(); }catch(e){} S.unsubTyping = null; }
+  if(S.unsubMembers){ try{ S.unsubMembers(); }catch(e){} S.unsubMembers = null; }
+  if(S.unsubDms){ try{ S.unsubDms(); }catch(e){} S.unsubDms = null; }
+  if(serverTypingUnsub){ try{ serverTypingUnsub(); }catch(e){} serverTypingUnsub = null; }
+  leaveVoice();
+  if(window.cancelReply) window.cancelReply();
   $('currentServerName').textContent = 'Select a Server';
   $('serverIconPreview').classList.add('hidden');
   $('channelsList').innerHTML = ''; $('voiceList').innerHTML = '';
   $('chanHeader').textContent = '—';
+  $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>';
+  $('chatInput').disabled = true;
+  $('chatInput').placeholder = 'Select a channel to chat…';
+  $('chanAdminBtn').classList.add('hidden');
+  $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
+  $('addChanBtn').classList.add('hidden'); $('addVoiceBtn').classList.add('hidden');
+  $('textArea').classList.remove('hidden');
+  $('voiceArea').classList.add('hidden');
   closeModal('serverSettings'); closeModal('chanSettings');
   loadMyServers();
 }
@@ -6607,6 +7562,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRemember();
   setupTypingInput();
   applyChatTheme();
+  // Spoiler click-to-reveal (delegated — keeps generated HTML attribute-free)
+  document.addEventListener('click', e => {
+    const s = e.target.closest?.('.md-spoiler');
+    if(s) s.classList.toggle('revealed');
+  });
   
   // Custom status color sync
   const colorPicker = $('customStatusColor');
@@ -7068,6 +8028,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFullTgifDataset();
   loadRemember();
   setupTypingInput();
+  const mc = $('msgContainer');
+  if(mc) mc.addEventListener('scroll', () => {
+    if(mc.scrollHeight - mc.scrollTop - mc.clientHeight < 80) hideNewMsgPill();
+  });
 });
 
 
@@ -7426,5 +8390,25 @@ window.toggleScreenShare = async () => {
 
 console.log('%c havoc ready ', 'background:#0AC18E;color:#000;font-weight:900;padding:4px 10px;');
 </script>
+<!-- DM CALL OVERLAY + INCOMING CALL BAR -->
+<div id="callOverlay" style="display:none">
+  <div id="callStatus" class="text-white font-bold text-lg">Calling…</div>
+  <div class="flex gap-4 items-center">
+    <video id="callRemoteVideo" autoplay playsinline class="hidden"></video>
+    <video id="callLocalVideo" autoplay playsinline muted class="hidden" style="width:150px"></video>
+  </div>
+  <div class="flex gap-4 items-center">
+    <button id="callMuteBtn" class="call-btn bg-dark-700 text-white" onclick="toggleCallMute()" title="Mute"><i class="fa-solid fa-microphone"></i></button>
+    <button id="callCamBtn" class="call-btn bg-dark-700 text-white hidden" onclick="toggleCallCam()" title="Camera"><i class="fa-solid fa-video"></i></button>
+    <button class="call-btn bg-red-600 text-white" onclick="endCall()" title="End call"><i class="fa-solid fa-phone-slash"></i></button>
+  </div>
+</div>
+<div id="incomingCallBar">
+  <i class="fa-solid fa-phone text-black"></i>
+  <span id="incomingCallText">Incoming call…</span>
+  <button onclick="declineCall()" class="bg-black/25 hover:bg-black/40 rounded px-3 py-1 text-xs font-bold">Decline</button>
+  <button onclick="acceptCall()" class="bg-black/25 hover:bg-black/40 rounded px-3 py-1 text-xs font-bold">Accept</button>
+</div>
+
 </body>
 </html>
