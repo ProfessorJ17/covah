@@ -52,7 +52,7 @@
     /* Discord-like rounding: plain .rounded buttons get 8px instead of 4px */
     button.rounded{border-radius:8px}
     .glow-text{text-shadow:0 0 10px rgba(0,229,163,.5)}
-    .havoc-gradient-text{background:var(--ct-gradient,linear-gradient(135deg,#3B63D6,#9B55C6,#F648AC,#E28F48,#1a0533));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+    .havoc-gradient-text{background:var(--ct-gradient,linear-gradient(135deg,#3B63D6,#9B55C6,#F648AC,#E28F48,#1a0533));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:0 0 10px var(--ct-logo-glow,#e2e8f0),0 0 24px var(--ct-logo-glow,#e2e8f0)}
     #sidebarResize{transition:background .15s;background:rgba(74,63,108,.15)}
     body.chat-themed #sidebarResize{background:rgba(74,63,108,.08)}
     .mention{background:rgba(10,193,142,.18);color:#00E5A3;padding:0 3px;border-radius:3px;font-weight:600}
@@ -371,11 +371,11 @@
     body.chat-themed button.server-active::after{
       content:'';
       position:absolute;
-      inset:-9px;
-      border-radius:27px;
+      inset:-6px;
+      border-radius:24px;
       background:var(--ct-ring,conic-gradient(#6b5a8a,#4a3f6c,#6b5a8a));
-      filter:blur(10px);
-      opacity:.7;
+      filter:blur(8px);
+      opacity:.6;
       pointer-events:none;
       z-index:0;
       animation:havocRingSpin 5s linear infinite;
@@ -391,8 +391,16 @@
       animation:havocRingSpin 5s linear infinite;
     }
     body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
-    /* Bottom user bar sits above the rotating server glow so it doesn't bleed through */
-    body.chat-themed #sidebar .bg-dark-950.border-t{position:relative;z-index:10;background-color:rgba(8,10,18,.88)!important}
+    /* Bottom user bar — frosted glass over the theme gradient, above the glow */
+    body.chat-themed #sidebar .bg-dark-950.border-t{
+      position:relative;z-index:10;
+      background-color:rgba(8,10,18,.45)!important;
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+    /* Clip the rotating glow at the server list bounds so it can't bleed
+       onto the ticket/create/admin buttons below */
+    body.chat-themed #serverList{overflow:hidden}
     body.chat-themed button:hover{
       box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
@@ -2267,6 +2275,9 @@ function applyChatTheme(){
   // Conic ring for the rotating active-server glow — built from the theme's own colors
   const ringCols = (th?.css.match(/#[0-9a-fA-F]{6}/g) || ['#6b5a8a','#4a3f6c','#6b5a8a']);
   document.body.style.setProperty('--ct-ring', `conic-gradient(${ringCols.join(',')},${ringCols[0]})`);
+  // Logo glow = last color of the theme gradient; Default Dark gets a light gray instead
+  const lastCol = ringCols[ringCols.length-1];
+  document.body.style.setProperty('--ct-logo-glow', t ? (lastCol || '#e2e8f0') : '#e2e8f0');
   // Refresh server icons with new theme colors
   if(typeof window.refreshServerIcons === 'function') window.refreshServerIcons();
 }
