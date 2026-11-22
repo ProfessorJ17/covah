@@ -341,27 +341,7 @@
     body.chat-themed #membersList .flex.items-center{background:transparent!important}
     body.chat-themed #membersList .flex.items-center:hover{background:var(--ct-gradient,#4a3f6c)!important;color:#fff}
     /* Server icons — grayscale + theme gradient overlay with theme glow */
-    body.chat-themed .server-icon-wrapper{
-      position:relative;
-      overflow:hidden;
-      border-radius:inherit;
-    }
-    /* Seed-generated (DiceBear) icons only — uploaded images stay untouched */
-    body.chat-themed .server-icon-wrapper img[src*="dicebear.com"]{
-      filter:grayscale(100%) brightness(0.8);
-    }
-    body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"])::after{
-      content:'';
-      position:absolute;
-      inset:0;
-      background:var(--ct-gradient,#4a3f6c);
-      opacity:0.6;
-      mix-blend-mode:multiply;
-      pointer-events:none;
-    }
-    body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"]):hover::after{
-      opacity:0.4;
-    }
+    /* Server icons render clean on all themes — no grayscale or gradient overlay (like Default) */
     /* Server icon wrapper clips the icon to the button's squircle shape.
        Solid backing stops the rotating glow bleeding through transparent avatars. */
     .server-icon-wrapper{position:relative;overflow:hidden;border-radius:inherit;background:#1e1f22}
@@ -391,12 +371,10 @@
       animation:havocRingSpin 5s linear infinite;
     }
     body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
-    /* Bottom user bar — frosted glass over the theme gradient, above the glow */
+    /* Bottom user bar — fully transparent over the theme gradient, above the glow */
     body.chat-themed #sidebar .bg-dark-950.border-t{
       position:relative;z-index:10;
-      background-color:rgba(8,10,18,.45)!important;
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
+      background-color:transparent!important;
     }
     /* Clip the rotating glow at the server list bounds so it can't bleed
        onto the ticket/create/admin buttons below */
@@ -560,6 +538,13 @@
     .discover-card { background: #1e1f22; border-radius: 12px; overflow: hidden; transition: transform 0.2s, background 0.2s; cursor: pointer; border: 1px solid #242b3b; }
     .discover-card:hover { transform: translateY(-4px); background: #2b2d31; border-color: #0AC18E; }
     .tag { background: #050608; color: #94a3b8; font-size: 10px; padding: 2px 8px; border-radius: 4px; border: 1px solid #242b3b; }
+
+    /* Scrollbars — #4A464B thumb on transparent track */
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#4A464B;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+    ::-webkit-scrollbar-thumb:hover{background:#5b5760;border:2px solid transparent;background-clip:content-box}
+    html{scrollbar-width:thin;scrollbar-color:#4A464B transparent}
   </style>
 </head>
 <body class="h-full flex flex-col overflow-hidden text-sm">
@@ -698,7 +683,6 @@
         <button onclick="openThreadsPanel()" title="Threads" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-comments"></i></button>
         <button onclick="toggleNotifMenu(event)" title="Notification Settings" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-bell"></i></button>
         <button onclick="openPinsPanel()" title="Pinned Messages" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-thumbtack"></i></button>
-        <button onclick="toggleMembersPanel()" title="Toggle Member List" id="membersToggleBtn" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-user-group"></i></button>
         <div class="hidden md:flex items-center ml-1">
           <input type="text" id="chanSearch" placeholder="Search" oninput="filterChanSearch(this.value)" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
         </div>
@@ -2677,8 +2661,8 @@ window.openDMs = () => {
   loadFriends(); renderDMList(); // Note: renderDMList is now async but we don't await here
   dmTab('dms');
 };
-function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); }
-function showChannelsView(){ $('dmView').classList.add('hidden'); $('channelsView').classList.remove('hidden'); $('membersContent')?.classList.remove('hidden'); $('dmProfileContent')?.classList.add('hidden'); $('dmHomeBtn').classList.remove('dm-active'); }
+function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); const mp=$('membersPanel'); if(mp) mp.style.display='none'; }
+function showChannelsView(){ $('dmView').classList.add('hidden'); $('channelsView').classList.remove('hidden'); $('membersContent')?.classList.remove('hidden'); $('dmProfileContent')?.classList.add('hidden'); $('dmHomeBtn').classList.remove('dm-active'); const mp=$('membersPanel'); if(mp) mp.style.display=''; }
 
 window.filterDMs = (q) => {
   q = q.toLowerCase();
