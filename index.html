@@ -49,7 +49,7 @@
     .btn-primary{background:#0AC18E;color:#000;font-weight:700;border-radius:8px}
     .btn-primary:hover{background:#00E5A3}
     .glow-text{text-shadow:0 0 10px rgba(0,229,163,.5)}
-    .havoc-gradient-text{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .havoc-gradient-text{background:var(--ct-accent,#4a3f6c);-webkit-background-clip:text;background-clip:text;color:transparent}
     #sidebarResize{transition:background .15s;background:rgba(74,63,108,.15)}
     body.chat-themed #sidebarResize{background:rgba(74,63,108,.08)}
     .mention{background:rgba(10,193,142,.18);color:#00E5A3;padding:0 3px;border-radius:3px;font-weight:600}
@@ -184,17 +184,17 @@
     body.chat-themed .text-slate-600{color:#9d96a8!important}
     /* Convert teal highlights to lavender/purple when themed */
     body.chat-themed .text-bch,
-    body.chat-themed .text-bch-bright{color:#c4b8e0!important}
+    body.chat-themed .text-bch-bright{color:#e8e4f0!important}
     body.chat-themed .bg-bch\/20{background-color:rgba(74,63,108,.15)!important}
     body.chat-themed .bg-bch\/30{background-color:rgba(74,63,108,.22)!important}
-    body.chat-themed .border-bch{border-color:rgba(74,63,108,.4)!important}
+    body.chat-themed .border-bch{border-color:rgba(107,90,138,.4)!important}
     body.chat-themed .border-bch\/30{border-color:rgba(74,63,108,.25)!important}
     body.chat-themed .border-bch\/40{border-color:rgba(74,63,108,.3)!important}
     /* Gradient accents: primary buttons (send etc.) + active channel highlight */
-    .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0}
+    .btn-primary{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
     .btn-primary:hover{filter:brightness(1.15)}
     body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(74,63,108,.3),rgba(107,90,138,.2))!important}
-    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);color:#e8e4f0}
+    body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:var(--ct-accent,#4a3f6c);color:#fff}
     /* All secondary buttons get gradient when themed */
     body.chat-themed button.bg-dark-800,
     body.chat-themed button.bg-dark-700,
@@ -207,8 +207,7 @@
     body.chat-themed #logoutBtn,
     body.chat-themed .logout-btn,
     body.chat-themed button[type="submit"],
-    body.chat-themed #sendBtn,
-    body.chat-themed .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed #sendBtn{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed button.bg-dark-800:hover,
     body.chat-themed button.bg-dark-700:hover,
     body.chat-themed button.bg-dark-600:hover,
@@ -220,26 +219,25 @@
     body.chat-themed #logoutBtn:hover,
     body.chat-themed .logout-btn:hover,
     body.chat-themed button[type="submit"]:hover,
-    body.chat-themed #sendBtn:hover,
-    body.chat-themed .btn-primary:hover{filter:brightness(1.2)}
+    body.chat-themed #sendBtn:hover{filter:brightness(1.2)}
     /* Settings modal buttons */
     body.chat-themed .modal button,
-    body.chat-themed .fixed button{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed .fixed button{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed .modal button:hover,
     body.chat-themed .fixed button:hover{filter:brightness(1.15)}
     /* Settings tab buttons */
     body.chat-themed .tab-active,
-    body.chat-themed button.tab-active{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed button.tab-active{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
     /* Danger zone buttons keep red but get gradient border */
     body.chat-themed button.bg-red-900\/30,
     body.chat-themed button.bg-red-950{border-color:rgba(180,80,80,.4)!important;background:linear-gradient(90deg,#5a2a2a,#7a3a3a)!important;color:#f0d0d0}
     /* Global button gradient for ALL buttons when themed */
-    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item){background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item){background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item):hover{filter:brightness(1.2)}
     /* Send button and primary buttons get stronger gradient */
     body.chat-themed #sendBtn,
     body.chat-themed button[type="submit"],
-    body.chat-themed .btn-primary{background:linear-gradient(90deg,#6b5a8a,#4a3f6c)!important;color:#fff;border:none!important;box-shadow:0 2px 8px rgba(74,63,108,.3)}
+    body.chat-themed .btn-primary{background:var(--ct-accent,#6b5a8a)!important;color:#fff;border:none!important;box-shadow:0 2px 8px rgba(74,63,108,.3)}
     body.chat-themed #sendBtn:hover,
     body.chat-themed button[type="submit"]:hover,
     body.chat-themed .btn-primary:hover{filter:brightness(1.25);box-shadow:0 4px 12px rgba(74,63,108,.4)}
@@ -263,9 +261,9 @@
     body.chat-themed .logout-btn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed .logout-btn:hover{filter:brightness(1.15)}
     /* DM home button gets the theme gradient for all themes */
-    #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
+    #dmHomeBtn{background:var(--ct-accent,#4a3f6c)!important}
     #dmHomeBtn:hover{filter:brightness(1.15)}
-    body.chat-themed #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
+    body.chat-themed #dmHomeBtn{background:var(--ct-accent,#4a3f6c)!important}
     /* Ensure DM icon is visible on gradient */
     body.chat-themed #dmHomeBtn img{filter:brightness(1.2)}
     /* Channel categories */
@@ -2047,12 +2045,12 @@ function formatMsgContent(content){
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
-  { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)' },
+  { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'gta6',   name:'GTA6',         css:'linear-gradient(90deg,#0a0e1c 0%,#1a1f3a 25%,#2d1b3d 50%,#3d2a4a 75%,#2d1b3d 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)' },
-  { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)' },
-  { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)' },
-  { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)' },
+  { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
+  { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
+  { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
+  { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
 ];
 // Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
 function currentChatThemeId(){
@@ -2067,7 +2065,8 @@ function applyChatTheme(){
   if(t) document.body.classList.add('chat-themed','ct-'+t);
   const th = CHAT_THEMES.find(x=>x.id===t);
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0a0e1c,#2d1b3d)');
-  document.body.style.setProperty('--ct-accent', th?.accent || th?.css || 'linear-gradient(#4a3f6c,#6b5a8a)');
+  // Accent should be a solid color or simple gradient for buttons
+  document.body.style.setProperty('--ct-accent', th?.accent || 'linear-gradient(90deg,#4a3f6c,#6b5a8a)');
 }
 window.setChatTheme = (t) => {
   localStorage.setItem('havoc_chat_theme', t || '__dark');
