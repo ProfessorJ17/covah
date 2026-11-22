@@ -376,6 +376,12 @@
       position:relative;z-index:10;
       background-color:transparent!important;
     }
+    /* Logout gets its own section — theme gradient under a dark frosted overlay,
+       same treatment as the chat/members panels */
+    .logout-section{background:#0d0f14}
+    body.chat-themed .logout-section{
+      background:linear-gradient(rgba(5,8,16,.45),rgba(5,8,16,.45)),var(--ct-gradient,#1a0533);
+    }
     /* Clip the rotating glow at the server list bounds so it can't bleed
        onto the ticket/create/admin buttons below */
     body.chat-themed #serverList{overflow:hidden}
@@ -661,9 +667,11 @@
           <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
         </div>
       </div>
-      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1 py-0.5 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
-        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-      </button>
+      <div class="logout-section border-t border-dark-700/60 px-2 py-1.5">
+        <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+        </button>
+      </div>
     </div>
   </aside>
 
