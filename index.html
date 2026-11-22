@@ -362,29 +362,36 @@
     body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"]):hover::after{
       opacity:0.4;
     }
-    /* Server icon glow uses theme color (box-shadow can't take gradients) */
-    body.chat-themed button.server-active{
-      box-shadow:0 0 12px var(--ct-glow,#6b5a8a), 0 0 24px var(--ct-glow,#6b5a8a);
-    }
-    body.chat-themed button:hover{
-      box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
-    }
-    /* Active server — rotating conic-gradient ring (Discord AI-mode style) */
-    body.chat-themed button.server-active .server-icon-wrapper{position:relative}
-    body.chat-themed button.server-active .server-icon-wrapper::before{
+    /* Server icon wrapper clips the icon to the button's squircle shape */
+    .server-icon-wrapper{position:relative;overflow:hidden;border-radius:inherit}
+    /* Active server — rotating conic-gradient glow OUTSIDE the icon only (Discord AI-mode style).
+       Pseudos extend past the button; the icon wrapper sits above them so nothing shows inside. */
+    body.chat-themed button.server-active{position:relative}
+    body.chat-themed button.server-active::after{
       content:'';
       position:absolute;
-      inset:0;
-      border-radius:inherit;
-      padding:2.5px;
+      inset:-9px;
+      border-radius:27px;
       background:var(--ct-ring,conic-gradient(#6b5a8a,#4a3f6c,#6b5a8a));
-      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-      -webkit-mask-composite:xor;
-      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-      mask-composite:exclude;
-      animation:havocRingSpin 6s linear infinite;
+      filter:blur(10px);
+      opacity:.7;
       pointer-events:none;
-      z-index:3;
+      z-index:0;
+      animation:havocRingSpin 5s linear infinite;
+    }
+    body.chat-themed button.server-active::before{
+      content:'';
+      position:absolute;
+      inset:-4px;
+      border-radius:22px;
+      background:var(--ct-ring,conic-gradient(#6b5a8a,#4a3f6c,#6b5a8a));
+      pointer-events:none;
+      z-index:1;
+      animation:havocRingSpin 5s linear infinite;
+    }
+    body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
+    body.chat-themed button:hover{
+      box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
     @keyframes havocRingSpin{to{transform:rotate(360deg)}}
     /* User avatars — grayscale + theme gradient overlay, seed images only */
@@ -408,6 +415,19 @@
     body.chat-themed #membersPanel .avatar-wrapper > img{filter:none!important}
     body.chat-themed #membersPanel .avatar-wrapper::after{display:none!important}
     body.chat-themed #membersPanel .avatar-wrapper::before{display:none!important}
+    /* DM / Friends / Pending list avatars stay clean too — same as members */
+    body.chat-themed #dmList .avatar-wrapper > img,
+    body.chat-themed #friendsList .avatar-wrapper > img,
+    body.chat-themed #incomingRequests .avatar-wrapper > img,
+    body.chat-themed #outgoingRequests .avatar-wrapper > img{filter:none!important}
+    body.chat-themed #dmList .avatar-wrapper::after,
+    body.chat-themed #friendsList .avatar-wrapper::after,
+    body.chat-themed #incomingRequests .avatar-wrapper::after,
+    body.chat-themed #outgoingRequests .avatar-wrapper::after,
+    body.chat-themed #dmList .avatar-wrapper::before,
+    body.chat-themed #friendsList .avatar-wrapper::before,
+    body.chat-themed #incomingRequests .avatar-wrapper::before,
+    body.chat-themed #outgoingRequests .avatar-wrapper::before{display:none!important}
     
     /* Members list — status text stays default muted color like Discord */
     body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
@@ -4308,7 +4328,7 @@ function renderServerRail(servers){
     const muted = isServerMuted(s.id,'server');
     const btn = document.createElement('button');
     btn.title = (s.tag ? `[${s.tag}] ` : '') + safe(s.name,'Server') + (muted?' (muted)':'');
-    btn.className = `w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center font-bold text-xs overflow-hidden ${S.server?.id===s.id?'server-active':''} ${muted?'muted-server':''}`;
+    btn.className = `w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center font-bold text-xs ${S.server?.id===s.id?'server-active':''} ${muted?'muted-server':''}`;
     const ic = s.iconUrl ? serverIconUrl(s) : null;
     if(ic) btn.innerHTML = `<div class="server-icon-wrapper w-full h-full"><img src="${esc(ic)}" class="w-full h-full object-cover"></div>`;
     else btn.innerHTML = `<div class="server-icon-wrapper w-full h-full flex items-center justify-center font-bold text-xs">${safe(s.name,'??').slice(0,2).toUpperCase()}</div>`;
