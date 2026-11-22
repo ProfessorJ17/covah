@@ -427,6 +427,7 @@
     .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
     .cat-header:hover{background:rgba(255,255,255,.04)}
     .cat-header .cat-caret{font-size:9px;color:#80848e;transition:transform .15s;width:10px;text-align:center}
+    .cat-drop{outline:1px dashed rgba(107,90,138,.6);outline-offset:-1px;background:rgba(74,63,108,.12)}
     .cat-header .cat-name{font-size:10px;font-weight:800;color:#949ba4;text-transform:uppercase;letter-spacing:.04em;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cat-header:hover .cat-name{color:#c9cdd4}
     .cat-children{margin-left:14px;border-left:1px solid rgba(255,255,255,.07);padding-left:4px}
@@ -533,6 +534,10 @@
       height: 44px !important;
     }
 
+    /* Discord-style date divider between days */
+    .msg-date-divider{display:flex;align-items:center;gap:10px;margin:16px 4px 8px;color:#949ba4;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .msg-date-divider::before,.msg-date-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.09)}
+
     /* DISCOVERY MODAL */
     .discover-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .discover-card { background: #1e1f22; border-radius: 12px; overflow: hidden; transition: transform 0.2s, background 0.2s; cursor: pointer; border: 1px solid #242b3b; }
@@ -575,7 +580,7 @@
     <div id="dmNotificationAvatars" class="flex flex-col items-center gap-1 max-h-24 overflow-y-auto w-full px-2"></div>
     <div class="w-8 h-0.5 bg-dark-700 rounded-full my-1"></div>
     <div id="serverList" class="flex flex-col items-center gap-2 w-full px-2 flex-1"></div>
-    <div class="flex flex-col items-center gap-2 pb-2 w-full px-2">
+    <div class="flex flex-col items-center gap-2 pb-2 w-full px-2" style="margin-bottom:84px">
       <button id="ticketBtn" onclick="openModal('joinInvite')" title="Join Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center"><i class="fa-solid fa-ticket"></i></button>
       <button onclick="openModal('createServer')" title="Create Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg font-bold"><i class="fa-solid fa-plus"></i></button>
       <button onclick="openModal('discover')" title="Discover Servers" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg"><i class="fa-solid fa-compass"></i></button>
@@ -640,7 +645,7 @@
       </div>
     </div>
 
-    <div class="bg-dark-950 border-t border-dark-700 px-2 py-2">
+    <div class="bg-dark-950 border-t border-dark-700 px-2 py-2" style="width:calc(100% + 64px);margin-left:-64px;position:relative;z-index:20">
       <div class="flex items-center gap-2">
         <div class="relative avatar-wrapper cursor-pointer" onclick="openModal('profile')" style="width:40px;height:40px">
           <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-10 h-10 rounded-full bg-dark-800 border border-dark-600">
@@ -656,7 +661,7 @@
           <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
         </div>
       </div>
-      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1.5 py-1 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[10px] font-bold logout-btn">
+      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1 py-0.5 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
         <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
       </button>
     </div>
@@ -2094,6 +2099,8 @@ function parseEmojis(t){
   if (typeof t !== 'string') return t || '';
   return t.replace(/:[a-z0-9_+-]+:/gi, m => EMOJI_MAP[m.toLowerCase()]||m);
 }
+// Escape then render :emoji: shortcodes — for names, topics, statuses (never raw HTML)
+const emojify = s => parseEmojis(esc(s));
 
 function parseLinks(t){
   if (typeof t !== 'string') return t || '';
@@ -4795,7 +4802,7 @@ async function switchServer(s){
   }
 
   const nameEl = $('currentServerName');
-  nameEl.innerHTML = `<span>${esc(safe(s.name,'Server'))}</span>${renderServerTag(s)}`;
+  nameEl.innerHTML = `<span>${emojify(safe(s.name,'Server'))}</span>${renderServerTag(s)}`;
 
   if(s.iconUrl){ $('serverIconPreview').src = serverIconUrl(s); $('serverIconPreview').classList.remove('hidden'); }
   else $('serverIconPreview').classList.add('hidden');
@@ -4910,6 +4917,56 @@ window.deleteCategory = async () => {
   closeModal('catSettings'); await loadCategories(S.server.id); renderChannels();
 };
 
+// Drag & drop for channel buttons (admins) — reorder + adopt the drop target's category
+function enableChanDrag(btn, c, index){
+  btn.draggable = true;
+  btn.ondragstart = (e) => {
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.setData('application/x-channel-id', c.id);
+    e.dataTransfer.effectAllowed = 'move';
+    btn.classList.add('opacity-50');
+  };
+  btn.ondragend = () => btn.classList.remove('opacity-50');
+  btn.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+  btn.ondrop = async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const cid = e.dataTransfer.getData('application/x-channel-id') || S_channels[parseInt(e.dataTransfer.getData('text/plain'))]?.id;
+    const fromIndex = S_channels.findIndex(x => x.id === cid);
+    if(fromIndex < 0 || fromIndex === index) return;
+    const target = S_channels[index];
+    const movedChannel = S_channels.splice(fromIndex, 1)[0];
+    S_channels.splice(Math.min(index, S_channels.length), 0, movedChannel);
+    // Dropping onto a channel also moves into that channel's category (Discord-style)
+    if(target && (movedChannel.categoryId || null) !== (target.categoryId || null)){
+      movedChannel.categoryId = target.categoryId || null;
+      try{ await updateDoc(doc(db,'servers',S.server.id,'channels',movedChannel.id), {categoryId:movedChannel.categoryId}); }catch(err){ console.error(err); }
+    }
+    for(let i = 0; i < S_channels.length; i++) {
+      await updateDoc(doc(db, 'servers', S.server.id, 'channels', S_channels[i].id), { position: i });
+    }
+    renderChannels();
+  };
+}
+// Drop target for category headers/wraps and the uncategorized list area
+function enableCatDrop(el, catId){
+  el.ondragover = e => { if(S.canManage){ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('cat-drop'); } };
+  el.ondragleave = () => el.classList.remove('cat-drop');
+  el.ondrop = async e => {
+    e.preventDefault(); e.stopPropagation(); el.classList.remove('cat-drop');
+    if(!S.canManage) return;
+    const cid = e.dataTransfer.getData('application/x-channel-id');
+    if(cid) await moveChannelToCategory(cid, catId);
+  };
+}
+async function moveChannelToCategory(channelId, catId){
+  const c = S_channels.find(x => x.id === channelId); if(!c || !S.server) return;
+  const maxPos = S_channels.reduce((m,x)=>Math.max(m, x.position||0), 0) + 1;
+  c.categoryId = catId || null; c.position = maxPos;
+  try{ await updateDoc(doc(db,'servers',S.server.id,'channels',channelId), {categoryId:c.categoryId, position:maxPos}); }
+  catch(e){ return alert(e.message); }
+  renderChannels();
+}
+
 function buildChanBtn(c, readMap){
   const index = S_channels.indexOf(c);
   const btn = document.createElement('button');
@@ -4917,11 +4974,16 @@ function buildChanBtn(c, readMap){
   btn.dataset.channelId = c.id;
   btn.dataset.index = index;
 
+  // Add drag handle for admins
+  const dragHandle = S.canManage ? `<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600 cursor-grab hover:text-slate-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>` : '';
+  if(S.canManage) enableChanDrag(btn, c, index);
+
   if(c.type === 'voice'){
     btn.onclick = () => joinVoice(c);
     btn.innerHTML = `
+      ${dragHandle}
       <i class="fa-solid fa-volume-high text-[10px] ${S.channel === c.id ? 'text-bch-bright' : 'text-slate-600 group-hover:text-slate-400'}"></i>
-      <span class="truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+      <span class="truncate flex-1 text-left font-medium">${emojify(c.name || c.id)}</span>
       ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
     `;
     return btn;
@@ -4932,51 +4994,13 @@ function buildChanBtn(c, readMap){
     switchChannel(c);
   };
 
-  // Add drag handle for admins
-  const dragHandle = S.canManage ? `<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600 cursor-grab hover:text-slate-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>` : '';
-
-  // Make draggable for admins
-  if(S.canManage) {
-    btn.draggable = true;
-    btn.ondragstart = (e) => {
-      e.dataTransfer.setData('text/plain', index);
-      e.dataTransfer.effectAllowed = 'move';
-      btn.classList.add('opacity-50');
-    };
-    btn.ondragend = () => {
-      btn.classList.remove('opacity-50');
-    };
-    btn.ondragover = (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    };
-    btn.ondrop = async (e) => {
-      e.preventDefault();
-      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-      const toIndex = index;
-      if(fromIndex === toIndex) return;
-
-      // Reorder array
-      const movedChannel = S_channels.splice(fromIndex, 1)[0];
-      S_channels.splice(toIndex, 0, movedChannel);
-
-      // Update positions in Firestore
-      for(let i = 0; i < S_channels.length; i++) {
-        await updateDoc(doc(db, 'servers', S.server.id, 'channels', S_channels[i].id), { position: i });
-      }
-
-      // Re-render
-      renderChannels();
-    };
-  }
-
   const unread = chanHasUnread(c, readMap);
   if(unread) btn.classList.add('chan-unread');
   btn.innerHTML = `
     ${dragHandle}
     <i class="fa-solid fa-hashtag text-xs ${S.channel === c.id ? 'text-bch' : 'text-slate-600 group-hover:text-slate-400'}"></i>
     ${unread?'<span class="unread-dot"></span>':''}
-    <span class="chan-name truncate flex-1 text-left font-medium">${esc(c.name || c.id)}</span>
+    <span class="chan-name truncate flex-1 text-left font-medium">${emojify(c.name || c.id)}</span>
     ${S.canManage ? `<span onclick="event.stopPropagation();openChanSettings('${esc(c.id)}','${esc(String(c.name||c.id).replace(/'/g,''))}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] shrink-0 cursor-pointer" title="Edit Channel"><i class="fa-solid fa-pen"></i></span>` : ''}
   `;
   return btn;
@@ -4994,6 +5018,9 @@ function renderChannels(){
 
   const visible = c => !(S.hideMutedChannels && isServerMuted(S.server?.id, c.id));
 
+  // Uncategorized area — dropping here removes the channel from its category
+  if(S.canManage) enableCatDrop(textList, null);
+
   // Uncategorized channels first (Discord-style)
   S_channels.filter(c => !c.categoryId && visible(c)).forEach(c => textList.appendChild(buildChanBtn(c, readMap)));
 
@@ -5005,17 +5032,19 @@ function renderChannels(){
     header.innerHTML = `
       <i class="fa-solid ${cat.collapsed ? 'fa-chevron-right' : 'fa-chevron-down'} cat-caret"></i>
       <i class="fa-solid fa-folder text-[10px] text-slate-500"></i>
-      <span class="cat-name">${esc(cat.name)}</span>
+      <span class="cat-name">${emojify(cat.name)}</span>
       <span class="cat-count">${kids.length}</span>
       ${S.canManage ? `<span onclick="event.stopPropagation();openCatSettings('${esc(cat.id)}')" class="hidden group-hover:inline text-slate-500 hover:text-white text-[10px] px-1 shrink-0" title="Edit Category"><i class="fa-solid fa-pen"></i></span>` : ''}
     `;
     header.onclick = () => toggleCategory(cat.id);
     header.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); if(S.canManage) openCatSettings(cat.id); };
+    if(S.canManage) enableCatDrop(header, cat.id);
     textList.appendChild(header);
     if(!cat.collapsed){
       const wrap = document.createElement('div');
       wrap.className = 'cat-children space-y-0.5';
       kids.forEach(c => wrap.appendChild(buildChanBtn(c, readMap)));
+      if(S.canManage) enableCatDrop(wrap, cat.id);
       textList.appendChild(wrap);
     }
   });
@@ -5056,7 +5085,7 @@ function switchChannel(c){
   }
 
   $('chanIcon').className = 'fa-solid fa-hashtag text-slate-500 text-xs';
-  $('chanHeader').textContent = c.name || c.id;
+  $('chanHeader').innerHTML = emojify(c.name || c.id);
   $('chanSettingsName').textContent = c.name || c.id;
   // Clear unread state for this channel immediately
   delete S.chanLastTs[c.id];
@@ -5108,7 +5137,8 @@ window.createVoiceChannel = async () => {
   if(!S.canManage || !S.server) return;
   const name = prompt('Voice channel name:')?.trim(); if(!name) return;
   const id = name.toLowerCase().replace(/[^a-z0-9\-]/g,'-').slice(0,30) || 'voice';
-  await setDoc(doc(db,'servers',S.server.id,'channels',id), {name,type:'voice',createdAt:Date.now()});
+  const pos = S_channels.reduce((m,c)=>Math.max(m, c.position||0), 0) + 1;
+  await setDoc(doc(db,'servers',S.server.id,'channels',id), {name,type:'voice',createdAt:Date.now(),position:pos});
   await loadChannels(S.server.id);
 };
 
@@ -5454,7 +5484,17 @@ async function renderMsgs(msgs){
   const feed = $('msgFeed'); feed.innerHTML = '';
   if(!msgs.length){ feed.innerHTML = '<div class="text-center py-12 text-slate-600 mono text-xs">No messages yet.</div>'; return; }
   await resolveProfiles(msgs.map(m => m.uid));
+  let lastDay = '';
   for (const m of msgs) {
+    // Discord-style date divider whenever the day changes (e.g. after midnight)
+    const day = new Date(m.ts || 0).toDateString();
+    if(day !== lastDay){
+      lastDay = day;
+      const dv = document.createElement('div');
+      dv.className = 'msg-date-divider';
+      dv.innerHTML = `<span>${new Date(m.ts || Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>`;
+      feed.appendChild(dv);
+    }
     const live = S.profileCache[m.uid] || {};
     const displayHandle = (S.membersCache||[]).find(x=>x.uid===m.uid)?.nick || live.handle || m.handle || 'User';
     const displayAvatar = live.avatar || m.avatar || userAvatar(m.uid||'x');
@@ -6177,7 +6217,7 @@ function listenMembers(serverId){
           userTag = u.userTag || '';
           // Update cache while we have the data
           if(!S.profileCache) S.profileCache = {};
-          S.profileCache[m.uid] = { handle, avatar, presence, createdAt, style, userTag, _ts: Date.now() };
+          S.profileCache[m.uid] = { handle, avatar, presence, createdAt, style, userTag, customStatus: u.customStatus || null, _ts: Date.now() };
         }
       }catch(e){}
       const row = { ...m, handle, avatar, presence, createdAt, joinedAt: m.joinedAt || 0, userTag };
@@ -6202,6 +6242,7 @@ function listenMembers(serverId){
         const avatarStyle = getAvatarStyleString({ style });
         const dotClass = m.presence === 'online' ? 'status-online' : m.presence === 'idle' ? 'status-idle' : m.presence === 'dnd' ? 'status-dnd' : 'status-offline';
         const statusLabel = m.presence === 'online' ? 'Online' : m.presence === 'idle' ? 'Idle' : m.presence === 'dnd' ? 'Do Not Disturb' : 'Offline';
+        const csText = profile.customStatus?.text || '';
         
         const div = document.createElement('div');
         div.className = 'flex items-center gap-1.5 px-1.5 py-1.5 rounded hover:bg-dark-800 cursor-pointer';
@@ -6220,7 +6261,7 @@ function listenMembers(serverId){
               ${renderUserTag(S.profileCache[m.uid])}
               ${isNewMember(m.uid)?' <i class="fa-solid fa-seedling new-member-leaf ml-1" title="New member"></i>':''}
             </div>
-            <div class="text-[9px] text-slate-500">${isOwner?'Owner · ':''}${statusLabel}</div>
+            <div class="text-[9px] text-slate-500">${isOwner?'Owner · ':''}${csText?emojify(csText):statusLabel}</div>
           </div>`;
         list.appendChild(div);
         const nameSpan = div.querySelector('.member-name-text');
@@ -6924,7 +6965,17 @@ function loadDms(targetUid){
       feed.innerHTML = `<div class="text-center py-12 text-slate-600 mono text-xs">This is the beginning of your direct message history with <strong>${esc(S.dmTarget?.handle || 'User')}</strong>.</div>`;
       return;
     }
+    let lastDay = '';
     for (const m of msgs) {
+      // Discord-style date divider whenever the day changes (e.g. after midnight)
+      const day = new Date(m.ts || 0).toDateString();
+      if(day !== lastDay){
+        lastDay = day;
+        const dv = document.createElement('div');
+        dv.className = 'msg-date-divider';
+        dv.innerHTML = `<span>${new Date(m.ts || Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>`;
+        feed.appendChild(dv);
+      }
       const mine = m.from === S.user.uid;
       const div = document.createElement('div');
       div.className = `flex ${mine?'justify-end':'justify-start'}`;
@@ -7171,7 +7222,7 @@ async function joinVoice(c){
   leaveVoice();
   S.channel = c.id; S.channelType = 'voice';
   $('chanIcon').className = 'fa-solid fa-volume-high text-bch-bright text-xs';
-  $('chanHeader').textContent = c.name || c.id;
+  $('chanHeader').innerHTML = emojify(c.name || c.id);
   $('voiceChanName').textContent = c.name || c.id;
   $('textArea').classList.add('hidden');
   $('voiceArea').classList.remove('hidden');
@@ -7466,7 +7517,7 @@ window.saveServerSettings = async () => {
   S.server = {...S.server, ...updateData};
 
   const nameEl = $('currentServerName');
-  nameEl.innerHTML = `<span>${esc(name)}</span>${renderServerTag(S.server)}`;
+  nameEl.innerHTML = `<span>${emojify(name)}</span>${renderServerTag(S.server)}`;
 
   if(iconUrl){ $('serverIconPreview').src = serverIconUrl({iconUrl, id:S.server?.id}); $('serverIconPreview').classList.remove('hidden'); }
   else $('serverIconPreview').classList.add('hidden');
@@ -7569,7 +7620,7 @@ function showChanTopic(topic){
   const el = $('chanTopic'); if(!el) return;
   if(topic){
     // Discord-style: masked links [text](url) plus bare-URL linkification
-    let html = esc(topic).replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    let html = parseEmojis(esc(topic)).replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
       (m,txt,u)=>`<a href="${u}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline">${txt}</a>`);
     el.innerHTML = parseLinks(html);
     el.classList.remove('hidden');
@@ -7584,7 +7635,7 @@ window.renameChannel = async () => {
   try{
     await updateDoc(doc(db,'servers',S.server.id,'channels',cid), {name});
     await loadChannels(S.server.id);
-    if(S.channel === cid){ $('chanHeader').textContent = name; $('chanSettingsName').textContent = name; }
+    if(S.channel === cid){ $('chanHeader').innerHTML = emojify(name); $('chanSettingsName').textContent = name; }
     const inp = $('chanRenameInput'); if(inp) inp.value = '';
   }catch(e){ alert(e.message); }
 };
@@ -8515,7 +8566,7 @@ function updateUserUI(){
     if(S.profile?.customStatus?.text) {
       stLabel = S.profile.customStatus.text;
     }
-    $('ucRole').textContent = S.isAdmin ? ('⚡ ADMIN · ' + stLabel) : (S.user.isAnonymous ? 'Anonymous' : stLabel);
+    $('ucRole').innerHTML = emojify(S.isAdmin ? ('⚡ ADMIN · ' + stLabel) : (S.user.isAnonymous ? 'Anonymous' : stLabel));
     updateStatusDot();
     
     const avatarEl = $('ucAvatar');
