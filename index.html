@@ -40,6 +40,7 @@
     ::-webkit-scrollbar-thumb{background:#242b3b;border-radius:3px}
     .badge-admin{background:linear-gradient(135deg,#7C3AED,#0AC18E);color:#fff;font-size:9px;padding:1px 6px;border-radius:3px;font-family:monospace;font-weight:700}
     .badge-owner{background:linear-gradient(135deg,#F7931A,#0AC18E);color:#fff;font-size:9px;padding:1px 6px;border-radius:3px;font-family:monospace;font-weight:700}
+    .tab-active,.tab-inactive{border-radius:8px;padding:4px 10px}
     .tab-active{color:#00E5A3;border-bottom:2px solid #0AC18E}
     .tab-inactive{color:#64748b;border-bottom:2px solid transparent}
     .field{width:100%;background:#050608;border:1px solid #242b3b;border-radius:8px;padding:8px 12px;font-size:13px;color:#fff;outline:none}
@@ -368,6 +369,24 @@
     body.chat-themed button:hover{
       box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
+    /* Active server — rotating conic-gradient ring (Discord AI-mode style) */
+    body.chat-themed button.server-active .server-icon-wrapper{position:relative}
+    body.chat-themed button.server-active .server-icon-wrapper::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      padding:2.5px;
+      background:var(--ct-ring,conic-gradient(#6b5a8a,#4a3f6c,#6b5a8a));
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      mask-composite:exclude;
+      animation:havocRingSpin 6s linear infinite;
+      pointer-events:none;
+      z-index:3;
+    }
+    @keyframes havocRingSpin{to{transform:rotate(360deg)}}
     /* User avatars — grayscale + theme gradient overlay, seed images only */
     body.chat-themed .avatar-wrapper > img[src*="dicebear.com"]{
       filter:grayscale(100%) brightness(.8);
@@ -385,6 +404,9 @@
     }
     body.chat-themed .avatar-wrapper:has(> img[src*="dicebear.com"]):hover::after{opacity:.4}
     body.chat-themed .avatar-wrapper .member-status-dot{z-index:2}
+    /* Members sidebar avatars stay clean — no grayscale/gradient overlay */
+    body.chat-themed #membersList .avatar-wrapper > img{filter:none!important}
+    body.chat-themed #membersList .avatar-wrapper::after{display:none!important}
     
     /* Members list — status text stays default muted color like Discord */
     body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
@@ -2218,6 +2240,9 @@ function applyChatTheme(){
   // Accent should be a solid color or simple gradient for buttons
   document.body.style.setProperty('--ct-accent', th?.accent || 'linear-gradient(90deg,#4a3f6c,#6b5a8a)');
   document.body.style.setProperty('--ct-glow', th?.glow || '#6b5a8a');
+  // Conic ring for the rotating active-server glow — built from the theme's own colors
+  const ringCols = (th?.css.match(/#[0-9a-fA-F]{6}/g) || ['#6b5a8a','#4a3f6c','#6b5a8a']);
+  document.body.style.setProperty('--ct-ring', `conic-gradient(${ringCols.join(',')},${ringCols[0]})`);
   // Refresh server icons with new theme colors
   if(typeof window.refreshServerIcons === 'function') window.refreshServerIcons();
 }
@@ -5380,7 +5405,7 @@ function renderUserTag(profile) {
   }
 
   // Use the server's configured color for the tag
-  return `<span class="px-1.5 py-0.5 rounded text-[8px] font-black mono tracking-tighter uppercase border ml-1 shadow-sm" style="background:${esc(tagBg)}20;color:${esc(tagBg)};border-color:${esc(tagBg)}40">${esc(tag)}</span>`;
+  return `<span class="px-2 py-0.5 rounded-full text-[8px] font-black mono tracking-tighter uppercase border ml-1 shadow-sm" style="background:${esc(tagBg)}20;color:${esc(tagBg)};border-color:${esc(tagBg)}40">${esc(tag)}</span>`;
 }
 
 function renderStatusDot(profile) {
