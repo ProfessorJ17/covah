@@ -345,10 +345,11 @@
       overflow:hidden;
       border-radius:inherit;
     }
-    body.chat-themed .server-icon-wrapper img{
+    /* Seed-generated (DiceBear) icons only — uploaded images stay untouched */
+    body.chat-themed .server-icon-wrapper img[src*="dicebear.com"]{
       filter:grayscale(100%) brightness(0.8);
     }
-    body.chat-themed .server-icon-wrapper::after{
+    body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"])::after{
       content:'';
       position:absolute;
       inset:0;
@@ -357,7 +358,7 @@
       mix-blend-mode:multiply;
       pointer-events:none;
     }
-    body.chat-themed .server-icon-wrapper:hover::after{
+    body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"]):hover::after{
       opacity:0.4;
     }
     /* Server icon glow uses theme color (box-shadow can't take gradients) */
@@ -367,11 +368,11 @@
     body.chat-themed button:hover{
       box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
-    /* User avatars — grayscale + theme gradient overlay (same as server icons) */
-    body.chat-themed .avatar-wrapper > img{
+    /* User avatars — grayscale + theme gradient overlay, seed images only */
+    body.chat-themed .avatar-wrapper > img[src*="dicebear.com"]{
       filter:grayscale(100%) brightness(.8);
     }
-    body.chat-themed .avatar-wrapper::after{
+    body.chat-themed .avatar-wrapper:has(> img[src*="dicebear.com"])::after{
       content:'';
       position:absolute;
       inset:0;
@@ -382,7 +383,7 @@
       pointer-events:none;
       z-index:1;
     }
-    body.chat-themed .avatar-wrapper:hover::after{opacity:.4}
+    body.chat-themed .avatar-wrapper:has(> img[src*="dicebear.com"]):hover::after{opacity:.4}
     body.chat-themed .avatar-wrapper .member-status-dot{z-index:2}
     
     /* Members list — status text stays default muted color like Discord */
@@ -454,19 +455,19 @@
       display: block;
     }
 
-    /* Chat / messages — Discord 40px */
+    /* Chat / messages — bumped for Discord-like presence */
     .msg-avatar-wrap {
-      width: 40px !important;
-      height: 40px !important;
+      width: 48px !important;
+      height: 48px !important;
     }
 
     /* Members list — 40px (disabled - members panel removed) */
     /* #membersList .avatar-wrapper { width: 40px !important; height: 40px !important; } */
 
-    /* Bottom user panel — 40px */
+    /* Bottom user panel */
     #ucAvatar {
-      width: 40px !important;
-      height: 40px !important;
+      width: 44px !important;
+      height: 44px !important;
     }
 
     /* Gold glowing pulsing ticket button */
@@ -488,15 +489,16 @@
       }
     }
     .bg-dark-950.border-t .avatar-wrapper {
-      width: 40px !important;
-      height: 40px !important;
+      width: 44px !important;
+      height: 44px !important;
     }
 
-    /* Friends / DM list */
+    /* Friends / DM / members lists */
     #friendsList .avatar-wrapper,
-    #dmList .avatar-wrapper {
-      width: 40px !important;
-      height: 40px !important;
+    #dmList .avatar-wrapper,
+    #membersList .avatar-wrapper {
+      width: 44px !important;
+      height: 44px !important;
     }
 
     /* DISCOVERY MODAL */
@@ -1130,9 +1132,9 @@
 
     <!-- AVATAR & BANNER METHODS -->
     <div class="flex items-center gap-4 mb-4">
-      <div class="relative avatar-wrapper" style="width:80px;height:80px">
+      <div class="relative avatar-wrapper" style="width:96px;height:96px">
         <img id="profileAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest"
-             class="w-20 h-20 rounded-full border-2 border-bch/40 object-cover">
+             class="w-24 h-24 rounded-full border-2 border-bch/40 object-cover">
       </div>
       <div class="flex-1 pt-1">
         <label class="field-label mb-1">Avatar & Banner Methods</label>
@@ -2815,12 +2817,22 @@ window.initProfileEditor = () => {
     if(colorPicker) colorPicker.value = S.profileStyle.nameColor;
     const nh = $('nameHex'); if(nh) nh.value = S.profileStyle.nameColor;
   }
-  // Load custom gradient
-  if(S.profileStyle.customGradient && S.profileStyle.customGradient.length > 0) {
-    const inputs = document.querySelectorAll('.cg-input');
-    S.profileStyle.customGradient.forEach((color, i) => {
-      if(inputs[i]) inputs[i].value = color;
-    });
+  // Load custom gradient — rebuild inputs to match the saved stop count (max 5)
+  const cgWrap = $('customGradientInputs');
+  if(cgWrap){
+    const saved = (S.profileStyle.customGradient && S.profileStyle.customGradient.length)
+      ? S.profileStyle.customGradient.slice(0,5) : [];
+    cgWrap.querySelectorAll('.cg-input').forEach(x => x.remove());
+    const count = Math.max(2, saved.length);
+    for(let i=0;i<count;i++){
+      const inp = document.createElement('input');
+      inp.type = 'color';
+      inp.className = 'w-6 h-6 rounded bg-transparent cursor-pointer cg-input';
+      inp.value = saved[i] || '#000000';
+      inp.oninput = updateCustomGradient;
+      cgWrap.insertBefore(inp, cgWrap.lastElementChild);
+    }
+    if(saved.length) updateCustomGradient();
   }
   // Load badge dropdown
   const badgeSelect = $('profileBadge');
