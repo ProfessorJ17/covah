@@ -770,9 +770,11 @@
       </div>
     </div>
 
-    <!-- AD SPACE — long banner below the chat composer -->
-    <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 flex items-center justify-center px-4 py-2">
+    <!-- AD SPACE — banner below the chat composer + click-to-watch rewarded video -->
+    <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 flex items-center justify-center gap-3 px-4 py-2">
+      <div id="gamBanner" class="flex-1 max-w-3xl min-h-[50px] flex items-center justify-center"></div>
       <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+      <button onclick="watchRewardedAd()" class="shrink-0 px-3 py-1.5 btn-primary text-[10px] font-bold rounded-lg" title="Watch a video ad to earn sats"><i class="fa-solid fa-play mr-1"></i>Watch &amp; Earn</button>
     </div>
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 
@@ -2911,7 +2913,8 @@ S.profileStyle = {
 // ===== SATOSHIS + GAM REWARDED ADS =====
 // TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
 const GAM_NETWORK_CODE = '22101006229';
-const GAM_REWARDED_UNIT = 'rewarded'; // TODO: replace with your rewarded ad unit name (GAM → Inventory → Ad units)
+const GAM_REWARDED_UNIT = 'havoc_rewarded_video';
+const GAM_BANNER_UNIT = 'havoc_banner'; // TODO: create a display ad unit with this name in GAM (Inventory → Ad units)
 
 // Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
 // so the balance isn't a readable/hand-editable plaintext number in the console.
@@ -3077,6 +3080,29 @@ function loadGPT(){
   });
   return _gptLoading;
 }
+// Banner ad: GAM display slot first; AdSense <ins> stays as fallback if GAM
+// has no fill or isn't configured yet.
+function initBannerAds(){
+  const wrap = $('gamBanner'); if(!wrap) return;
+  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return; // adsense only
+  loadGPT().then(() => {
+    if(!window.googletag?.defineSlot) return;
+    googletag.cmd.push(() => {
+      const slot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[970,90],[320,50],[300,250],[336,280]], 'gamBanner');
+      if(!slot){ console.warn('[ads] banner slot null — check GAM_BANNER_UNIT'); return; }
+      slot.addService(googletag.pubads());
+      googletag.pubads().addEventListener('slotRenderEnded', e => {
+        if(e.slot !== slot) return;
+        const ins = document.querySelector('.ad-banner .adsbygoogle');
+        if(e.isEmpty){ console.log('[ads] banner no-fill — showing AdSense fallback'); }
+        else if(ins){ ins.style.display = 'none'; }
+      });
+      googletag.enableServices();
+      googletag.display(slot);
+      console.log('[ads] banner slot displayed:', `/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`);
+    });
+  }).catch(e => console.warn('[ads] banner GPT failed:', e));
+}
 window.watchRewardedAd = async () => {
   if(!S.user || !S.profile) return alert('Sign in first');
   // Direct-sold video ads take priority — advertiser paid the admin upfront,
@@ -3120,6 +3146,7 @@ function applyAdToggle(){
   const t = $('adsEnabledToggle'); if(t) t.checked = on;
 }
 applyAdToggle();
+initBannerAds();
 
 // ===== DIRECT-SOLD VIDEO ADS =====
 // Survey-style model: advertisers pay the admin a CPM upfront; their videos
