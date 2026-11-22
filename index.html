@@ -779,6 +779,15 @@
     <!-- AD SPACE — banner below the chat composer + click-to-watch rewarded video -->
     <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 relative flex items-center justify-center gap-3 px-4 py-2" style="min-height:90px">
       <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><span class="text-[10px] mono text-slate-600 tracking-widest uppercase">Advertisement</span></div>
+      <div id="houseAd" class="absolute inset-0 hidden items-center justify-center z-20" style="background:linear-gradient(135deg,#0b0f19,#141a2e)">
+        <div class="flex items-center gap-3">
+          <img src="HAVOC.png" class="h-9 w-9 rounded-lg object-cover shadow-lg" alt="Havoc">
+          <div class="text-left">
+            <div class="text-xs font-bold text-white tracking-wide">Havoc</div>
+            <div class="text-[9px] text-slate-400 uppercase tracking-widest">Advertisement</div>
+          </div>
+        </div>
+      </div>
       <div id="gamBanner" class="relative z-10 flex-1 max-w-3xl min-h-[50px] flex items-center justify-center"></div>
       <ins class="adsbygoogle relative z-10" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
     </div>
@@ -3088,6 +3097,28 @@ function loadGPT(){
 }
 // Banner ad: GAM display slot first; AdSense <ins> stays as fallback if GAM
 // has no fill or isn't configured yet.
+let _bannerSlot = null;
+const BANNER_ROTATE_MS = 30000; // rotate creatives every 30s
+const HOUSE_AD_BREAK_MS = 5000; // 5s house-ad break between rotations
+function showHouseAdBreak(){
+  if(!adsEnabled()) return;
+  const house = $('houseAd'); if(!house) return;
+  const wrap = $('gamBanner'), ins = document.querySelector('.ad-banner .adsbygoogle');
+  if(wrap) wrap.style.visibility = 'hidden';
+  if(ins) ins.style.visibility = 'hidden';
+  house.classList.remove('hidden'); house.classList.add('flex');
+  setTimeout(() => {
+    house.classList.add('hidden'); house.classList.remove('flex');
+    if(wrap) wrap.style.visibility = '';
+    if(ins) ins.style.visibility = '';
+    if(_bannerSlot && window.googletag?.pubads){
+      try{ googletag.cmd.push(() => googletag.pubads().refresh([_bannerSlot])); }
+      catch(e){ console.warn('[ads] banner refresh failed:', e); }
+    }
+  }, HOUSE_AD_BREAK_MS);
+}
+setInterval(showHouseAdBreak, BANNER_ROTATE_MS);
+
 function initBannerAds(){
   const wrap = $('gamBanner'); if(!wrap) return;
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return; // adsense only
@@ -3096,6 +3127,7 @@ function initBannerAds(){
     googletag.cmd.push(() => {
       const slot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[970,90],[320,50],[300,250],[336,280]], 'gamBanner');
       if(!slot){ console.warn('[ads] banner slot null — check GAM_BANNER_UNIT'); return; }
+      _bannerSlot = slot;
       slot.addService(googletag.pubads());
       googletag.pubads().addEventListener('slotRenderEnded', e => {
         if(e.slot !== slot) return;
