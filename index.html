@@ -141,7 +141,7 @@
     body.ct-gta6{background:linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
-    body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
+    body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#1E2A78 15%,#3B63D6 30%,#9B55C6 45%,#F648AC 60%,#EB6A7C 75%,#E28F48 90%,#FFB36B 100%) fixed}
     body.ct-matrix{background:linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%) fixed}
     /* New themes */
     body.ct-cyber{background:linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%) fixed}
@@ -154,6 +154,22 @@
     body.ct-aurora{background:linear-gradient(135deg,#00ff87 0%,#60efff 50%,#7b2ff7 100%) fixed}
     body.ct-prism{background:linear-gradient(135deg,#ff9a9e 0%,#fecfef 25%,#a18cd1 50%,#84fab0 75%,#8fd3f4 100%) fixed}
     body.ct-hacker{background:linear-gradient(135deg,#000000 0%,#001100 50%,#003300 100%) fixed}
+    /* Theme-specific text colors for readability */
+    body.ct-gta6{--text-primary:#e8e4f0;--text-secondary:#a39cb5}
+    body.ct-synth{--text-primary:#fff;--text-secondary:#e0aaff}
+    body.ct-ocean{--text-primary:#e0f7fa;--text-secondary:#b0bec5}
+    body.ct-sunset{--text-primary:#fff3e0;--text-secondary:#ffcc80}
+    body.ct-matrix{--text-primary:#e8f5e9;--text-secondary:#a5d6a7}
+    body.ct-cyber{--text-primary:#e0e0ff;--text-secondary:#b0b0ff}
+    body.ct-vapor{--text-primary:#fff;--text-secondary:#ffb3d9}
+    body.ct-neon{--text-primary:#fff;--text-secondary:#ffcce5}
+    body.ct-holo{--text-primary:#e0fff8;--text-secondary:#b3fff0}
+    body.ct-quantum{--text-primary:#e0f7ff;--text-secondary:#b3e5fc}
+    body.ct-glitch{--text-primary:#fff;--text-secondary:#ffcccc}
+    body.ct-circuit{--text-primary:#e0e0e0;--text-secondary:#b0b0b0}
+    body.ct-aurora{--text-primary:#e8fff8;--text-secondary:#b3ffe8}
+    body.ct-prism{--text-primary:#fff;--text-secondary:#e0d0ff}
+    body.ct-hacker{--text-primary:#00ff00;--text-secondary:#00cc00}
     /* Keep panels translucent over the gradient so text stays legible */
     body.chat-themed header,
     body.chat-themed nav,
@@ -196,11 +212,11 @@
     body.chat-themed #sidebar{border-right:none!important}
     body.chat-themed nav{border-right:none!important}
     body.chat-themed header{border-bottom:none!important}
-    /* Muted off-white/lavender text for dark contrast */
-    body.chat-themed .text-white{color:#e8e4f0!important}
-    body.chat-themed .text-slate-500{color:#a39cb5!important}
-    body.chat-themed .text-slate-400{color:#b8b4c6!important}
-    body.chat-themed .text-slate-600{color:#9d96a8!important}
+    /* Muted off-white/lavender text for dark contrast - theme-aware */
+    body.chat-themed .text-white{color:var(--text-primary,#e8e4f0)!important}
+    body.chat-themed .text-slate-500{color:var(--text-secondary,#a39cb5)!important}
+    body.chat-themed .text-slate-400{color:var(--text-secondary,#b8b4c6)!important}
+    body.chat-themed .text-slate-600{color:var(--text-secondary,#9d96a8)!important}
     /* Convert teal highlights to lavender/purple when themed */
     body.chat-themed .text-bch,
     body.chat-themed .text-bch-bright{color:#e8e4f0!important}
@@ -302,10 +318,11 @@
     /* Members list — transparent hover with theme gradient */
     body.chat-themed #membersList .flex.items-center{background:transparent!important}
     body.chat-themed #membersList .flex.items-center:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
-    /* Server icons — grayscale + theme gradient overlay */
+    /* Server icons — grayscale + theme gradient overlay with theme glow */
     body.chat-themed .server-icon-wrapper{
       position:relative;
       overflow:hidden;
+      border-radius:inherit;
     }
     body.chat-themed .server-icon-wrapper img{
       filter:grayscale(100%) brightness(0.8);
@@ -321,6 +338,13 @@
     }
     body.chat-themed .server-icon-wrapper:hover::after{
       opacity:0.4;
+    }
+    /* Server icon glow uses theme accent */
+    body.chat-themed button.server-active{
+      box-shadow:0 0 12px var(--ct-accent,#4a3f6c), 0 0 24px var(--ct-accent,#4a3f6c);
+    }
+    body.chat-themed button:hover{
+      box-shadow:0 0 8px var(--ct-accent,#4a3f6c);
     }
     
     /* Members list — status text with theme accent + outline */
@@ -2115,7 +2139,7 @@ const CHAT_THEMES = [
   { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
   { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
-  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
+  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#1a0533 0%,#1E2A78 15%,#3B63D6 30%,#9B55C6 45%,#F648AC 60%,#EB6A7C 75%,#E28F48 90%,#FFB36B 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
   { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
   { id:'cyber',  name:'Cyberpunk 2077', css:'linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%)', accent:'linear-gradient(90deg,#ff00ff,#00ffff)' },
   { id:'vapor',  name:'Vaporwave Dreams', css:'linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%)', accent:'linear-gradient(90deg,#ff71ce,#01cdfe)' },
