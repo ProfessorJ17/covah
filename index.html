@@ -1895,17 +1895,31 @@ const safe = (v, f='') => (v===undefined||v===null) ? f : String(v);
 
 function userAvatar(seed){ return `https://api.dicebear.com/7.x/${USER_AVATAR_STYLE}/svg?seed=${encodeURIComponent(seed||'Guest')}`; }
 function serverIcon(seed){
-  // Use theme accent colors for server icons
+  // Generate themed SVG server icon with theme colors
   const themeId = currentChatThemeId();
-  let colors = '4a3f6c,6b5a8a'; // default purple
+  let colors = ['#4a3f6c','#6b5a8a']; // default purple
   
-  if(themeId === 'gta6') colors = '3C27AE,4C249E,5D1F86,6E1B69';
-  else if(themeId === 'synth') colors = 'a4139b,ff2975';
-  else if(themeId === 'ocean') colors = '0e5a8a,1b9aaa';
-  else if(themeId === 'sunset') colors = 'c73e6b,f7971e';
-  else if(themeId === 'matrix') colors = '052e16,0f5132';
+  if(themeId === 'gta6') colors = ['#3C27AE','#4C249E','#5D1F86','#6E1B69'];
+  else if(themeId === 'synth') colors = ['#a4139b','#ff2975'];
+  else if(themeId === 'ocean') colors = ['#0e5a8a','#1b9aaa'];
+  else if(themeId === 'sunset') colors = ['#c73e6b','#f7971e'];
+  else if(themeId === 'matrix') colors = ['#052e16','#0f5132'];
   
-  return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}&backgroundColor=transparent&colors=${colors}`;
+  // Create simple geometric SVG with theme colors
+  const size = 100;
+  const seedHash = (seed||'server').split('').reduce((a,b)=>a+b.charCodeAt(0),0);
+  const shape1 = colors[seedHash % colors.length];
+  const shape2 = colors[(seedHash+1) % colors.length];
+  const shape3 = colors[(seedHash+2) % colors.length];
+  
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <rect width="${size}" height="${size}" fill="transparent"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${size/3}" fill="${shape1}" opacity="0.8"/>
+    <rect x="${size/4}" y="${size/4}" width="${size/2}" height="${size/2}" fill="${shape2}" opacity="0.6" transform="rotate(45 ${size/2} ${size/2})"/>
+    <polygon points="${size/2},${size/8} ${size*0.85},${size*0.75} ${size*0.15},${size*0.75}" fill="${shape3}" opacity="0.7"/>
+  </svg>`;
+  
+  return 'data:image/svg+xml;base64,' + btoa(svg);
 }
 
 const EMOJI_MAP = {
