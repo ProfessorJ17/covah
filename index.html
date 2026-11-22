@@ -289,14 +289,11 @@
     /* Members list — transparent hover with theme gradient */
     body.chat-themed #membersList .flex.items-center{background:transparent!important}
     body.chat-themed #membersList .flex.items-center:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
-    /* Member names get white outline for readability */
-    body.chat-themed #membersList .member-name{
-      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
-      -webkit-text-stroke: 0.5px #fff;
-    }
-    /* All member list text gets subtle outline */
-    body.chat-themed #membersList *{
-      text-shadow: -0.5px -0.5px 0 rgba(255,255,255,.3), 0.5px -0.5px 0 rgba(255,255,255,.3), -0.5px 0.5px 0 rgba(255,255,255,.3), 0.5px 0.5px 0 rgba(255,255,255,.3);
+    /* Member names keep custom styling - no outline to preserve gradients */
+    /* Status text gets subtle outline for readability */
+    body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
+      -webkit-text-stroke: 0.3px rgba(255,255,255,.5);
+      paint-order: stroke fill;
     }
     /* Override Tailwind hover:bg-dark-800 on member items */
     body.chat-themed #membersList [class*="hover:bg-dark-800"]:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
@@ -889,15 +886,14 @@
     </div>
     <div class="p-3 border-b border-dark-700">
       <div id="ghConnectBox">
-        <p class="text-[10px] text-slate-400 mb-2">Connect GitHub to pick <em>and upload</em> images stored in <span class="mono text-bch">github.com/YOU/havoc/images</span>. Uses GitHub's official sign-in — no password needed.</p>
-        <button onclick="connectGithub()" class="btn-primary px-4 py-1.5 text-xs"><i class="fa-brands fa-github"></i> Connect GitHub</button>
+        <p class="text-[10px] text-slate-400 mb-2">Connect GitHub to pick <em>and upload</em> images stored in <span class="mono text-bch">github.com/YOU/havoc/images</span>. Uses a Personal Access Token — no password needed.</p>
+        <div class="flex gap-1.5">
+          <input type="password" id="ghPatInput" placeholder="github_pat_… or ghp_…" class="field flex-1 text-xs">
+          <button onclick="connectGithubPat()" class="btn-primary px-3 text-[10px] shrink-0">Connect</button>
+        </div>
         <details class="mt-3">
-          <summary class="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300">Device flow not working? Use a Personal Access Token instead</summary>
-          <div class="flex gap-1.5 mt-2">
-            <input type="password" id="ghPatInput" placeholder="github_pat_… or ghp_…" class="field flex-1 text-xs">
-            <button onclick="connectGithubPat()" class="btn-primary px-3 text-[10px] shrink-0">Connect</button>
-          </div>
-          <p class="text-[9px] text-slate-600 mt-1">Create at github.com → Settings → Developer settings → Personal access tokens. Classic token needs <b>public_repo</b> scope; fine-grained needs <b>Contents: Read &amp; write</b> on your havoc repo.</p>
+          <summary class="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300">How to get a PAT</summary>
+          <p class="text-[9px] text-slate-600 mt-1">Go to github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Needs <b>public_repo</b> scope.</p>
         </details>
       </div>
       <div id="ghConnectedBox" class="hidden items-center gap-2">
@@ -3364,56 +3360,11 @@ async function ghApi(path, opts = {}){
 }
 function ghForgetToken(){ S.ghToken=null; S.ghLogin=null; S.ghRepoInfo=null; ghSaveToken(); }
 
-// Device flow: user enters a code at github.com/login/device — no client secret, no redirect
+// GitHub connect - PAT is the only method (works without CORS proxy)
 window.connectGithub = async () => {
   if(!S.user || S.user.isAnonymous) return alert('Login to use GitHub');
-  if(!GH_CLIENT_ID) {
-    $('ghStatus').innerHTML = 'GitHub OAuth is not configured yet.<br><span class="text-slate-500">Admin needs to create an OAuth App and paste the Client ID into the GH_CLIENT_ID constant in index.html.</span>';
-    return;
-  }
-  $('ghStatus').textContent = 'Requesting device code…';
-  try{
-    // Device flow endpoints live on github.com (not api.github.com), send no CORS
-    // headers, and reject JSON preflights — route through a CORS proxy with a
-    // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
-    const GH_PROXY = 'https://corsproxy.io/?key=c944ff71&url=';
-    const dRes = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/device/code'), {
-      method:'POST',
-      headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
-    });
-    const d = await dRes.json();
-    if(!d.device_code) throw new Error(d.error_description || d.error || 'device flow failed');
-    $('ghStatus').innerHTML = `Open <a class="text-bch hover:underline" href="${esc(d.verification_uri)}" target="_blank" rel="noopener">${esc(d.verification_uri)}</a> and enter code:<br><span class="text-2xl font-black text-white tracking-widest">${esc(d.user_code)}</span><br><span class="text-[10px] text-slate-500">Waiting for authorization…</span>`;
-    const deadline = Date.now() + (d.expires_in||900)*1000;
-    const interval = (d.interval||5)*1000;
-    const poll = async () => {
-      if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
-      try{
-        const r = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/oauth/access_token'), {
-          method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
-        });
-        const t = await r.json();
-        if(t.access_token){
-          S.ghToken = t.access_token;
-          const me = await ghApi('/user');
-          S.ghLogin = me.login;
-          ghSaveToken();
-          if(S.profile && S.profile.github !== me.login){
-            try{ await updateDoc(doc(db,'users',S.user.uid), { github: me.login }); S.profile.github = me.login; }catch(e){}
-          }
-          S.ghRepoInfo = null;
-          renderGithubConnectState();
-          return;
-        }
-        if(t.error === 'authorization_pending'){ setTimeout(poll, interval); return; }
-        if(t.error === 'slow_down'){ setTimeout(poll, interval+5000); return; }
-        $('ghStatus').textContent = 'Authorization failed: '+(t.error_description||t.error||'unknown');
-      }catch(e){ setTimeout(poll, interval); }
-    };
-    setTimeout(poll, interval);
-  }catch(e){ $('ghStatus').textContent = 'Could not start GitHub connect: '+e.message; }
+  // PAT input is already visible in the modal - just focus it
+  $('ghPatInput')?.focus();
 };
 
 window.connectGithubPat = async () => {
