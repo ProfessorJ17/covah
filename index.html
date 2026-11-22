@@ -2310,7 +2310,7 @@ window.openModal = id => {
     $('ssDesc').value = safe(S.server?.desc,'');
     $('ssSeed').value = '';
     $('ssIconUrl').value = '';
-    $('ssIconPreview').src = S.server?.iconUrl || serverIcon('server');
+    $('ssIconPreview').src = S.server ? serverIconUrl(S.server) : serverIcon('server');
     $('ssIsPublic').checked = !!S.server?.isPublic;
     $('ssTags').value = (S.server?.tags || []).join(', ');
     $('ssBannerUrl').value = S.server?.bannerUrl || '';
@@ -4742,7 +4742,7 @@ async function switchServer(s){
   const nameEl = $('currentServerName');
   nameEl.innerHTML = `<span>${esc(safe(s.name,'Server'))}</span>${renderServerTag(s)}`;
 
-  if(s.iconUrl){ $('serverIconPreview').src = s.iconUrl; $('serverIconPreview').classList.remove('hidden'); }
+  if(s.iconUrl){ $('serverIconPreview').src = serverIconUrl(s); $('serverIconPreview').classList.remove('hidden'); }
   else $('serverIconPreview').classList.add('hidden');
   $('serverSettingsBtn').classList.toggle('hidden', !S.canManage);
   $('inviteBtn').classList.remove('hidden');
@@ -7413,7 +7413,7 @@ window.saveServerSettings = async () => {
   const nameEl = $('currentServerName');
   nameEl.innerHTML = `<span>${esc(name)}</span>${renderServerTag(S.server)}`;
 
-  if(iconUrl){ $('serverIconPreview').src = iconUrl; $('serverIconPreview').classList.remove('hidden'); }
+  if(iconUrl){ $('serverIconPreview').src = serverIconUrl({iconUrl, id:S.server?.id}); $('serverIconPreview').classList.remove('hidden'); }
   else $('serverIconPreview').classList.add('hidden');
   await loadMyServers();
 
@@ -7780,7 +7780,7 @@ window.loadAdminServers = async () => {
       const row = document.createElement('div');
       row.className = 'flex items-center gap-3 bg-dark-950 border border-dark-800 rounded-lg px-4 py-3 hover:border-kiro/30 transition-all';
       row.innerHTML = `
-        ${s.iconUrl?`<img src="${esc(s.iconUrl)}" class="w-10 h-10 rounded-xl object-cover">`:'<div class="w-10 h-10 rounded-xl bg-dark-700"></div>'}
+        ${s.iconUrl?`<img src="${esc(serverIconUrl({...d.data(), id:d.id}))}" class="w-10 h-10 rounded-xl object-cover">`:'<div class="w-10 h-10 rounded-xl bg-dark-700"></div>'}
         <div class="flex-1 min-w-0">
           <div class="font-bold text-sm text-white truncate">${esc(s.name)}</div>
           <div class="text-[10px] text-slate-500 mono">owner: ${esc(s.ownerHandle||'—')}</div>
