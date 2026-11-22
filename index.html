@@ -191,6 +191,27 @@
     /* Convert teal highlights to lavender/purple when themed */
     body.chat-themed .text-bch,
     body.chat-themed .text-bch-bright{color:#e8e4f0!important}
+    body.chat-themed a.text-bch,
+    body.chat-themed a.text-bch-bright{
+      background:var(--ct-accent,#4a3f6c);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent!important;
+      text-decoration:none;
+    }
+    body.chat-themed a.text-bch:hover,
+    body.chat-themed a.text-bch-bright:hover{text-decoration:underline}
+    /* Message content links use theme gradient */
+    body.chat-themed #msgFeed a,
+    body.chat-themed .msg-content a{
+      background:var(--ct-accent,#4a3f6c);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent!important;
+      text-decoration:none;
+    }
+    body.chat-themed #msgFeed a:hover,
+    body.chat-themed .msg-content a:hover{text-decoration:underline}
     body.chat-themed .bg-bch\/20{background-color:rgba(74,63,108,.15)!important}
     body.chat-themed .bg-bch\/30{background-color:rgba(74,63,108,.22)!important}
     body.chat-themed .border-bch{border-color:rgba(107,90,138,.4)!important}
@@ -1862,7 +1883,19 @@ const shortTime = ts => ts ? new Date(ts).toLocaleTimeString([], {hour:'2-digit'
 const safe = (v, f='') => (v===undefined||v===null) ? f : String(v);
 
 function userAvatar(seed){ return `https://api.dicebear.com/7.x/${USER_AVATAR_STYLE}/svg?seed=${encodeURIComponent(seed||'Guest')}`; }
-function serverIcon(seed){ return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}`; }
+function serverIcon(seed){
+  // Use theme accent colors for server icons
+  const themeId = currentChatThemeId();
+  let colors = '4a3f6c,6b5a8a'; // default purple
+  
+  if(themeId === 'gta6') colors = '3C27AE,4C249E,5D1F86,6E1B69';
+  else if(themeId === 'synth') colors = 'a4139b,ff2975';
+  else if(themeId === 'ocean') colors = '0e5a8a,1b9aaa';
+  else if(themeId === 'sunset') colors = 'c73e6b,f7971e';
+  else if(themeId === 'matrix') colors = '052e16,0f5132';
+  
+  return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}&backgroundColor=transparent&colors=${colors}`;
+}
 
 const EMOJI_MAP = {
   ':smile:':'😄',':smiley:':'😃',':grinning:':'😀',':grin:':'😁',':laughing:':'😆',':satisfied:':'😆',
@@ -2068,6 +2101,8 @@ function applyChatTheme(){
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0a0e1c,#2d1b3d)');
   // Accent should be a solid color or simple gradient for buttons
   document.body.style.setProperty('--ct-accent', th?.accent || 'linear-gradient(90deg,#4a3f6c,#6b5a8a)');
+  // Refresh server icons with new theme colors
+  if(typeof window.refreshServerIcons === 'function') window.refreshServerIcons();
 }
 window.setChatTheme = (t) => {
   localStorage.setItem('havoc_chat_theme', t || '__dark');
@@ -3215,6 +3250,13 @@ window.serverIconMethod = (m) => {
 };
 window.previewServerSeed = seed => { $('newServerIconPreview').src = serverIcon(seed||'server'); };
 window.previewServerUrl = url => { if(url&&url.startsWith('http')) $('newServerIconPreview').src=url; };
+// Refresh server icons when theme changes
+window.refreshServerIcons = () => {
+  document.querySelectorAll('img[src*="dicebear.com"][src*="shapes"]').forEach(img => {
+    const seedMatch = img.src.match(/seed=([^&]+)/);
+    if(seedMatch) img.src = serverIcon(decodeURIComponent(seedMatch[1]));
+  });
+};
 
 window.ssIconMethod = (m) => {
   S.ssIconMode = m;
