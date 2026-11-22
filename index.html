@@ -207,7 +207,8 @@
     body.chat-themed #logoutBtn,
     body.chat-themed .logout-btn,
     body.chat-themed button[type="submit"],
-    body.chat-themed #sendBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed #sendBtn,
+    body.chat-themed .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed button.bg-dark-800:hover,
     body.chat-themed button.bg-dark-700:hover,
     body.chat-themed button.bg-dark-600:hover,
@@ -219,7 +220,8 @@
     body.chat-themed #logoutBtn:hover,
     body.chat-themed .logout-btn:hover,
     body.chat-themed button[type="submit"]:hover,
-    body.chat-themed #sendBtn:hover{filter:brightness(1.15)}
+    body.chat-themed #sendBtn:hover,
+    body.chat-themed .btn-primary:hover{filter:brightness(1.2)}
     /* Settings modal buttons */
     body.chat-themed .modal button,
     body.chat-themed .fixed button{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
@@ -231,6 +233,16 @@
     /* Danger zone buttons keep red but get gradient border */
     body.chat-themed button.bg-red-900\/30,
     body.chat-themed button.bg-red-950{border-color:rgba(180,80,80,.4)!important;background:linear-gradient(90deg,#5a2a2a,#7a3a3a)!important;color:#f0d0d0}
+    /* Global button gradient for ALL buttons when themed */
+    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item){background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item):hover{filter:brightness(1.2)}
+    /* Send button and primary buttons get stronger gradient */
+    body.chat-themed #sendBtn,
+    body.chat-themed button[type="submit"],
+    body.chat-themed .btn-primary{background:linear-gradient(90deg,#6b5a8a,#4a3f6c)!important;color:#fff;border:none!important;box-shadow:0 2px 8px rgba(74,63,108,.3)}
+    body.chat-themed #sendBtn:hover,
+    body.chat-themed button[type="submit"]:hover,
+    body.chat-themed .btn-primary:hover{filter:brightness(1.25);box-shadow:0 4px 12px rgba(74,63,108,.4)}
     /* Small icon buttons stay subtle but tinted */
     body.chat-themed button.w-7,
     body.chat-themed button.w-8{background:rgba(74,63,108,.15)!important;border-color:rgba(107,90,138,.3)!important}
@@ -253,6 +265,9 @@
     /* DM home button gets the theme gradient for all themes */
     #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
     #dmHomeBtn:hover{filter:brightness(1.15)}
+    body.chat-themed #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
+    /* Ensure DM icon is visible on gradient */
+    body.chat-themed #dmHomeBtn img{filter:brightness(1.2)}
     /* Channel categories */
     .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
     .cat-header:hover{background:rgba(255,255,255,.04)}
@@ -505,6 +520,7 @@
         <button onclick="openThreadsPanel()" title="Threads" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-comments"></i></button>
         <button onclick="toggleNotifMenu(event)" title="Notification Settings" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-bell"></i></button>
         <button onclick="openPinsPanel()" title="Pinned Messages" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-thumbtack"></i></button>
+        <button onclick="toggleMembersPanel()" title="Toggle Member List" id="membersToggleBtn" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-user-group"></i></button>
         <div class="hidden md:flex items-center ml-1">
           <input type="text" id="chanSearch" placeholder="Search" oninput="filterChanSearch(this.value)" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
         </div>
@@ -588,6 +604,27 @@
       </div>
     </div>
   </main>
+
+  <aside id="membersPanel" class="w-60 bg-dark-900 border-l border-dark-700 p-3 overflow-y-auto shrink-0 hidden xl:block">
+    <div id="membersContent">
+      <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2 mono px-1">Members — <span id="memberCount">0</span></div>
+      <div id="membersList" class="space-y-1"></div>
+    </div>
+    <div id="dmProfileContent" class="hidden">
+      <div class="text-center mb-4">
+        <div class="relative avatar-wrapper inline-block mb-2">
+          <img id="dmProfileAvatar" class="w-20 h-20 rounded-full border-2 border-bch/40 object-cover">
+          <span id="dmProfileDot" class="member-status-dot status-offline z-20"></span>
+        </div>
+        <div id="dmProfileHandle" class="font-bold text-white text-lg"></div>
+        <div id="dmProfileStatus" class="text-xs text-slate-400 mono"></div>
+      </div>
+      <div class="space-y-2 text-xs">
+        <button id="dmFriendBtn" onclick="console.log('Button clicked!'); handleDMFriendAction()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
+        <button onclick="blockCurrentDM()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Block</button>
+      </div>
+    </div>
+  </aside>
 </div>
 
 
@@ -3272,8 +3309,8 @@ window.connectGithub = async () => {
     // Device flow endpoints live on github.com (not api.github.com), send no CORS
     // headers, and reject JSON preflights — route through a CORS proxy with a
     // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
-    const GH_PROXY = 'https://corsproxy.io/?';
-    const dRes = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/device/code'), {
+    const GH_PROXY = 'https://api.allorigins.win/raw?url=';
+    const dRes = await fetch(GH_PROXY + 'https://github.com/login/device/code', {
       method:'POST',
       headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
       body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
@@ -3286,7 +3323,7 @@ window.connectGithub = async () => {
     const poll = async () => {
       if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
       try{
-        const r = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/oauth/access_token'), {
+        const r = await fetch(GH_PROXY + 'https://github.com/login/oauth/access_token', {
           method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
           body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
         });
@@ -6424,9 +6461,9 @@ window.startDM = (uid, handle, avatar) => {
   $('voiceArea').classList.add('hidden');
   $('membersContent')?.classList.add('hidden');
   $('dmProfileContent')?.classList.remove('hidden');
-  $('dmProfileAvatar').src = avatar || userAvatar(uid);
-  $('dmProfileHandle').textContent = handle;
-  $('dmProfileStatus').textContent = isAdmin && !isFriend ? 'Admin DM' : 'Direct Message';
+  if($('dmProfileAvatar')) $('dmProfileAvatar').src = avatar || userAvatar(uid);
+  if($('dmProfileHandle')) $('dmProfileHandle').textContent = handle;
+  if($('dmProfileStatus')) $('dmProfileStatus').textContent = isAdmin && !isFriend ? 'Admin DM' : 'Direct Message';
 
   // Update status dot
   const profile = S.profileCache?.[uid] || {};
@@ -8342,9 +8379,17 @@ function isNewMember(uid){
 }
 
 // ===== MEMBERS PANEL TOGGLE =====
-// Members panel removed - toggle function disabled
 window.toggleMembersPanel = () => {
-  console.log('Members panel has been removed');
+  const panel = $('membersPanel');
+  if(!panel) return;
+  // Toggle visibility - if it's currently visible, hide it; if hidden, show it
+  if(panel.classList.contains('hidden') || panel.style.display === 'none'){
+    panel.classList.remove('hidden');
+    panel.style.display = '';
+  } else {
+    panel.classList.add('hidden');
+    panel.style.display = 'none';
+  }
 };
 
 // ===== NOTIFICATIONS =====
