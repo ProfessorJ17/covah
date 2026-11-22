@@ -569,6 +569,10 @@
 
 <div class="flex-1 flex overflow-hidden">
 
+  <!-- LEFT GROUP: rail + sidebar + chat + user bar (stops before members panel) -->
+  <div class="flex-1 flex flex-col min-w-0">
+  <div class="flex-1 flex min-h-0">
+
   <!-- SERVER RAIL -->
   <nav class="w-16 bg-dark-950 border-r border-dark-700 flex flex-col items-center py-3 gap-2 shrink-0 overflow-y-auto">
     <div class="relative">
@@ -760,6 +764,32 @@
       </div>
     </div>
   </main>
+  </div><!-- /top row -->
+
+  <!-- USER BAR — bottom section under rail + sidebar + chat, stops before members panel -->
+  <div id="userBar" class="bg-dark-950 border-t border-dark-700 px-3 py-2 relative z-20 shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="relative avatar-wrapper cursor-pointer" onclick="openModal('profile')" style="width:40px;height:40px">
+        <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-10 h-10 rounded-full bg-dark-800 border border-dark-600">
+        <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
+        <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left">Not signed in</button>
+      </div>
+      <div class="flex items-center gap-0.5">
+        <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
+        <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
+        <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
+      </div>
+    </div>
+    <div class="logout-section px-1 pt-1.5">
+      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+      </button>
+    </div>
+  </div>
+  </div><!-- /left group -->
 
   <aside id="membersPanel" class="w-60 bg-dark-900 border-l border-dark-700 p-3 overflow-y-auto shrink-0 hidden xl:block">
     <div id="membersContent">
@@ -781,30 +811,6 @@
       </div>
     </div>
   </aside>
-</div>
-
-<!-- USER BAR — full-width bottom section: avatar/status left, controls right, logout below -->
-<div id="userBar" class="bg-dark-950 border-t border-dark-700 px-3 py-2 relative z-20">
-  <div class="flex items-center gap-2">
-    <div class="relative avatar-wrapper cursor-pointer" onclick="openModal('profile')" style="width:40px;height:40px">
-      <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-10 h-10 rounded-full bg-dark-800 border border-dark-600">
-      <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
-    </div>
-    <div class="min-w-0 flex-1">
-      <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
-      <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left">Not signed in</button>
-    </div>
-    <div class="flex items-center gap-0.5">
-      <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
-      <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
-      <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
-    </div>
-  </div>
-  <div class="logout-section px-1 pt-1.5">
-    <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
-      <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-    </button>
-  </div>
 </div>
 
 
