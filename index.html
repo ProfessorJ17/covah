@@ -362,8 +362,9 @@
     body.chat-themed .server-icon-wrapper:has(img[src*="dicebear.com"]):hover::after{
       opacity:0.4;
     }
-    /* Server icon wrapper clips the icon to the button's squircle shape */
-    .server-icon-wrapper{position:relative;overflow:hidden;border-radius:inherit}
+    /* Server icon wrapper clips the icon to the button's squircle shape.
+       Solid backing stops the rotating glow bleeding through transparent avatars. */
+    .server-icon-wrapper{position:relative;overflow:hidden;border-radius:inherit;background:#1e1f22}
     /* Active server — rotating conic-gradient glow OUTSIDE the icon only (Discord AI-mode style).
        Pseudos extend past the button; the icon wrapper sits above them so nothing shows inside. */
     body.chat-themed button.server-active{position:relative}
@@ -390,6 +391,8 @@
       animation:havocRingSpin 5s linear infinite;
     }
     body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
+    /* Bottom user bar sits above the rotating server glow so it doesn't bleed through */
+    body.chat-themed #sidebar .bg-dark-950.border-t{position:relative;z-index:10;background-color:rgba(8,10,18,.88)!important}
     body.chat-themed button:hover{
       box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
