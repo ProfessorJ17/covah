@@ -137,12 +137,23 @@
     .theme-swatch.active { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.4); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    /* GTA6 purple-to-rust gradient */
-    body.ct-gta6{background:linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%) fixed}
+    /* Sunset Ember (formerly GTA6) purple-to-rust gradient with royal blue top-left */
+    body.ct-gta6{background:linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
     body.ct-matrix{background:linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%) fixed}
+    /* New themes */
+    body.ct-cyber{background:linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%) fixed}
+    body.ct-vapor{background:linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%) fixed}
+    body.ct-neon{background:linear-gradient(135deg,#ff006e 0%,#8338ec 50%,#3a86ff 100%) fixed}
+    body.ct-holo{background:linear-gradient(135deg,#00f5d4 0%,#00bbf9 50%,#9b5de5 100%) fixed}
+    body.ct-quantum{background:linear-gradient(135deg,#000428 0%,#004e92 50%,#00c6ff 100%) fixed}
+    body.ct-glitch{background:linear-gradient(135deg,#ff0000 0%,#00ff00 50%,#0000ff 100%) fixed}
+    body.ct-circuit{background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%) fixed}
+    body.ct-aurora{background:linear-gradient(135deg,#00ff87 0%,#60efff 50%,#7b2ff7 100%) fixed}
+    body.ct-prism{background:linear-gradient(135deg,#ff9a9e 0%,#fecfef 25%,#a18cd1 50%,#84fab0 75%,#8fd3f4 100%) fixed}
+    body.ct-hacker{background:linear-gradient(135deg,#000000 0%,#001100 50%,#003300 100%) fixed}
     /* Keep panels translucent over the gradient so text stays legible */
     body.chat-themed header,
     body.chat-themed nav,
@@ -291,10 +302,31 @@
     /* Members list — transparent hover with theme gradient */
     body.chat-themed #membersList .flex.items-center{background:transparent!important}
     body.chat-themed #membersList .flex.items-center:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
-    /* Member names keep custom styling - no outline to preserve gradients */
-    /* Status text gets subtle outline for readability */
+    /* Server icons — grayscale + theme gradient overlay */
+    body.chat-themed .server-icon-wrapper{
+      position:relative;
+      overflow:hidden;
+    }
+    body.chat-themed .server-icon-wrapper img{
+      filter:grayscale(100%) brightness(0.8);
+    }
+    body.chat-themed .server-icon-wrapper::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:var(--ct-accent,#4a3f6c);
+      opacity:0.6;
+      mix-blend-mode:multiply;
+      pointer-events:none;
+    }
+    body.chat-themed .server-icon-wrapper:hover::after{
+      opacity:0.4;
+    }
+    
+    /* Members list — status text with theme accent + outline */
     body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
-      -webkit-text-stroke: 0.3px rgba(255,255,255,.5);
+      color:var(--ct-accent,#e8e4f0)!important;
+      -webkit-text-stroke: 0.3px rgba(255,255,255,.6);
       paint-order: stroke fill;
     }
     /* Override Tailwind hover:bg-dark-800 on member items */
@@ -1893,31 +1925,8 @@ const safe = (v, f='') => (v===undefined||v===null) ? f : String(v);
 
 function userAvatar(seed){ return `https://api.dicebear.com/7.x/${USER_AVATAR_STYLE}/svg?seed=${encodeURIComponent(seed||'Guest')}`; }
 function serverIcon(seed){
-  // Generate themed SVG server icon with theme colors
-  const themeId = currentChatThemeId();
-  let colors = ['#4a3f6c','#6b5a8a']; // default purple
-  
-  if(themeId === 'gta6') colors = ['#3C27AE','#4C249E','#5D1F86','#6E1B69'];
-  else if(themeId === 'synth') colors = ['#a4139b','#ff2975'];
-  else if(themeId === 'ocean') colors = ['#0e5a8a','#1b9aaa'];
-  else if(themeId === 'sunset') colors = ['#c73e6b','#f7971e'];
-  else if(themeId === 'matrix') colors = ['#052e16','#0f5132'];
-  
-  // Create simple geometric SVG with theme colors
-  const size = 100;
-  const seedHash = (seed||'server').split('').reduce((a,b)=>a+b.charCodeAt(0),0);
-  const shape1 = colors[seedHash % colors.length];
-  const shape2 = colors[(seedHash+1) % colors.length];
-  const shape3 = colors[(seedHash+2) % colors.length];
-  
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <rect width="${size}" height="${size}" fill="transparent"/>
-    <circle cx="${size/2}" cy="${size/2}" r="${size/3}" fill="${shape1}" opacity="0.8"/>
-    <rect x="${size/4}" y="${size/4}" width="${size/2}" height="${size/2}" fill="${shape2}" opacity="0.6" transform="rotate(45 ${size/2} ${size/2})"/>
-    <polygon points="${size/2},${size/8} ${size*0.85},${size*0.75} ${size*0.15},${size*0.75}" fill="${shape3}" opacity="0.7"/>
-  </svg>`;
-  
-  return 'data:image/svg+xml;base64,' + btoa(svg);
+  // Use DiceBear but apply grayscale + theme gradient overlay via CSS
+  return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}`;
 }
 
 const EMOJI_MAP = {
@@ -2103,11 +2112,21 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'gta6',   name:'GTA6 Vice City', css:'linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
+  { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
   { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
-  { id:'sunset', name:'Sunset Ember', css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
+  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
   { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
+  { id:'cyber',  name:'Cyberpunk 2077', css:'linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%)', accent:'linear-gradient(90deg,#ff00ff,#00ffff)' },
+  { id:'vapor',  name:'Vaporwave Dreams', css:'linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%)', accent:'linear-gradient(90deg,#ff71ce,#01cdfe)' },
+  { id:'neon',   name:'Neon Tokyo', css:'linear-gradient(135deg,#ff006e 0%,#8338ec 50%,#3a86ff 100%)', accent:'linear-gradient(90deg,#8338ec,#3a86ff)' },
+  { id:'holo',   name:'Hologram', css:'linear-gradient(135deg,#00f5d4 0%,#00bbf9 50%,#9b5de5 100%)', accent:'linear-gradient(90deg,#00bbf9,#9b5de5)' },
+  { id:'quantum',name:'Quantum Realm', css:'linear-gradient(135deg,#000428 0%,#004e92 50%,#00c6ff 100%)', accent:'linear-gradient(90deg,#004e92,#00c6ff)' },
+  { id:'glitch', name:'Glitch Protocol', css:'linear-gradient(135deg,#ff0000 0%,#00ff00 50%,#0000ff 100%)', accent:'linear-gradient(90deg,#ff0000,#00ff00)' },
+  { id:'circuit',name:'Circuit Board', css:'linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%)', accent:'linear-gradient(90deg,#0f3460,#e94560)' },
+  { id:'aurora', name:'Aurora Borealis', css:'linear-gradient(135deg,#00ff87 0%,#60efff 50%,#7b2ff7 100%)', accent:'linear-gradient(90deg,#00ff87,#7b2ff7)' },
+  { id:'prism',  name:'Prism Shift', css:'linear-gradient(135deg,#ff9a9e 0%,#fecfef 25%,#a18cd1 50%,#84fab0 75%,#8fd3f4 100%)', accent:'linear-gradient(90deg,#a18cd1,#84fab0)' },
+  { id:'hacker', name:'Hacker Terminal', css:'linear-gradient(135deg,#000000 0%,#001100 50%,#003300 100%)', accent:'linear-gradient(90deg,#00ff00,#00aa00)' },
 ];
 // Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
 function currentChatThemeId(){
@@ -2118,7 +2137,7 @@ function currentChatThemeId(){
 }
 function applyChatTheme(){
   const t = currentChatThemeId();
-  document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix');
+  document.body.classList.remove('chat-themed','ct-gta6','ct-synth','ct-ocean','ct-sunset','ct-matrix','ct-cyber','ct-vapor','ct-neon','ct-holo','ct-quantum','ct-glitch','ct-circuit','ct-aurora','ct-prism','ct-hacker');
   if(t) document.body.classList.add('chat-themed','ct-'+t);
   const th = CHAT_THEMES.find(x=>x.id===t);
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0a0e1c,#2d1b3d)');
@@ -4149,8 +4168,8 @@ function renderServerRail(servers){
     const btn = document.createElement('button');
     btn.title = (s.tag ? `[${s.tag}] ` : '') + safe(s.name,'Server') + (muted?' (muted)':'');
     btn.className = `w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center font-bold text-xs overflow-hidden ${S.server?.id===s.id?'server-active':''} ${muted?'muted-server':''}`;
-    if(s.iconUrl) btn.innerHTML = `<img src="${esc(s.iconUrl)}" class="w-full h-full object-cover">`;
-    else btn.textContent = safe(s.name,'??').slice(0,2).toUpperCase();
+    if(s.iconUrl) btn.innerHTML = `<div class="server-icon-wrapper w-full h-full"><img src="${esc(s.iconUrl)}" class="w-full h-full object-cover"></div>`;
+    else btn.innerHTML = `<div class="server-icon-wrapper w-full h-full flex items-center justify-center font-bold text-xs">${safe(s.name,'??').slice(0,2).toUpperCase()}</div>`;
     btn.onclick = () => switchServer(s);
     btn.oncontextmenu = e => { e.preventDefault(); showServerContext(e,s); };
     list.appendChild(btn);
