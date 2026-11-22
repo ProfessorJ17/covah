@@ -135,8 +135,8 @@
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
-    /* Dark horizontal gradient: deep navy/indigo left → dark plum/mauve right */
-    body.ct-gta6{background:linear-gradient(90deg,#0a0e1c 0%,#1a1f3a 25%,#2d1b3d 50%,#3d2a4a 75%,#2d1b3d 100%) fixed}
+    /* GTA6 purple-to-rust gradient */
+    body.ct-gta6{background:linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
     body.ct-sunset{background:linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%) fixed}
@@ -2046,7 +2046,7 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(90deg,#0a0e1c 0%,#1a1f3a 25%,#2d1b3d 50%,#3d2a4a 75%,#2d1b3d 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
+  { id:'gta6',   name:'GTA6',         css:'linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
   { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
   { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
@@ -3308,8 +3308,8 @@ window.connectGithub = async () => {
     // Device flow endpoints live on github.com (not api.github.com), send no CORS
     // headers, and reject JSON preflights — route through a CORS proxy with a
     // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
-    const GH_PROXY = 'https://api.allorigins.win/raw?url=';
-    const dRes = await fetch(GH_PROXY + 'https://github.com/login/device/code', {
+    const GH_PROXY = 'https://corsproxy.io/?url=';
+    const dRes = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/device/code'), {
       method:'POST',
       headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
       body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
@@ -3322,7 +3322,7 @@ window.connectGithub = async () => {
     const poll = async () => {
       if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
       try{
-        const r = await fetch(GH_PROXY + 'https://github.com/login/oauth/access_token', {
+        const r = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/oauth/access_token'), {
           method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
           body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
         });
