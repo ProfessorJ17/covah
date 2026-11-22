@@ -164,8 +164,8 @@
     body.ct-ocean{--text-primary:#e0f7fa;--text-secondary:#b0bec5}
     body.ct-sunset{--text-primary:#fff3e0;--text-secondary:#ffcc80}
     /* GTA6 themes only: DM button gets its own background art behind the logo */
-    body.ct-sunset #dmHomeBtn,
-    body.ct-gta6 #dmHomeBtn{
+    body.chat-themed.ct-sunset #dmHomeBtn,
+    body.chat-themed.ct-gta6 #dmHomeBtn{
       background-image:url('DMbuttonbackground.png')!important;
       background-size:cover!important;
       background-position:center!important;
@@ -679,12 +679,10 @@
         <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
         <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
         <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
+        <button id="logoutBtn" onclick="doSignOut()" class="hidden h-7 px-2 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn whitespace-nowrap">
+          <i class="fa-solid fa-right-from-bracket"></i><span class="ml-1">Logout</span>
+        </button>
       </div>
-    </div>
-    <div class="logout-section px-1 pt-1.5">
-      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
-        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-      </button>
     </div>
   </div>
   </div><!-- /left column -->
