@@ -193,6 +193,7 @@
     body.chat-themed .bg-dark-900\/90{background-color:rgba(10,12,22,.028)!important}
     body.chat-themed .bg-dark-900\/40{background-color:rgba(10,12,22,.015)!important}
     body.chat-themed .bg-dark-950\/80{background-color:rgba(8,10,18,.02)!important}
+    body.chat-themed .bg-dark-950\/70{background-color:rgba(8,10,18,.018)!important}
     body.chat-themed .bg-dark-950\/60{background-color:rgba(8,10,18,.018)!important}
     body.chat-themed .bg-dark-950\/50{background-color:rgba(8,10,18,.015)!important}
     body.chat-themed .bg-dark-950\/40{background-color:rgba(8,10,18,.012)!important}
@@ -372,10 +373,10 @@
       animation:havocRingSpin 5s linear infinite;
     }
     body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
-    /* User bar — one full-width bottom section with the theme gradient under
-       a dark frosted overlay (same treatment as chat/members panels) */
+    /* User bar — transparent like the other themed sections; the body
+       gradient + the sidebar's radial shade show through identically */
     body.chat-themed #userBar{
-      background:linear-gradient(rgba(5,8,16,.45),rgba(5,8,16,.45)),var(--ct-gradient,#1a0533)!important;
+      background:transparent!important;
     }
     .logout-section{padding-left:4px;padding-right:4px}
     /* Clip the rotating glow at the server list bounds so it can't bleed
@@ -569,6 +570,10 @@
 
 <div class="flex-1 flex overflow-hidden">
 
+  <!-- LEFT COLUMN: server rail + channel sidebar + user bar (Discord bottom section) -->
+  <div class="flex flex-col shrink-0 min-w-0">
+  <div class="flex flex-1 min-h-0">
+
   <!-- SERVER RAIL -->
   <nav class="w-16 bg-dark-950 border-r border-dark-700 flex flex-col items-center py-3 gap-2 shrink-0 overflow-y-auto">
     <div class="relative">
@@ -648,31 +653,33 @@
       </div>
     </div>
 
-    <!-- USER BAR — pinned inside the channel sidebar column (Discord layout) -->
-    <div id="userBar" class="bg-dark-950 border-t border-dark-700 px-2 py-2 relative z-20 shrink-0">
-      <div class="flex items-center gap-2">
-        <div class="relative avatar-wrapper cursor-pointer shrink-0" onclick="openModal('profile')" style="width:32px;height:32px">
-          <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-600">
-          <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
-        </div>
-        <div class="min-w-0 flex-1">
-          <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
-          <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left max-w-full">Not signed in</button>
-        </div>
-        <div class="flex items-center gap-0.5 shrink-0">
-          <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
-          <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
-          <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
-        </div>
+  </aside>
+  </div><!-- /rail + sidebar row -->
+
+  <!-- USER BAR — bottom section spanning server rail + channel sidebar -->
+  <div id="userBar" class="bg-dark-950 border-t border-dark-700 px-2 py-2 relative z-20 shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="relative avatar-wrapper cursor-pointer shrink-0" onclick="openModal('profile')" style="width:32px;height:32px">
+        <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-600">
+        <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
       </div>
-      <div class="logout-section px-1 pt-1.5">
-        <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
-          <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-        </button>
+      <div class="min-w-0 flex-1">
+        <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
+        <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left max-w-full">Not signed in</button>
+      </div>
+      <div class="flex items-center gap-0.5 shrink-0">
+        <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
+        <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
+        <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
       </div>
     </div>
-
-  </aside>
+    <div class="logout-section px-1 pt-1.5">
+      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+      </button>
+    </div>
+  </div>
+  </div><!-- /left column -->
 
   <!-- RESIZE HANDLE -->
   <div id="sidebarResize" class="w-1 bg-dark-700 hover:bg-bch cursor-col-resize shrink-0 z-20"></div>
@@ -1672,6 +1679,7 @@
       <button onclick="adminTab('gifs')" id="at-gifs" class="py-2 px-3 text-xs mono tab-inactive">GIFs</button>
       <button onclick="adminTab('images')" id="at-images" class="py-2 px-3 text-xs mono tab-inactive">Images</button>
       <button onclick="adminTab('bans')" id="at-bans" class="py-2 px-3 text-xs mono tab-inactive">Bans</button>
+      <button onclick="adminTab('ads')" id="at-ads" class="py-2 px-3 text-xs mono tab-inactive">Ads</button>
     </div>
     <div class="flex-1 overflow-y-auto p-5">
       <div id="ap-servers">
@@ -1721,6 +1729,39 @@
         <div class="flex gap-2"><input type="text" id="banUidInput" placeholder="user uid or email" class="field flex-1 text-xs"><button onclick="banUser()" class="btn-primary px-4 text-xs">Ban</button></div>
         <div id="banList" class="space-y-1 max-h-64 overflow-y-auto"></div>
       </div>
+      <div id="ap-ads" class="hidden space-y-4">
+        <p class="text-xs text-slate-400">Direct-sold video ads. Advertisers pay you a CPM upfront; viewers earn +1 sat per completed view. Set a rate (sats per 1,000 views) to track what you owe each advertiser.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="adTitleInput" placeholder="Title / headline" class="field text-xs">
+          <input type="text" id="adAdvertiserInput" placeholder="Advertiser / payee" class="field text-xs">
+          <input type="text" id="adVideoUrlInput" placeholder="Video URL (.mp4/.webm — GitHub raw works)" class="field text-xs col-span-2">
+          <input type="number" id="adWeightInput" min="1" value="1" placeholder="Rotation weight" class="field text-xs">
+          <input type="number" id="adRateInput" min="0" step="any" placeholder="Rate: sats per 1,000 views" class="field text-xs">
+        </div>
+        <button onclick="addVideoAd()" class="btn-primary px-4 py-2 text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Add Video Ad</button>
+        <div id="videoAdList" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REWARDED VIDEO AD (direct-sold) — viewers earn +1 sat on completed view -->
+<div id="modal-videoAd" class="fixed inset-0 z-[600] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+  <div class="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-dark-700">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-[9px] font-bold mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">SPONSORED</span>
+        <span id="videoAdMeta" class="text-[10px] text-slate-400 mono truncate"></span>
+      </div>
+      <button onclick="closeVideoAd(false)" class="text-slate-500 hover:text-white text-sm shrink-0"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="relative bg-black">
+      <video id="rewardedVideo" class="w-full aspect-video" playsinline></video>
+      <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/10"><div id="videoAdProgress" class="h-full bg-bch transition-all" style="width:0%"></div></div>
+    </div>
+    <div class="px-4 py-3 flex items-center justify-between gap-3">
+      <div class="text-[10px] text-slate-500 mono">Watch to the end to earn <span class="text-bch font-bold">+1 sat</span> · closing early earns nothing</div>
+      <button id="videoAdMuteBtn" onclick="toggleVideoAdMute()" class="text-[10px] text-slate-400 hover:text-white shrink-0"><i class="fa-solid fa-volume-high"></i></button>
     </div>
   </div>
 </div>
@@ -1742,7 +1783,7 @@ import {
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, collectionGroup, addDoc, getDocs, query, where, writeBatch,
-  orderBy, startAfter, limit, onSnapshot
+  orderBy, startAfter, limit, onSnapshot, increment
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js';
 
@@ -2838,8 +2879,8 @@ S.profileStyle = {
 
 // ===== SATOSHIS + GAM REWARDED ADS =====
 // TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
-const GAM_NETWORK_CODE = 'YOUR_NETWORK_CODE';
-const GAM_REWARDED_UNIT = 'rewarded';
+const GAM_NETWORK_CODE = '22101006229';
+const GAM_REWARDED_UNIT = 'rewarded'; // TODO: replace with your rewarded ad unit name (GAM → Inventory → Ad units)
 
 // Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
 // so the balance isn't a readable/hand-editable plaintext number in the console.
@@ -2881,7 +2922,16 @@ function loadGPT(){
 }
 window.watchRewardedAd = async () => {
   if(!S.user || !S.profile) return alert('Sign in first');
-  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('Rewarded ads not configured yet — set GAM_NETWORK_CODE and GAM_REWARDED_UNIT in the code.');
+  // Direct-sold video ads take priority — advertiser paid the admin upfront,
+  // viewer earns +1 sat on completed view (survey-style).
+  const directAds = await getActiveVideoAds();
+  if(directAds.length){
+    if(!confirm('Watch an ad to earn +1 satoshi (0.00000001 BTC)?')) return;
+    _wireVideoAd();
+    showRewardedVideoAd(pickVideoAd(directAds));
+    return;
+  }
+  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
   // GAM policy: explicit user opt-in before any rewarded ad
   if(!confirm('Watch an ad to earn +1 satoshi (0.00000001 BTC)?')) return;
   try{ await loadGPT(); console.log('[ads] GPT loaded, apiReady:', !!window.googletag?.apiReady); }
@@ -2913,6 +2963,70 @@ function applyAdToggle(){
   const t = $('adsEnabledToggle'); if(t) t.checked = on;
 }
 applyAdToggle();
+
+// ===== DIRECT-SOLD VIDEO ADS =====
+// Survey-style model: advertisers pay the admin a CPM upfront; their videos
+// rotate as rewarded ads; viewers earn +1 sat per completed view; admin
+// settles with advertisers from the tracked `views` counter.
+let _videoAdsCache = null;
+async function getActiveVideoAds(){
+  if(_videoAdsCache) return _videoAdsCache;
+  try{
+    const snap = await getDocs(collection(db,'videoAds'));
+    _videoAdsCache = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(a => a.active !== false && a.videoUrl);
+  }catch(e){ console.warn('videoAds load failed:', e); _videoAdsCache = []; }
+  return _videoAdsCache;
+}
+window.invalidateVideoAds = () => { _videoAdsCache = null; };
+
+function pickVideoAd(ads){
+  const total = ads.reduce((s,a) => s + (+a.weight > 0 ? +a.weight : 1), 0);
+  let r = Math.random() * total;
+  for(const a of ads){ r -= (+a.weight > 0 ? +a.weight : 1); if(r <= 0) return a; }
+  return ads[ads.length - 1];
+}
+
+let _videoAdFinished = false;
+function _wireVideoAd(){
+  const v = $('rewardedVideo'); if(!v || v.dataset.wired) return; v.dataset.wired = '1';
+  v.addEventListener('timeupdate', () => {
+    if(v.duration) $('videoAdProgress').style.width = (v.currentTime / v.duration * 100) + '%';
+  });
+  v.addEventListener('ended', () => { _videoAdFinished = true; closeVideoAd(true); });
+  v.addEventListener('error', () => { closeVideoAd(false); });
+}
+window.showRewardedVideoAd = (ad) => {
+  const modal = $('modal-videoAd'); if(!modal) return;
+  _videoAdFinished = false;
+  $('videoAdProgress').style.width = '0%';
+  $('videoAdMeta').textContent = `${ad.title || 'Sponsored'}${ad.advertiser ? ' · ' + ad.advertiser : ''}`;
+  $('videoAdMuteBtn').innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+  const v = $('rewardedVideo');
+  v.dataset.adId = ad.id || '';
+  v.src = ad.videoUrl;
+  v.currentTime = 0;
+  v.muted = true; // autoplay-safe; user unmutes via button
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  const p = v.play(); if(p && p.catch) p.catch(() => {});
+};
+window.closeVideoAd = async (completed) => {
+  const modal = $('modal-videoAd'); if(!modal) return;
+  const v = $('rewardedVideo');
+  const adId = v.dataset.adId || '';
+  const reward = completed && _videoAdFinished;
+  v.pause(); v.removeAttribute('src'); v.load();
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+  if(reward){
+    await addSats(1);
+    if(adId){ try{ await updateDoc(doc(db,'videoAds',adId), {views: increment(1), lastViewAt: Date.now()}); invalidateVideoAds(); }catch(e){} }
+    updateSatsDisplay();
+  }
+};
+window.toggleVideoAdMute = () => {
+  const v = $('rewardedVideo'); if(!v) return;
+  v.muted = !v.muted;
+  $('videoAdMuteBtn').innerHTML = v.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+};
 
 window.initProfileEditor = () => {
   updateSatsDisplay();
@@ -7893,7 +8007,7 @@ window.deleteServerFromRail = async (sid, name) => {
   if(wasCurrent) resetAfterServerDelete(); else loadMyServers();
 };
 window.adminTab = tab => {
-  ['servers','users','blacklist','gifs','images','bans'].forEach(t => {
+  ['servers','users','blacklist','gifs','images','bans','ads'].forEach(t => {
     $(`ap-${t}`)?.classList.add('hidden');
     $(`at-${t}`)?.classList.remove('tab-active'); $(`at-${t}`)?.classList.add('tab-inactive');
   });
@@ -7905,6 +8019,7 @@ window.adminTab = tab => {
   if(tab === 'gifs') { loadGifBans(); loadAdminGifs(); }
   if(tab === 'images') loadAdminImages();
   if(tab === 'bans') loadBans();
+  if(tab === 'ads') loadVideoAds();
 };
 
 window.loadAdminImages = async () => {
@@ -7927,6 +8042,73 @@ window.adminDeleteImage = async id => {
   if(!confirm('Delete this image?')) return;
   await deleteDoc(doc(db,'imageBank',id));
   loadAdminImages();
+};
+
+// ===== DIRECT-SOLD VIDEO ADS (admin inventory) =====
+window.loadVideoAds = async () => {
+  const el = $('videoAdList'); if(!el) return;
+  el.innerHTML = '<p class="text-[10px] text-slate-500 py-2">Loading…</p>';
+  let snap;
+  try{ snap = await getDocs(collection(db,'videoAds')); }
+  catch(e){ el.innerHTML = '<p class="text-[10px] text-red-400 py-2">Failed to load — check Firestore rules allow reads on `videoAds`.</p>'; return; }
+  invalidateVideoAds();
+  if(snap.empty){ el.innerHTML = '<p class="text-[10px] text-slate-500 py-3 text-center">No video ads yet — add one above.</p>'; return; }
+  el.innerHTML = '';
+  snap.forEach(d => {
+    const a = d.data();
+    const views = a.views || 0;
+    const rate = +a.rateSats || 0;
+    const owedSats = Math.floor(views * rate / 1000);
+    const active = a.active !== false;
+    const div = document.createElement('div');
+    div.className = 'border border-dark-700 rounded-lg p-3 flex gap-3 items-center';
+    div.innerHTML = `
+      <video src="${esc(a.videoUrl)}" class="w-28 h-16 object-cover rounded bg-black shrink-0" muted preload="metadata"></video>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold text-white truncate">${esc(a.title || 'Untitled')}</div>
+        <div class="text-[10px] text-slate-500 mono truncate">${esc(a.advertiser || '—')} · ${views} completed views · weight ${a.weight || 1}${rate ? ` · owes ~${owedSats} sats (${satsToBtc(owedSats)} BTC)` : ''}</div>
+      </div>
+      <div class="flex flex-col gap-1 items-end shrink-0">
+        <button onclick="toggleVideoAd('${esc(d.id)}',${active ? 'false' : 'true'})" class="text-[10px] px-2 py-1 rounded border ${active ? 'border-green-500/40 text-green-400' : 'border-dark-600 text-slate-500'}">${active ? 'Active' : 'Paused'}</button>
+        ${a.paid ? '<span class="text-[10px] text-slate-500 mono">paid ✓</span>' : `<button onclick="markVideoAdPaid('${esc(d.id)}')" class="text-[10px] px-2 py-1 rounded border border-bch/40 text-bch">Mark paid</button>`}
+        <button onclick="deleteVideoAd('${esc(d.id)}')" class="text-[10px] px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
+      </div>`;
+    el.appendChild(div);
+  });
+};
+
+window.addVideoAd = async () => {
+  const videoUrl = ($('adVideoUrlInput').value || '').trim();
+  if(!videoUrl || !/^https?:\/\//.test(videoUrl)) return alert('Enter a valid http(s) video URL');
+  try{
+    await addDoc(collection(db,'videoAds'), {
+      title: ($('adTitleInput').value || '').trim() || 'Sponsored',
+      advertiser: ($('adAdvertiserInput').value || '').trim(),
+      videoUrl,
+      weight: Math.max(1, parseInt($('adWeightInput').value) || 1),
+      rateSats: Math.max(0, parseFloat($('adRateInput').value) || 0),
+      active: true, paid: false, views: 0, createdAt: Date.now()
+    });
+  }catch(e){ return alert('Failed to save ad — check Firestore rules allow writes on `videoAds`. ' + e.message); }
+  ['adTitleInput','adAdvertiserInput','adVideoUrlInput','adWeightInput','adRateInput'].forEach(id => { const e2 = $(id); if(e2) e2.value = ''; });
+  invalidateVideoAds();
+  loadVideoAds();
+};
+
+window.toggleVideoAd = async (id, activate) => {
+  try{ await updateDoc(doc(db,'videoAds',id), {active: activate}); }
+  catch(e){ return alert('Update failed: ' + e.message); }
+  invalidateVideoAds(); loadVideoAds();
+};
+window.markVideoAdPaid = async id => {
+  if(!confirm('Mark this advertiser as paid? Their view counter stays for records.')) return;
+  await updateDoc(doc(db,'videoAds',id), {paid: true, paidAt: Date.now()});
+  loadVideoAds();
+};
+window.deleteVideoAd = async id => {
+  if(!confirm('Delete this ad?')) return;
+  await deleteDoc(doc(db,'videoAds',id));
+  invalidateVideoAds(); loadVideoAds();
 };
 
 window.loadAdminGifs = async () => {
