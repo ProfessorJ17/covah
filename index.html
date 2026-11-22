@@ -53,7 +53,7 @@
     /* Discord-like rounding: plain .rounded buttons get 8px instead of 4px */
     button.rounded{border-radius:8px}
     .glow-text{text-shadow:0 0 10px rgba(0,229,163,.5)}
-    .havoc-gradient-text{background:var(--ct-gradient,linear-gradient(135deg,#3B63D6,#9B55C6,#F648AC,#E28F48,#1a0533));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:0 0 10px var(--ct-logo-glow,#e2e8f0),0 0 24px var(--ct-logo-glow,#e2e8f0)}
+    .havoc-gradient-text{background:var(--ct-gradient,linear-gradient(135deg,#3B63D6,#9B55C6,#F648AC,#E28F48,#1a0533));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:0 0 10px rgba(255,255,255,.85),0 0 24px rgba(255,255,255,.5)}
     #sidebarResize{transition:background .15s;background:rgba(74,63,108,.15)}
     body.chat-themed #sidebarResize{background:rgba(74,63,108,.08)}
     .mention{background:rgba(10,193,142,.18);color:#00E5A3;padding:0 3px;border-radius:3px;font-weight:600}
@@ -568,7 +568,7 @@
 
 <header class="h-11 bg-dark-950 border-b border-dark-700 flex items-center justify-between px-4 shrink-0 z-30">
   <div class="flex items-center gap-3">
-    <span class="font-extrabold tracking-widest text-sm uppercase mono havoc-gradient-text">havoc</span>
+    <span class="font-extrabold tracking-widest text-sm mono havoc-gradient-text">havoc</span>
     <span class="hidden md:inline text-slate-500 text-[11px] italic border-l border-dark-700 pl-3 mono">Post-Quantum Encrypted Community</span>
   </div>
   <div class="flex items-center gap-2" id="authBar">
