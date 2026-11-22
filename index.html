@@ -130,9 +130,11 @@
     .font-option { padding: 6px 10px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
     .font-option:hover { background: #1c222e; border-color: #242b3b; }
     .font-option.active { border-color: #0AC18E !important; background: rgba(10,193,142,0.15) !important; color: #00E5A3 !important; }
-    .gradient-swatch { width: 24px; height: 24px; border-radius: 4px; cursor: pointer; border: 1.5px solid transparent; transition: transform 0.1s; }
+    .gradient-swatch { width: 32px; height: 32px; border-radius: 6px; cursor: pointer; border: 1.5px solid transparent; transition: transform 0.1s; }
     .gradient-swatch:hover { transform: scale(1.1); }
     .gradient-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+    .theme-swatch { width: 48px; height: 48px; border-radius: 8px; border: 2px solid transparent; }
+    .theme-swatch.active { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.4); }
 
     /* ===== CHAT BACKGROUND THEMES ===== */
     /* GTA6 purple-to-rust gradient */
@@ -1182,7 +1184,7 @@
       <!-- CHAT BACKGROUND -->
       <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
         <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Chat Background</label>
-        <div class="flex flex-wrap gap-2" id="chatThemePicker"></div>
+        <div class="flex flex-wrap gap-3" id="chatThemePicker"></div>
         <p class="text-[9px] text-slate-500 italic">Applies to your view only. Panels stay dark enough for text to remain readable.</p>
       </div>
     </div>
@@ -2134,7 +2136,10 @@ function renderChatThemePicker(){
   const el = $('chatThemePicker'); if(!el) return;
   const cur = currentChatThemeId();
   el.innerHTML = CHAT_THEMES.map(t =>
-    `<div class="gradient-swatch theme-swatch ${cur===t.id?'active':''}" style="background:${t.css}" title="${esc(t.name)}" onclick="setChatTheme('${t.id}')"></div>`
+    `<div class="flex flex-col items-center gap-1">
+      <span class="text-[9px] text-slate-400 mono">${esc(t.name)}</span>
+      <div class="gradient-swatch theme-swatch ${cur===t.id?'active':''}" style="background:${t.css}" onclick="setChatTheme('${t.id}')"></div>
+    </div>`
   ).join('');
 }
 
