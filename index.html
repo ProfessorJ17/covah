@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="google-adsense-account" content="ca-pub-3839146786704737">
   <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' 'unsafe-hashes'; style-src * 'unsafe-inline' 'unsafe-hashes'; img-src * data: blob: https:; font-src * data:; connect-src *;">
   <title>havoc</title>
   <link rel="icon" href="https://professorj17.github.io/4everai/HAVOC.ico" type="image/x-icon"/>
@@ -371,17 +372,12 @@
       animation:havocRingSpin 5s linear infinite;
     }
     body.chat-themed button.server-active .server-icon-wrapper{position:relative;z-index:2}
-    /* Bottom user bar — fully transparent over the theme gradient, above the glow */
-    body.chat-themed #sidebar .bg-dark-950.border-t{
-      position:relative;z-index:10;
-      background-color:transparent!important;
+    /* User bar — one full-width bottom section with the theme gradient under
+       a dark frosted overlay (same treatment as chat/members panels) */
+    body.chat-themed #userBar{
+      background:linear-gradient(rgba(5,8,16,.45),rgba(5,8,16,.45)),var(--ct-gradient,#1a0533)!important;
     }
-    /* Logout gets its own section — theme gradient under a dark frosted overlay,
-       same treatment as the chat/members panels */
-    .logout-section{background:#0d0f14}
-    body.chat-themed .logout-section{
-      background:linear-gradient(rgba(5,8,16,.45),rgba(5,8,16,.45)),var(--ct-gradient,#1a0533);
-    }
+    .logout-section{padding-left:4px;padding-right:4px}
     /* Clip the rotating glow at the server list bounds so it can't bleed
        onto the ticket/create/admin buttons below */
     body.chat-themed #serverList{overflow:hidden}
@@ -557,6 +553,7 @@
     ::-webkit-scrollbar-thumb:hover{background:#5b5760;border:2px solid transparent;background-clip:content-box}
     html{scrollbar-width:thin;scrollbar-color:#4A464B transparent}
   </style>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3839146786704737" crossorigin="anonymous"></script>
 </head>
 <body class="h-full flex flex-col overflow-hidden text-sm">
 
@@ -586,7 +583,7 @@
     <div id="dmNotificationAvatars" class="flex flex-col items-center gap-1 max-h-24 overflow-y-auto w-full px-2"></div>
     <div class="w-8 h-0.5 bg-dark-700 rounded-full my-1"></div>
     <div id="serverList" class="flex flex-col items-center gap-2 w-full px-2 flex-1"></div>
-    <div class="flex flex-col items-center gap-2 pb-2 w-full px-2" style="margin-bottom:84px">
+    <div class="flex flex-col items-center gap-2 pb-2 w-full px-2">
       <button id="ticketBtn" onclick="openModal('joinInvite')" title="Join Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center"><i class="fa-solid fa-ticket"></i></button>
       <button onclick="openModal('createServer')" title="Create Server" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg font-bold"><i class="fa-solid fa-plus"></i></button>
       <button onclick="openModal('discover')" title="Discover Servers" class="w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center text-lg"><i class="fa-solid fa-compass"></i></button>
@@ -651,28 +648,6 @@
       </div>
     </div>
 
-    <div class="bg-dark-950 border-t border-dark-700 px-2 py-2" style="width:calc(100% + 64px);margin-left:-64px;position:relative;z-index:20">
-      <div class="flex items-center gap-2">
-        <div class="relative avatar-wrapper cursor-pointer" onclick="openModal('profile')" style="width:40px;height:40px">
-          <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-10 h-10 rounded-full bg-dark-800 border border-dark-600">
-          <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
-        </div>
-        <div class="min-w-0 flex-1">
-          <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
-          <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left">Not signed in</button>
-        </div>
-        <div class="flex items-center gap-0.5">
-          <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
-          <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
-          <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
-        </div>
-      </div>
-      <div class="logout-section border-t border-dark-700/60 px-2 py-1.5">
-        <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
-          <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-        </button>
-      </div>
-    </div>
   </aside>
 
   <!-- RESIZE HANDLE -->
@@ -764,6 +739,12 @@
       </div>
     </div>
 
+    <!-- AD SPACE — long banner below the chat composer -->
+    <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 flex items-center justify-center px-4 py-2">
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+    </div>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+
     <div id="voiceArea" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-dark-900/40 overflow-y-auto">
       <div class="text-center mb-4">
         <h2 id="voiceChanName" class="text-xl font-bold text-white mb-1">Voice Channel</h2>
@@ -800,6 +781,30 @@
       </div>
     </div>
   </aside>
+</div>
+
+<!-- USER BAR — full-width bottom section: avatar/status left, controls right, logout below -->
+<div id="userBar" class="bg-dark-950 border-t border-dark-700 px-3 py-2 relative z-20">
+  <div class="flex items-center gap-2">
+    <div class="relative avatar-wrapper cursor-pointer" onclick="openModal('profile')" style="width:40px;height:40px">
+      <img id="ucAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Guest" class="w-10 h-10 rounded-full bg-dark-800 border border-dark-600">
+      <span id="ucStatusDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-dark-950 status-offline"></span>
+    </div>
+    <div class="min-w-0 flex-1">
+      <div id="ucHandle" class="font-bold text-white text-xs truncate">Guest</div>
+      <button id="ucRole" onclick="event.stopPropagation();openStatusMenu(event)" class="text-[10px] text-slate-500 mono truncate hover:text-bch text-left">Not signed in</button>
+    </div>
+    <div class="flex items-center gap-0.5">
+      <button id="micBtn" onclick="toggleMic()" oncontextmenu="showAudioDevices(event, 'input')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Mute"><i class="fa-solid fa-microphone"></i></button>
+      <button id="deafenBtn" onclick="toggleDeafen()" oncontextmenu="showAudioDevices(event, 'output')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Deafen"><i class="fa-solid fa-headphones"></i></button>
+      <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
+    </div>
+  </div>
+  <div class="logout-section px-1 pt-1.5">
+    <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full py-1 bg-dark-800/80 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[9px] font-bold logout-btn">
+      <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+    </button>
+  </div>
 </div>
 
 
@@ -1335,6 +1340,19 @@
         <p class="text-[9px] text-slate-500 italic">Applies to your view only. Panels stay dark enough for text to remain readable.</p>
       </div>
     </div>
+
+    <!-- SATOSHI BALANCE / REWARDED ADS -->
+    <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Balance</div>
+        <div id="profileSatsBtc" class="text-sm font-bold text-bch mono">0.00000000 BTC</div>
+      </div>
+      <button id="watchAdBtn" onclick="watchRewardedAd()" class="shrink-0 px-3 py-1.5 btn-primary text-[10px] font-bold rounded-lg"><i class="fa-solid fa-play mr-1"></i>Watch Ad +1 sat</button>
+    </div>
+    <label class="flex items-center gap-2 cursor-pointer -mt-2 mb-4">
+      <input type="checkbox" id="adsEnabledToggle" checked onchange="setAdsEnabled(this.checked)" class="w-3.5 h-3.5 rounded border-dark-600 bg-dark-800 accent-[#0AC18E]">
+      <span class="text-[10px] text-slate-400">Ad Area (banner + rewarded ads)</span>
+    </label>
 
     <div class="flex gap-2 mt-6">
       <button onclick="saveProfile()" class="flex-1 py-2.5 btn-primary text-sm font-bold shadow-lg shadow-bch/10">Save Changes</button>
@@ -2814,7 +2832,86 @@ S.profileStyle = {
   avatarCrop: { x: 0, y: 0, zoom: 1 }
 };
 
+// ===== SATOSHIS + GAM REWARDED ADS =====
+// TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
+const GAM_NETWORK_CODE = 'YOUR_NETWORK_CODE';
+const GAM_REWARDED_UNIT = 'rewarded';
+
+// Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
+// so the balance isn't a readable/hand-editable plaintext number in the console.
+// NOTE: client-side encoding raises the bar but a determined attacker can still
+// bypass it — true enforcement needs a Firebase Callable Function (server-side).
+function satsKey(uid){ let h=0; const s='havoc_sats_'+(uid||''); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h||1; }
+const encSats = (n,u) => (Math.trunc(n) ^ satsKey(u)) >>> 0;
+const decSats = (v,u) => (typeof v==='number' ? (v ^ satsKey(u)) >>> 0 : 0);
+function rawSats(){
+  if(!S.profile) return 0;
+  if(typeof S.profile.satsX === 'number') return decSats(S.profile.satsX, S.user?.uid);
+  return typeof S.profile.sats === 'number' ? S.profile.sats : 0; // legacy plaintext
+}
+const satsToBtc = s => (s / 1e8).toFixed(8);
+function updateSatsDisplay(){
+  const el = $('profileSatsBtc');
+  if(el) el.textContent = satsToBtc(rawSats()) + ' BTC';
+}
+async function addSats(n){
+  if(!S.user) return;
+  const cur = rawSats() + n;
+  if(S.profile){ S.profile.satsX = encSats(cur, S.user.uid); delete S.profile.sats; }
+  updateSatsDisplay();
+  try{ await updateDoc(doc(db,'users',S.user.uid), {satsX: S.profile.satsX, sats: null}); }
+  catch(e){ console.error('sats save error:', e); }
+}
+let _gptLoading = null;
+function loadGPT(){
+  if(window.googletag?.apiReady) return Promise.resolve();
+  if(_gptLoading) return _gptLoading;
+  _gptLoading = new Promise((res, rej) => {
+    window.googletag = window.googletag || { cmd: [] };
+    const s = document.createElement('script');
+    s.src = 'https://securepubads.g.doubleclick.net/tag/js/gpt.js';
+    s.async = true; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  return _gptLoading;
+}
+window.watchRewardedAd = async () => {
+  if(!S.user || !S.profile) return alert('Sign in first');
+  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('Rewarded ads not configured yet — set GAM_NETWORK_CODE and GAM_REWARDED_UNIT in the code.');
+  // GAM policy: explicit user opt-in before any rewarded ad
+  if(!confirm('Watch an ad to earn +1 satoshi (0.00000001 BTC)?')) return;
+  try{ await loadGPT(); console.log('[ads] GPT loaded, apiReady:', !!window.googletag?.apiReady); }
+  catch(e){ console.error('[ads] GPT failed to load:', e); return alert('Could not load the ad network.'); }
+  googletag.cmd.push(() => {
+    const slot = googletag.defineOutOfPageSlot(`/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`, googletag.enums.OutOfPageFormat.REWARDED);
+    if(!slot){ console.error('[ads] defineOutOfPageSlot returned null — check GAM unit path, viewport, HTTPS'); return alert('Rewarded ad unavailable — check your GAM ad unit and page setup.'); }
+    console.log('[ads] rewarded slot defined:', `/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`);
+    slot.addService(googletag.pubads());
+    googletag.pubads().addEventListener('rewardedSlotGranted', () => { console.log('[ads] REWARDED — granting +1 sat'); addSats(1); });
+    googletag.pubads().addEventListener('rewardedSlotClosed', () => console.log('[ads] rewarded slot closed'));
+    googletag.pubads().addEventListener('slotRenderEnded', e => console.log('[ads] slotRenderEnded:', e?.slot?.getAdUnitPath?.()));
+    googletag.enableServices();
+    googletag.display(slot);
+    console.log('[ads] display() called — ad should appear');
+  });
+};
+
+// ===== AD AREA TOGGLE (per-device) =====
+function adsEnabled(){ return localStorage.getItem('havoc_ads_enabled') !== '0'; }
+window.setAdsEnabled = (on) => {
+  localStorage.setItem('havoc_ads_enabled', on ? '1' : '0');
+  applyAdToggle();
+};
+function applyAdToggle(){
+  const on = adsEnabled();
+  document.querySelectorAll('.ad-banner').forEach(el => el.style.display = on ? '' : 'none');
+  const b = $('watchAdBtn'); if(b) b.disabled = !on;
+  const t = $('adsEnabledToggle'); if(t) t.checked = on;
+}
+applyAdToggle();
+
 window.initProfileEditor = () => {
+  updateSatsDisplay();
   const fp = $('fontPicker');
   if(fp) {
     fp.innerHTML = '';
