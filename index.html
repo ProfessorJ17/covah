@@ -2054,6 +2054,8 @@ function loadRemember(){ try{ const d=JSON.parse(localStorage.getItem('havoc_rem
 // Modal helpers (must be defined early for HTML onclick handlers)
 window.openModal = id => {
   $(`modal-${id}`)?.classList.remove('hidden');
+  if(id === 'createChan' && typeof populateCategorySelects === 'function') populateCategorySelects();
+  if(id === 'profile' && typeof updateProfileGhBtn === 'function') updateProfileGhBtn();
   
   // Handle invite modal puzzle text
   if(id === 'joinInvite'){
@@ -2071,32 +2073,6 @@ window.openModal = id => {
       }
     }
   }
-};
-window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
-
-const S = {
-  user:null, profile:null, isAdmin:false,
-  server:null, channel:null, channelType:'text',
-  canManage:false, locked:false, inDMs:false,
-  unsubMsgs:null, unsubMembers:null, unsubTyping:null, unsubDms:null,
-  pendingImage:null, pendingImageUrl:null, pendingAudio:null,
-  roles:[], membersCache:[], voiceUsers:{},
-  friends:[], incoming:[], outgoing:[], myServerCount:0, gifPage:0, gifCache:[],
-  dmTarget:null, currentInviteCode:null,
-  micMuted:false, deafened:false, camOn:false,
-  reactionTarget:null,
-  peers: {}, localStream: null,
-  avatarMode: 'seed', serverIconMode: 'seed', ssIconMode: 'seed',
-  typing: {}, // { channelId: { uid: timestamp } }
-  typingTimeout: null,
-  processedSignals: new Set()
-};
-
-// Modal helpers (must be defined early for HTML onclick handlers)
-window.openModal = id => {
-  $(`modal-${id}`)?.classList.remove('hidden');
-  if(id === 'createChan' && typeof populateCategorySelects === 'function') populateCategorySelects();
-  if(id === 'profile' && typeof updateProfileGhBtn === 'function') updateProfileGhBtn();
   
   // Initialize modal content based on type
   if(id === 'serverSettings' && S.canManage && typeof ssIconMethod === 'function'){
@@ -2175,6 +2151,7 @@ window.openModal = id => {
     $('newServerTagEmojiColor').value = '#ffffff';
   }
 };
+window.closeModal = id => $(`modal-${id}`)?.classList.add('hidden');
 
 // ========== AUTH ==========
 onAuthStateChanged(auth, async user => {
@@ -2352,7 +2329,7 @@ window.doSignOut = async () => {
   $('serverIconPreview').classList.add('hidden');
   $('channelsList').innerHTML=''; if($('voiceList')) $('voiceList').innerHTML='';
   $('msgFeed').innerHTML='<div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>';
-  $('membersList')?.innerHTML=''; $('friendsList')?.innerHTML=''; $('dmList')?.innerHTML='';
+  $('membersList') && ($('membersList').innerHTML=''); $('friendsList') && ($('friendsList').innerHTML=''); $('dmList') && ($('dmList').innerHTML='');
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
   $('addChanBtn').classList.add('hidden'); $('addVoiceBtn')?.classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
