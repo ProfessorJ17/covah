@@ -1492,6 +1492,13 @@
   </div>
 </div>
 
+<!-- Early placeholders for global functions -->
+<script>
+window.toggleSidebar = function(){ console.log('Sidebar toggle loading...'); };
+window.openModal = function(id){ console.log('openModal loading:', id); };
+window.closeModal = function(id){ console.log('closeModal loading:', id); };
+</script>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
 import {
@@ -2050,6 +2057,27 @@ const BADGES = [
 ];
 function saveRemember(email, pass){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email,pass})); else localStorage.removeItem('havoc_remember'); }
 function loadRemember(){ try{ const d=JSON.parse(localStorage.getItem('havoc_remember')||'null'); if(d?.email){ $('lEmail').value=d.email; $('lPass').value=d.pass||''; $('rememberMe').checked=true; } }catch{} }
+
+const S = {
+  user:null, profile:null, isAdmin:false,
+  server:null, channel:null, channelType:'text',
+  canManage:false, locked:false, inDMs:false,
+  unsubMsgs:null, unsubMembers:null, unsubTyping:null, unsubDms:null,
+  pendingImage:null, pendingImageUrl:null, pendingAudio:null,
+  roles:[], membersCache:[], voiceUsers:{},
+  friends:[], incoming:[], outgoing:[], myServerCount:0, gifPage:0, gifCache:[],
+  dmTarget:null, currentInviteCode:null,
+  micMuted:false, deafened:false, camOn:false,
+  reactionTarget:null,
+  peers: {}, localStream: null,
+  avatarMode: 'seed', serverIconMode: 'seed', ssIconMode: 'seed',
+  typing: {}, // { channelId: { uid: timestamp } }
+  typingTimeout: null,
+  processedSignals: new Set(),
+  sidebarCollapsed: localStorage.getItem('havoc_sidebar_collapsed') === '1',
+  sidebarWidth: parseInt(localStorage.getItem('havoc_sidebar_width') || '240', 10),
+  chanLastTs: {}
+};
 
 // Modal helpers (must be defined early for HTML onclick handlers)
 window.openModal = id => {
@@ -4561,12 +4589,10 @@ function markChanRead(cid, ts){
 }
 // ===== CHANNEL CATEGORIES =====
 let S_categories = [];
-// Track latest message timestamp per channel for unread badges (cross-channel)
-let S_chanLastTs = {};
 
 function chanHasUnread(c, readMap){
   if(c.type === 'voice' || c.id === S.channel) return false;
-  const lastTs = S_chanLastTs[c.id] || c.lastTs || 0;
+  const lastTs = S.chanLastTs[c.id] || c.lastTs || 0;
   return lastTs > (readMap[c.id]||0) && lastTs > 0;
 }
 async function loadCategories(serverId){
@@ -4773,7 +4799,7 @@ function switchChannel(c){
   $('chanHeader').textContent = c.name || c.id;
   $('chanSettingsName').textContent = c.name || c.id;
   // Clear unread state for this channel immediately
-  delete S_chanLastTs[c.id];
+  delete S.chanLastTs[c.id];
   renderChannels();
   $('textArea').classList.remove('hidden');
   $('voiceArea').classList.add('hidden');
@@ -5046,7 +5072,7 @@ function listenMessages(serverId, channelId){
     // Update cross-channel lastTs from latest message in this channel
     if(msgs.length > 0){
       const latestTs = msgs[msgs.length-1].ts || 0;
-      S_chanLastTs[channelId] = Math.max(S_chanLastTs[channelId] || 0, latestTs);
+      S.chanLastTs[channelId] = Math.max(S.chanLastTs[channelId] || 0, latestTs);
     }
 
     // Capture scroll position BEFORE render to detect "new messages" pill
@@ -5061,7 +5087,7 @@ function listenMessages(serverId, channelId){
           const m = { id: change.doc.id, ...change.doc.data() };
           if (m.uid !== S.user?.uid) { handleIncomingMessageNotif(m); newFromOthers = true; }
           // Update cross-channel lastTs for unread badges
-          S_chanLastTs[channelId] = Math.max(S_chanLastTs[channelId] || 0, m.ts || 0);
+          S.chanLastTs[channelId] = Math.max(S.chanLastTs[channelId] || 0, m.ts || 0);
           // Re-render channels to update unread dots
           renderChannels();
         }
@@ -8543,9 +8569,7 @@ function updateHideMutedLabel(){
 }
 
 // ===== SIDEBAR TOGGLE & RESIZE =====
-S.sidebarCollapsed = localStorage.getItem('havoc_sidebar_collapsed') === '1';
-S.sidebarWidth = parseInt(localStorage.getItem('havoc_sidebar_width') || '240', 10);
-
+// Override the placeholder with the real implementation
 window.toggleSidebar = function(){
   const sidebar = $('sidebar');
   const toggleBtn = $('sidebarToggleBtn');
