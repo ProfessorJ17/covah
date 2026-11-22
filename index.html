@@ -191,16 +191,68 @@
     body.chat-themed .border-bch\/30{border-color:rgba(74,63,108,.25)!important}
     body.chat-themed .border-bch\/40{border-color:rgba(74,63,108,.3)!important}
     /* Gradient accents: primary buttons (send etc.) + active channel highlight */
-    body.chat-themed .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);color:#e8e4f0}
-    body.chat-themed .btn-primary:hover{filter:brightness(1.15)}
+    .btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0}
+    .btn-primary:hover{filter:brightness(1.15)}
     body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(74,63,108,.3),rgba(107,90,138,.2))!important}
     body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:linear-gradient(90deg,#4a3f6c,#6b5a8a);color:#e8e4f0}
+    /* All secondary buttons get gradient when themed */
+    body.chat-themed button.bg-dark-800,
+    body.chat-themed button.bg-dark-700,
+    body.chat-themed button.bg-dark-600,
+    body.chat-themed button.px-4,
+    body.chat-themed button.py-1,
+    body.chat-themed button.py-2,
+    body.chat-themed button.px-3,
+    body.chat-themed button.px-2,
+    body.chat-themed #logoutBtn,
+    body.chat-themed .logout-btn,
+    body.chat-themed button[type="submit"],
+    body.chat-themed #sendBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed button.bg-dark-800:hover,
+    body.chat-themed button.bg-dark-700:hover,
+    body.chat-themed button.bg-dark-600:hover,
+    body.chat-themed button.px-4:hover,
+    body.chat-themed button.py-1:hover,
+    body.chat-themed button.py-2:hover,
+    body.chat-themed button.px-3:hover,
+    body.chat-themed button.px-2:hover,
+    body.chat-themed #logoutBtn:hover,
+    body.chat-themed .logout-btn:hover,
+    body.chat-themed button[type="submit"]:hover,
+    body.chat-themed #sendBtn:hover{filter:brightness(1.15)}
+    /* Settings modal buttons */
+    body.chat-themed .modal button,
+    body.chat-themed .fixed button{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed .modal button:hover,
+    body.chat-themed .fixed button:hover{filter:brightness(1.15)}
+    /* Settings tab buttons */
+    body.chat-themed .tab-active,
+    body.chat-themed button.tab-active{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    /* Danger zone buttons keep red but get gradient border */
+    body.chat-themed button.bg-red-900\/30,
+    body.chat-themed button.bg-red-950{border-color:rgba(180,80,80,.4)!important;background:linear-gradient(90deg,#5a2a2a,#7a3a3a)!important;color:#f0d0d0}
+    /* Small icon buttons stay subtle but tinted */
+    body.chat-themed button.w-7,
+    body.chat-themed button.w-8{background:rgba(74,63,108,.15)!important;border-color:rgba(107,90,138,.3)!important}
+    body.chat-themed button.w-7:hover,
+    body.chat-themed button.w-8:hover{background:rgba(74,63,108,.25)!important}
     /* Message composer bar + input get a subtle themed surface */
     body.chat-themed #msgForm{background:rgba(10,14,28,.12)!important;border-color:rgba(120,110,160,.15)}
     body.chat-themed #msgForm:focus-within{border-color:rgba(107,90,138,.4)}
-    /* DM home button gets the theme gradient (Discord blurple-style) */
-    body.chat-themed #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
-    body.chat-themed #dmHomeBtn:hover{filter:brightness(1.15)}
+    /* Message composer input */
+    body.chat-themed #msgInput{background:rgba(10,14,28,.08)!important;border-color:rgba(120,110,160,.12)!important;color:#e8e4f0}
+    body.chat-themed #msgInput::placeholder{color:#a39cb5}
+    /* Send button specific styling */
+    body.chat-themed #sendBtn,
+    body.chat-themed button.btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border:none!important}
+    body.chat-themed #sendBtn:hover,
+    body.chat-themed button.btn-primary:hover{filter:brightness(1.2)}
+    /* Logout button gets gradient when themed */
+    body.chat-themed .logout-btn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed .logout-btn:hover{filter:brightness(1.15)}
+    /* DM home button gets the theme gradient for all themes */
+    #dmHomeBtn{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important}
+    #dmHomeBtn:hover{filter:brightness(1.15)}
     /* Channel categories */
     .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
     .cat-header:hover{background:rgba(255,255,255,.04)}
@@ -271,11 +323,8 @@
       height: 40px !important;
     }
 
-    /* Members list — 40px */
-    #membersList .avatar-wrapper {
-      width: 40px !important;
-      height: 40px !important;
-    }
+    /* Members list — 40px (disabled - members panel removed) */
+    /* #membersList .avatar-wrapper { width: 40px !important; height: 40px !important; } */
 
     /* Bottom user panel — 40px */
     #ucAvatar {
@@ -429,7 +478,7 @@
           <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
         </div>
       </div>
-      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1.5 py-1 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded text-[10px] font-bold">
+      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1.5 py-1 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded text-[10px] font-bold logout-btn">
         <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
       </button>
     </div>
@@ -439,7 +488,7 @@
   <div id="sidebarResize" class="w-1 bg-dark-700 hover:bg-bch cursor-col-resize shrink-0 z-20"></div>
 
   <!-- MAIN -->
-  <main class="flex-1 flex flex-col bg-dark-850 min-w-0">
+  <main class="flex-1 flex flex-col min-w-0">
     <div class="h-12 border-b border-dark-700 px-4 flex items-center justify-between bg-dark-900/90 shrink-0 gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <button id="sidebarOpenBtn" onclick="toggleSidebar()" title="Open Sidebar" class="hidden text-slate-500 hover:text-bch-bright text-xs p-1.5 rounded hover:bg-dark-800"><i class="fa-solid fa-chevron-right"></i></button>
@@ -456,7 +505,6 @@
         <button onclick="openThreadsPanel()" title="Threads" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-comments"></i></button>
         <button onclick="toggleNotifMenu(event)" title="Notification Settings" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-bell"></i></button>
         <button onclick="openPinsPanel()" title="Pinned Messages" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-thumbtack"></i></button>
-        <button onclick="toggleMembersPanel()" title="Hide Member List" id="membersToggleBtn" class="w-8 h-8 rounded hover:bg-dark-800 text-slate-400 hover:text-white flex items-center justify-center text-sm"><i class="fa-solid fa-user-group"></i></button>
         <div class="hidden md:flex items-center ml-1">
           <input type="text" id="chanSearch" placeholder="Search" oninput="filterChanSearch(this.value)" class="bg-dark-950 border border-dark-700 rounded px-2 py-1 text-[11px] text-white w-28 focus:outline-none focus:border-bch placeholder-slate-600">
         </div>
@@ -540,27 +588,6 @@
       </div>
     </div>
   </main>
-
-  <aside id="membersPanel" class="w-60 bg-dark-900 border-l border-dark-700 p-3 overflow-y-auto shrink-0 hidden xl:block">
-    <div id="membersContent">
-      <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2 mono px-1">Members — <span id="memberCount">0</span></div>
-      <div id="membersList" class="space-y-1"></div>
-    </div>
-    <div id="dmProfileContent" class="hidden">
-      <div class="text-center mb-4">
-        <div class="relative avatar-wrapper inline-block mb-2">
-          <img id="dmProfileAvatar" class="w-20 h-20 rounded-full border-2 border-bch/40 object-cover">
-          <span id="dmProfileDot" class="member-status-dot status-offline z-20"></span>
-        </div>
-        <div id="dmProfileHandle" class="font-bold text-white text-lg"></div>
-        <div id="dmProfileStatus" class="text-xs text-slate-400 mono"></div>
-      </div>
-      <div class="space-y-2 text-xs">
-        <button id="dmFriendBtn" onclick="console.log('Button clicked!'); handleDMFriendAction()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Remove Friend</button>
-        <button onclick="blockCurrentDM()" class="w-full py-1.5 bg-dark-800 hover:bg-red-900/40 text-red-400 rounded border border-dark-600">Block</button>
-      </div>
-    </div>
-  </aside>
 </div>
 
 
@@ -1098,8 +1125,9 @@
 
     <div class="flex gap-2 mt-6">
       <button onclick="saveProfile()" class="flex-1 py-2.5 btn-primary text-sm font-bold shadow-lg shadow-bch/10">Save Changes</button>
-      <button onclick="doSignOut()" class="px-4 py-2.5 bg-dark-800 text-red-400 font-bold rounded-lg text-sm border border-dark-700">Logout</button>
+      <button onclick="doSignOut()" class="px-4 py-2.5 logout-btn text-red-400 font-bold rounded-lg text-sm border border-dark-700">Logout</button>
     </div>
+    <div id="profileMsg" class="mt-2 text-xs mono hidden text-center"></div>
     <div id="profileMsg" class="mt-2 text-xs mono hidden text-center"></div>
   </div>
 </div>
@@ -1392,7 +1420,7 @@
     <h2 class="font-bold text-white mb-4"><i class="fa-solid fa-folder text-bch"></i> Category</h2>
     <div class="space-y-2">
       <input type="text" id="catRenameInput" placeholder="Category name…" maxlength="50" class="field w-full text-xs">
-      <button onclick="saveCatSettings()" class="w-full py-2 bg-dark-800 text-white border border-dark-600 rounded text-xs font-bold mono hover:border-bch">Save</button>
+      <button onclick="saveCatSettings()" class="w-full py-2 btn-primary rounded text-xs font-bold mono">Save</button>
       <button onclick="deleteCategory()" class="w-full py-2 bg-red-950 text-red-200 border border-red-500/40 rounded text-xs font-bold mono">Delete Category</button>
     </div>
   </div>
@@ -2324,7 +2352,7 @@ window.doSignOut = async () => {
   $('serverIconPreview').classList.add('hidden');
   $('channelsList').innerHTML=''; if($('voiceList')) $('voiceList').innerHTML='';
   $('msgFeed').innerHTML='<div class="text-center py-16 text-slate-600 mono text-xs">Select a server or open Direct Messages.</div>';
-  $('membersList').innerHTML=''; $('friendsList').innerHTML=''; $('dmList').innerHTML='';
+  $('membersList')?.innerHTML=''; $('friendsList')?.innerHTML=''; $('dmList')?.innerHTML='';
   $('serverSettingsBtn').classList.add('hidden'); $('inviteBtn').classList.add('hidden');
   $('addChanBtn').classList.add('hidden'); $('addVoiceBtn')?.classList.add('hidden');
   $('chanAdminBtn').classList.add('hidden');
@@ -2371,16 +2399,17 @@ window.openDMs = () => {
   $('textArea').classList.remove('hidden');
   $('voiceArea').classList.add('hidden');
   $('msgFeed').innerHTML = '<div class="text-center py-16 text-slate-600 mono text-xs">Select a friend to start chatting.<br><span class="text-slate-700">Friends appear on the left.</span></div>';
-  $('membersContent').classList.add('hidden');
-  $('dmProfileContent').classList.add('hidden');
+  $('membersContent')?.classList.add('hidden');
+  $('dmProfileContent')?.classList.add('hidden');
   if($('memberCount')) $('memberCount').textContent = '0';
   $('typingIndicator').classList.add('hidden');
   if($('membersList')) $('membersList').innerHTML = '';
+  if($('dmList')) $('dmList').innerHTML = '';
   loadFriends(); renderDMList(); // Note: renderDMList is now async but we don't await here
   dmTab('dms');
 };
-function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); $('membersPanel').classList.remove('hidden'); }
-function showChannelsView(){ $('dmView').classList.add('hidden'); $('channelsView').classList.remove('hidden'); $('membersContent').classList.remove('hidden'); $('dmProfileContent').classList.add('hidden'); $('dmHomeBtn').classList.remove('dm-active'); }
+function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); }
+function showChannelsView(){ $('dmView').classList.add('hidden'); $('channelsView').classList.remove('hidden'); $('membersContent')?.classList.remove('hidden'); $('dmProfileContent')?.classList.add('hidden'); $('dmHomeBtn').classList.remove('dm-active'); }
 
 window.filterDMs = (q) => {
   q = q.toLowerCase();
@@ -3238,8 +3267,8 @@ window.connectGithub = async () => {
     // Device flow endpoints live on github.com (not api.github.com), send no CORS
     // headers, and reject JSON preflights — route through a CORS proxy with a
     // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
-    const GH_PROXY = 'https://cors.isomorphic-git.org/';
-    const dRes = await fetch(GH_PROXY + 'https://github.com/login/device/code', {
+    const GH_PROXY = 'https://corsproxy.io/?';
+    const dRes = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/device/code'), {
       method:'POST',
       headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
       body: new URLSearchParams({ client_id: GH_CLIENT_ID, scope: GH_SCOPE })
@@ -3252,7 +3281,7 @@ window.connectGithub = async () => {
     const poll = async () => {
       if(Date.now() > deadline){ $('ghStatus').textContent = 'Code expired — try again.'; return; }
       try{
-        const r = await fetch(GH_PROXY + 'https://github.com/login/oauth/access_token', {
+        const r = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/oauth/access_token'), {
           method:'POST', headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
           body: new URLSearchParams({ client_id: GH_CLIENT_ID, device_code: d.device_code, grant_type:'urn:ietf:params:oauth:grant-type:device_code' })
         });
@@ -5850,6 +5879,7 @@ function listenMembers(serverId){
   
   S.unsubMembers = onSnapshot(membersCol, async (snap) => {
     const list = $('membersList');
+    if(list) list.innerHTML = '';
     if(!list) return;
     
     // Clear only if this is the first snapshot or complete reload needed
@@ -6389,8 +6419,8 @@ window.startDM = (uid, handle, avatar) => {
   $('chatInput').placeholder = `Message @${handle}`;
   $('textArea').classList.remove('hidden');
   $('voiceArea').classList.add('hidden');
-  $('membersContent').classList.add('hidden');
-  $('dmProfileContent').classList.remove('hidden');
+  $('membersContent')?.classList.add('hidden');
+  $('dmProfileContent')?.classList.remove('hidden');
   $('dmProfileAvatar').src = avatar || userAvatar(uid);
   $('dmProfileHandle').textContent = handle;
   $('dmProfileStatus').textContent = isAdmin && !isFriend ? 'Admin DM' : 'Direct Message';
@@ -7981,6 +8011,7 @@ function updateTypingIndicator(typers) {
 function updateMembersTypingStatus() {
   // Update members list to show typing indicators for users typing anywhere in the server
   const memberItems = document.querySelectorAll('#membersList .flex.items-center');
+  if(!memberItems.length) return;
   memberItems.forEach(item => {
     const uid = item.dataset.uid;
     if (uid && otherTypers[uid]) {
@@ -8308,17 +8339,9 @@ function isNewMember(uid){
 }
 
 // ===== MEMBERS PANEL TOGGLE =====
+// Members panel removed - toggle function disabled
 window.toggleMembersPanel = () => {
-  const panel = $('membersPanel');
-  if(!panel) return;
-  // Toggle visibility - if it's currently visible, hide it; if hidden, show it
-  if(panel.classList.contains('hidden') || panel.style.display === 'none'){
-    panel.classList.remove('hidden');
-    panel.style.display = '';
-  } else {
-    panel.classList.add('hidden');
-    panel.style.display = 'none';
-  }
+  console.log('Members panel has been removed');
 };
 
 // ===== NOTIFICATIONS =====
@@ -8546,7 +8569,7 @@ function updateHideMutedLabel(){
 S.sidebarCollapsed = localStorage.getItem('havoc_sidebar_collapsed') === '1';
 S.sidebarWidth = parseInt(localStorage.getItem('havoc_sidebar_width') || '240', 10);
 
-function toggleSidebar(){
+window.toggleSidebar = function(){
   const sidebar = $('sidebar');
   const toggleBtn = $('sidebarToggleBtn');
   const openBtn = $('sidebarOpenBtn');
@@ -8574,7 +8597,7 @@ function toggleSidebar(){
     openBtn?.classList.add('hidden');
   }
   if(toggleBtn) toggleBtn.innerHTML = S.sidebarCollapsed ? '<i class="fa-solid fa-chevron-right"></i>' : '<i class="fa-solid fa-chevron-left"></i>';
-}
+};
 
 // Sidebar resize drag
 let isResizing = false;
@@ -8596,8 +8619,8 @@ document.addEventListener('mouseup', () => {
 });
 
 // Apply saved sidebar state on load
-document.addEventListener('DOMContentLoaded', () => {
-  if(S.sidebarCollapsed) toggleSidebar();
+const initSidebar = () => {
+  if(S.sidebarCollapsed) window.toggleSidebar();
   else {
     const sidebar = $('sidebar');
     if(sidebar) sidebar.style.width = S.sidebarWidth + 'px';
@@ -8612,7 +8635,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
     });
   }
-});
+};
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initSidebar);
+} else {
+  initSidebar();
+}
 
 // Initialize hide muted channels state
 S.hideMutedChannels = localStorage.getItem('havoc_hide_muted') === '1';
