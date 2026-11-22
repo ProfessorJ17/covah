@@ -177,6 +177,12 @@
     body.chat-themed .border-b,
     body.chat-themed .border-l,
     body.chat-themed .border-r{border-color:transparent!important}
+    body.chat-themed .border-l{border-left:none!important}
+    body.chat-themed .border-r{border-right:none!important}
+    body.chat-themed #membersPanel{border-left:none!important}
+    body.chat-themed #sidebar{border-right:none!important}
+    body.chat-themed nav{border-right:none!important}
+    body.chat-themed header{border-bottom:none!important}
     /* Muted off-white/lavender text for dark contrast */
     body.chat-themed .text-white{color:#e8e4f0!important}
     body.chat-themed .text-slate-500{color:#a39cb5!important}
@@ -195,42 +201,29 @@
     .btn-primary:hover{filter:brightness(1.15)}
     body.chat-themed #channelsList button.bg-dark-700{background:linear-gradient(90deg,rgba(74,63,108,.3),rgba(107,90,138,.2))!important}
     body.chat-themed .mention-everyone,body.chat-themed .mention-here{background:var(--ct-accent,#4a3f6c);color:#fff}
-    /* All secondary buttons get gradient when themed */
-    body.chat-themed button.bg-dark-800,
-    body.chat-themed button.bg-dark-700,
-    body.chat-themed button.bg-dark-600,
-    body.chat-themed button.px-4,
-    body.chat-themed button.py-1,
-    body.chat-themed button.py-2,
-    body.chat-themed button.px-3,
-    body.chat-themed button.px-2,
-    body.chat-themed #logoutBtn,
-    body.chat-themed .logout-btn,
+    /* All buttons transparent by default, gradient on hover */
+    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item){background:transparent!important;color:#e8e4f0;border-color:rgba(107,90,138,.2)!important}
+    body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item):hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff;filter:brightness(1.1)}
+    /* Primary buttons keep gradient always */
+    body.chat-themed #sendBtn,
     body.chat-themed button[type="submit"],
-    body.chat-themed #sendBtn{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
-    body.chat-themed button.bg-dark-800:hover,
-    body.chat-themed button.bg-dark-700:hover,
-    body.chat-themed button.bg-dark-600:hover,
-    body.chat-themed button.px-4:hover,
-    body.chat-themed button.py-1:hover,
-    body.chat-themed button.py-2:hover,
-    body.chat-themed button.px-3:hover,
-    body.chat-themed button.px-2:hover,
-    body.chat-themed #logoutBtn:hover,
-    body.chat-themed .logout-btn:hover,
+    body.chat-themed .btn-primary{background:var(--ct-accent,#6b5a8a)!important;color:#fff;border:none!important;box-shadow:0 2px 8px rgba(74,63,108,.3)}
+    body.chat-themed #sendBtn:hover,
     body.chat-themed button[type="submit"]:hover,
-    body.chat-themed #sendBtn:hover{filter:brightness(1.2)}
-    /* Settings modal buttons */
+    body.chat-themed .btn-primary:hover{filter:brightness(1.25);box-shadow:0 4px 12px rgba(74,63,108,.4)}
+    /* Settings modal buttons — transparent default, gradient hover */
     body.chat-themed .modal button,
-    body.chat-themed .fixed button{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
+    body.chat-themed .fixed button{background:transparent!important;color:#e8e4f0;border-color:rgba(107,90,138,.2)!important}
     body.chat-themed .modal button:hover,
-    body.chat-themed .fixed button:hover{filter:brightness(1.15)}
+    body.chat-themed .fixed button:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
     /* Settings tab buttons */
     body.chat-themed .tab-active,
     body.chat-themed button.tab-active{background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
-    /* Danger zone buttons keep red but get gradient border */
+    /* Danger zone buttons keep red but transparent */
     body.chat-themed button.bg-red-900\/30,
-    body.chat-themed button.bg-red-950{border-color:rgba(180,80,80,.4)!important;background:linear-gradient(90deg,#5a2a2a,#7a3a3a)!important;color:#f0d0d0}
+    body.chat-themed button.bg-red-950{border-color:rgba(180,80,80,.4)!important;background:transparent!important;color:#f0d0d0}
+    body.chat-themed button.bg-red-900\/30:hover,
+    body.chat-themed button.bg-red-950:hover{background:linear-gradient(90deg,#5a2a2a,#7a3a3a)!important}
     /* Global button gradient for ALL buttons when themed */
     body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item){background:var(--ct-accent,#4a3f6c)!important;color:#fff;border-color:rgba(107,90,138,.4)!important}
     body.chat-themed button:not(.gh-add-btn):not(.reaction):not(.server-active):not(.dm-active):not(.ctx-item):hover{filter:brightness(1.2)}
@@ -250,8 +243,8 @@
     body.chat-themed #msgForm{background:rgba(10,14,28,.12)!important;border-color:rgba(120,110,160,.15)}
     body.chat-themed #msgForm:focus-within{border-color:rgba(107,90,138,.4)}
     /* Message composer input */
-    body.chat-themed #msgInput{background:rgba(10,14,28,.08)!important;border-color:rgba(120,110,160,.12)!important;color:#e8e4f0}
-    body.chat-themed #msgInput::placeholder{color:#a39cb5}
+    body.chat-themed #msgInput{background:rgba(10,14,28,.08)!important;border-color:rgba(120,110,160,.12)!important;color:#fff}
+    body.chat-themed #msgInput::placeholder{color:#e8e4f0}
     /* Send button specific styling */
     body.chat-themed #sendBtn,
     body.chat-themed button.btn-primary{background:linear-gradient(90deg,#4a3f6c,#6b5a8a)!important;color:#e8e4f0;border:none!important}
@@ -266,7 +259,15 @@
     body.chat-themed #dmHomeBtn{background:var(--ct-accent,#4a3f6c)!important}
     /* Ensure DM icon is visible on gradient */
     body.chat-themed #dmHomeBtn img{filter:brightness(1.2)}
-    /* Channel categories */
+    /* Channel list — non-selected channels transparent, selected gets gradient */
+    body.chat-themed #channelsList button:not(.bg-dark-700){background:transparent!important;color:#e8e4f0}
+    body.chat-themed #channelsList button:not(.bg-dark-700):hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
+    body.chat-themed #channelsList button.bg-dark-700{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
+    /* Members list — transparent hover with theme gradient */
+    body.chat-themed #membersList .flex.items-center{background:transparent!important}
+    body.chat-themed #membersList .flex.items-center:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
+    /* Override Tailwind hover:bg-dark-800 on member items */
+    body.chat-themed #membersList [class*="hover:bg-dark-800"]:hover{background:var(--ct-accent,#4a3f6c)!important;color:#fff}
     .cat-header{display:flex;align-items:center;gap:4px;width:100%;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
     .cat-header:hover{background:rgba(255,255,255,.04)}
     .cat-header .cat-caret{font-size:9px;color:#80848e;transition:transform .15s;width:10px;text-align:center}
@@ -2046,11 +2047,11 @@ function formatMsgContent(content){
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'gta6',   name:'GTA6',         css:'linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'synth',  name:'Synthwave',     css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
-  { id:'ocean',  name:'Deep Ocean',    css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
-  { id:'sunset', name:'Sunset',        css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
-  { id:'matrix', name:'Matrix',        css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
+  { id:'gta6',   name:'GTA6 Vice City', css:'linear-gradient(135deg,#3C27AE 0%,#4C249E 17%,#5D1F86 33%,#6E1B69 50%,#811E4E 67%,#962C34 83%,#AA3C29 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
+  { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
+  { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
+  { id:'sunset', name:'Sunset Ember', css:'linear-gradient(160deg,#1a0533 0%,#6b1d5a 40%,#c73e6b 70%,#f7971e 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
+  { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
 ];
 // Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
 function currentChatThemeId(){
@@ -3308,7 +3309,7 @@ window.connectGithub = async () => {
     // Device flow endpoints live on github.com (not api.github.com), send no CORS
     // headers, and reject JSON preflights — route through a CORS proxy with a
     // form-urlencoded body. Falls back to PAT paste if the proxy is unreachable.
-    const GH_PROXY = 'https://corsproxy.io/?url=';
+    const GH_PROXY = 'https://corsproxy.io/?key=c944ff71&url=';
     const dRes = await fetch(GH_PROXY + encodeURIComponent('https://github.com/login/device/code'), {
       method:'POST',
       headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},
