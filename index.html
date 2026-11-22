@@ -48,6 +48,8 @@
     .server-active{background:#0AC18E!important;color:#000!important;border-radius:12px!important;box-shadow:0 0 12px rgba(0,229,163,.4)}
     .btn-primary{background:#0AC18E;color:#000;font-weight:700;border-radius:8px}
     .btn-primary:hover{background:#00E5A3}
+    /* Discord-like rounding: plain .rounded buttons get 8px instead of 4px */
+    button.rounded{border-radius:8px}
     .glow-text{text-shadow:0 0 10px rgba(0,229,163,.5)}
     .havoc-gradient-text{background:var(--ct-gradient,linear-gradient(135deg,#3B63D6,#9B55C6,#F648AC,#E28F48,#1a0533));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
     #sidebarResize{transition:background .15s;background:rgba(74,63,108,.15)}
@@ -261,28 +263,24 @@
     body.chat-themed #sendBtn:hover,
     body.chat-themed button[type="submit"]:hover,
     body.chat-themed .btn-primary:hover{filter:brightness(1.25);box-shadow:0 4px 12px rgba(74,63,108,.4)}
-    /* Add shading on bottom-right of all sections like Discord */
+    /* Discord-style bottom-right shading on app shell sections only.
+       NOTE: never touch .fixed/.modal here — position:relative would break modals. */
     body.chat-themed header,
     body.chat-themed nav,
     body.chat-themed aside,
-    body.chat-themed main,
-    body.chat-themed .modal,
-    body.chat-themed .fixed{position:relative}
+    body.chat-themed main{position:relative}
     body.chat-themed header::after,
     body.chat-themed nav::after,
     body.chat-themed aside::after,
-    body.chat-themed main::after,
-    body.chat-themed .modal::after,
-    body.chat-themed .fixed::after{
+    body.chat-themed main::after{
       content:'';
       position:absolute;
       bottom:0;
       right:0;
       width:100%;
       height:100%;
-      background:linear-gradient(135deg,transparent 0%,rgba(0,0,0,.3) 100%);
+      background:linear-gradient(135deg,transparent 55%,rgba(0,0,0,.28) 100%);
       pointer-events:none;
-      z-index:1;
     }
     /* Settings modal buttons — transparent default, theme gradient hover */
     body.chat-themed .modal button,
@@ -605,7 +603,7 @@
           <button onclick="openModal('profile')" class="w-7 h-7 rounded hover:bg-dark-700 text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Settings"><i class="fa-solid fa-gear"></i></button>
         </div>
       </div>
-      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1.5 py-1 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded text-[10px] font-bold logout-btn">
+      <button id="logoutBtn" onclick="doSignOut()" class="hidden w-full mt-1.5 py-1 bg-dark-800 hover:bg-red-900/40 text-red-400 border border-dark-600 rounded-lg text-[10px] font-bold logout-btn">
         <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
       </button>
     </div>
@@ -1132,12 +1130,14 @@
             <button onclick="avatarMethod('seed')" id="am-seed" class="px-2 py-1 rounded bg-bch/20 text-bch">Seed</button>
             <button onclick="avatarMethod('url')" id="am-url" class="px-2 py-1 rounded bg-dark-800 text-slate-400">URL</button>
             <button onclick="openGifPicker('avatar')" id="am-gif" class="px-2 py-1 rounded bg-dark-800 text-slate-400">GIF</button>
+            <button onclick="openGithubPicker('avatar')" class="px-2 py-1 rounded bg-dark-800 text-slate-400" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
           </div>
           <div class="flex gap-1 text-[9px] mono">
             <span class="text-slate-500 mr-2 self-center">Banner:</span>
             <button onclick="bannerMethod('color')" id="bm-color" class="px-2 py-1 rounded bg-bch/20 text-bch">Color</button>
             <button onclick="bannerMethod('url')" id="bm-url" class="px-2 py-1 rounded bg-dark-800 text-slate-400">URL</button>
             <button onclick="openGifPicker('banner')" id="bm-gif" class="px-2 py-1 rounded bg-dark-800 text-slate-400">GIF</button>
+            <button onclick="openGithubPicker('banner')" class="px-2 py-1 rounded bg-dark-800 text-slate-400" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
           </div>
         </div>
       </div>
@@ -1146,7 +1146,7 @@
 
 
     <!-- GITHUB CONNECT (powers all "+" image buttons) -->
-    <button type="button" id="profileGhBtn" onclick="openGithubPicker('attach')" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-dark-600 bg-dark-800/60 text-slate-300 hover:border-bch hover:text-white text-[10px] mono mb-4 transition-all">
+    <button type="button" id="profileGhBtn" onclick="openGithubPicker('avatar')" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-dark-600 bg-dark-800/60 text-slate-300 hover:border-bch hover:text-white text-[10px] mono mb-4 transition-all">
       <i class="fa-brands fa-github"></i> <span id="profileGhLabel">GitHub Images</span>
     </button>
 
@@ -1340,11 +1340,12 @@
     <h2 class="font-bold text-white mb-4"><i class="fa-solid fa-server text-bch"></i> Create Server</h2>
     <div class="space-y-3">
       <div class="flex items-center gap-3">
-        <img id="newServerIconPreview" src="https://api.dicebear.com/7.x/shapes/svg?seed=server" class="w-14 h-14 rounded-2xl object-cover border border-dark-600">
+        <img id="newServerIconPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=server" class="w-14 h-14 rounded-2xl object-cover border border-dark-600">
         <div class="flex-1">
           <div class="flex gap-1 mb-2 text-[10px] mono">
             <button onclick="serverIconMethod('seed')" id="sim-seed" class="px-2 py-0.5 rounded bg-bch/20 text-bch">Seed</button>
             <button onclick="serverIconMethod('url')" id="sim-url" class="px-2 py-0.5 rounded bg-dark-800 text-slate-400">URL</button>
+            <button onclick="openGithubPicker('newServerIcon')" class="px-2 py-0.5 rounded bg-dark-800 text-slate-400" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
           </div>
           <div id="serverIconSeedBox">
             <label for="newServerSeed" class="hidden">Server Seed</label>
@@ -1356,7 +1357,7 @@
           </div>
         </div>
       </div>
-      <p class="text-[10px] text-slate-500">Server icons use DiceBear <strong>Shapes</strong> style (different from user avatars)</p>
+      <p class="text-[10px] text-slate-500">Server icons use the same DiceBear style as user avatars</p>
       <div><label for="newServerName" class="field-label">Server Name</label><input type="text" id="newServerName" maxlength="40" class="field"></div>
       <div class="bg-dark-950/50 border border-dark-700 rounded-lg p-3 space-y-3">
         <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Server Tag (Required)</label>
@@ -1430,11 +1431,12 @@
         <div>
           <label class="field-label">Server Icon</label>
           <div class="flex items-center gap-3 mb-2">
-            <img id="ssIconPreview" src="https://api.dicebear.com/7.x/shapes/svg?seed=server" class="w-16 h-16 rounded-2xl object-cover border border-dark-600">
+            <img id="ssIconPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=server" class="w-16 h-16 rounded-2xl object-cover border border-dark-600">
             <div class="flex-1">
               <div class="flex gap-1 mb-2 text-[10px] mono">
                 <button onclick="ssIconMethod('seed')" id="ssim-seed" class="px-2 py-0.5 rounded bg-bch/20 text-bch">Seed</button>
                 <button onclick="ssIconMethod('url')" id="ssim-url" class="px-2 py-0.5 rounded bg-dark-800 text-slate-400">URL</button>
+                <button onclick="openGithubPicker('serverIcon')" class="px-2 py-0.5 rounded bg-dark-800 text-slate-400" title="Pick from GitHub images"><i class="fa-brands fa-github"></i></button>
               </div>
               <div id="ssIconSeedBox">
                 <input type="text" id="ssSeed" placeholder="server seed" oninput="previewSsSeed(this.value)" class="field text-xs">
@@ -1447,7 +1449,7 @@
               </div>
             </div>
           </div>
-          <p class="text-[10px] text-slate-500">Shapes style – looks different from user avatars</p>
+          <p class="text-[10px] text-slate-500">Same DiceBear style as user avatars</p>
         </div>
         <div><label class="field-label">Name</label><input type="text" id="ssName" class="field"></div>
         <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
@@ -1692,7 +1694,7 @@ const ICE = {
 
 // Different styles so servers look distinct from user avatars
 const USER_AVATAR_STYLE = 'bottts';      // robots for users
-const SERVER_ICON_STYLE = 'shapes';     // geometric shapes for servers
+const SERVER_ICON_STYLE = 'bottts';     // same style as user avatars
 
 // ========== POST-QUANTUM SECURITY LAYER ==========
 // NOTE: Currently disabled. Requires proper key exchange (X3DH or similar) for multi-user support.
@@ -2161,11 +2163,11 @@ function formatMsgContent(content){
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
+  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#3B63D6 0%,#1E2A78 15%,#9B55C6 30%,#F648AC 45%,#EB6A7C 60%,#E28F48 75%,#FFB36B 90%,#1a0533 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
   { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
   { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
-  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#3B63D6 0%,#1E2A78 15%,#9B55C6 30%,#F648AC 45%,#EB6A7C 60%,#E28F48 75%,#FFB36B 90%,#1a0533 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
   { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
   { id:'cyber',  name:'Cyberpunk 2077', css:'linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%)', accent:'linear-gradient(90deg,#ff00ff,#00ffff)' },
   { id:'vapor',  name:'Vaporwave Dreams', css:'linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%)', accent:'linear-gradient(90deg,#ff71ce,#01cdfe)' },
@@ -2181,7 +2183,7 @@ const CHAT_THEMES = [
 // Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
 function currentChatThemeId(){
   const r = localStorage.getItem('havoc_chat_theme');
-  if(r === null || r === '') return 'gta6';   // '' = legacy saved value, treat as unset
+  if(r === null || r === '') return 'sunset';   // '' = legacy saved value, treat as unset
   if(r === '__dark') return '';
   return r;
 }
@@ -3347,7 +3349,8 @@ window.previewServerSeed = seed => { $('newServerIconPreview').src = serverIcon(
 window.previewServerUrl = url => { if(url&&url.startsWith('http')) $('newServerIconPreview').src=url; };
 // Refresh server icons when theme changes
 window.refreshServerIcons = () => {
-  document.querySelectorAll('img[src*="dicebear.com"][src*="shapes"]').forEach(img => {
+  document.querySelectorAll('#newServerIconPreview, #ssIconPreview, #serverIconPreview, .discover-card img, #serverList img').forEach(img => {
+    if(!img.src.includes('dicebear.com')) return;
     const seedMatch = img.src.match(/seed=([^&]+)/);
     if(seedMatch) img.src = serverIcon(decodeURIComponent(seedMatch[1]));
   });
@@ -3616,7 +3619,12 @@ window.pickGithubImage = (url) => {
     if($('profileBannerUrl')){ $('profileBannerUrl').value = url; previewBannerUrl?.(url); }
   } else if(S.ghMode === 'serverIcon'){
     if(typeof ssIconMethod === 'function') ssIconMethod('url');
+    S.ssIconMode = 'url';
     if($('ssIconUrl')){ $('ssIconUrl').value = url; previewSsIcon?.(url); }
+  } else if(S.ghMode === 'newServerIcon'){
+    if(typeof serverIconMethod === 'function') serverIconMethod('url');
+    S.serverIconMode = 'url';
+    if($('newServerIconUrl')){ $('newServerIconUrl').value = url; previewServerUrl?.(url); }
   } else if(S.ghMode === 'serverBanner'){
     if($('ssBannerUrl')) $('ssBannerUrl').value = url;
   } else if(S.ghMode === 'emoji'){
