@@ -774,7 +774,6 @@
     <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 flex items-center justify-center gap-3 px-4 py-2">
       <div id="gamBanner" class="flex-1 max-w-3xl min-h-[50px] flex items-center justify-center"></div>
       <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
-      <button onclick="watchRewardedAd()" class="shrink-0 px-3 py-1.5 btn-primary text-[10px] font-bold rounded-lg" title="Watch a video ad to earn sats"><i class="fa-solid fa-play mr-1"></i>Watch &amp; Earn</button>
     </div>
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 
@@ -3108,10 +3107,14 @@ window.watchRewardedAd = async () => {
   // Direct-sold video ads take priority — advertiser paid the admin upfront,
   // viewer earns +1 sat on completed view (survey-style).
   const directAds = await getActiveVideoAds();
+  console.log('[ads] direct-sold inventory:', directAds.length, directAds.map(a=>a.id));
   if(directAds.length){
     if(!confirm('Watch an ad to earn sats (0.00000001 BTC each)?')) return;
+    _videoAdFailed = new Set();
+    const ad = pickVideoAd(directAds);
+    if(!ad) return alert('No ads available right now — try again later.');
     _wireVideoAd();
-    showRewardedVideoAd(pickVideoAd(directAds));
+    showRewardedVideoAd(ad);
     return;
   }
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
@@ -3124,12 +3127,15 @@ window.watchRewardedAd = async () => {
     if(!slot){ console.error('[ads] defineOutOfPageSlot returned null — check GAM unit path, viewport, HTTPS'); return alert('Rewarded ad unavailable — check your GAM ad unit and page setup.'); }
     console.log('[ads] rewarded slot defined:', `/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`);
     slot.addService(googletag.pubads());
-    googletag.pubads().addEventListener('rewardedSlotGranted', () => { console.log('[ads] REWARDED — granting +1 sat'); addSats(1); });
-    googletag.pubads().addEventListener('rewardedSlotClosed', () => console.log('[ads] rewarded slot closed'));
-    googletag.pubads().addEventListener('slotRenderEnded', e => console.log('[ads] slotRenderEnded:', e?.slot?.getAdUnitPath?.()));
+    let oopShown = false;
+    googletag.pubads().addEventListener('rewardedSlotGranted', () => { oopShown = true; console.log('[ads] REWARDED — granting +1 sat'); addSats(1); });
+    googletag.pubads().addEventListener('rewardedSlotClosed', () => { oopShown = true; console.log('[ads] rewarded slot closed'); });
+    googletag.pubads().addEventListener('slotRenderEnded', e => console.log('[ads] slotRenderEnded:', e?.slot?.getAdUnitPath?.(), 'empty:', e?.isEmpty));
     googletag.enableServices();
     googletag.display(slot);
     console.log('[ads] display() called — ad should appear');
+    // No-fill guard: if the rewarded overlay never shows within 10s, tell the user
+    setTimeout(() => { if(!oopShown) alert('Rewarded ad unavailable right now — no fill. Try again later or ask an admin to load a direct-sold video ad.'); }, 10000);
   });
 };
 
@@ -3163,15 +3169,27 @@ async function getActiveVideoAds(){
 }
 window.invalidateVideoAds = () => { _videoAdsCache = null; };
 
-function pickVideoAd(ads){
-  const total = ads.reduce((s,a) => s + (+a.weight > 0 ? +a.weight : 1), 0);
-  let r = Math.random() * total;
-  for(const a of ads){ r -= (+a.weight > 0 ? +a.weight : 1); if(r <= 0) return a; }
-  return ads[ads.length - 1];
-}
-
 let _videoAdFinished = false;
 let _videoAdReward = 1;
+let _videoAdFailed = new Set(); // ads that errored this session — skipped on retry
+function pickVideoAd(ads){
+  const pool = ads.filter(a => !_videoAdFailed.has(a.id));
+  if(!pool.length) return null;
+  const total = pool.reduce((s,a) => s + (+a.weight > 0 ? +a.weight : 1), 0);
+  let r = Math.random() * total;
+  for(const a of pool){ r -= (+a.weight > 0 ? +a.weight : 1); if(r <= 0) return a; }
+  return pool[pool.length - 1];
+}
+// On video error: hide modal quietly, try the next ad, alert if exhausted
+async function onVideoAdError(){
+  const v = $('rewardedVideo');
+  if(v?.dataset.adId) _videoAdFailed.add(v.dataset.adId);
+  const modal = $('modal-videoAd');
+  if(modal){ v?.pause(); v?.removeAttribute('src'); v?.load(); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  const pool = (await getActiveVideoAds()).filter(a => !_videoAdFailed.has(a.id));
+  if(pool.length){ _wireVideoAd(); showRewardedVideoAd(pickVideoAd(pool)); }
+  else alert('Ad failed to load — no more ads available right now. Try again later.');
+}
 function _wireVideoAd(){
   const v = $('rewardedVideo'); if(!v || v.dataset.wired) return; v.dataset.wired = '1';
   v.addEventListener('loadedmetadata', () => {
@@ -3182,10 +3200,11 @@ function _wireVideoAd(){
     if(v.duration) $('videoAdProgress').style.width = (v.currentTime / v.duration * 100) + '%';
   });
   v.addEventListener('ended', () => { _videoAdFinished = true; closeVideoAd(true); });
-  v.addEventListener('error', () => { closeVideoAd(false); });
+  v.addEventListener('error', () => { onVideoAdError(); });
 }
 window.showRewardedVideoAd = (ad) => {
-  const modal = $('modal-videoAd'); if(!modal) return;
+  const modal = $('modal-videoAd'); if(!modal){ console.error('[ads] modal-videoAd missing'); return; }
+  console.log('[ads] playing direct-sold ad:', ad.id, ad.videoUrl);
   _videoAdFinished = false;
   _videoAdReward = 1;
   $('videoAdProgress').style.width = '0%';
