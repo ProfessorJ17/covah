@@ -143,7 +143,7 @@
     body.ct-gta6{background:linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
-    body.ct-sunset{background:linear-gradient(160deg,#3B63D6 0%,#1E2A78 15%,#9B55C6 30%,#F648AC 45%,#EB6A7C 60%,#E28F48 75%,#FFB36B 90%,#1a0533 100%) fixed}
+    body.ct-sunset{background:linear-gradient(160deg,#1D0030 0%,#2E49BF 12%,#3B63D6 24%,#826092 36%,#9B55C6 48%,#F648AC 60%,#FF2B90 70%,#EB6A7C 80%,#DF7B4D 90%,#FFBC24 100%) fixed}
     body.ct-matrix{background:linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%) fixed}
     /* New themes */
     body.ct-cyber{background:linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%) fixed}
@@ -279,7 +279,7 @@
       right:0;
       width:100%;
       height:100%;
-      background:linear-gradient(135deg,transparent 55%,rgba(0,0,0,.28) 100%);
+      background:radial-gradient(ellipse 90% 70% at bottom right,rgba(0,0,0,.20) 0%,rgba(0,0,0,.10) 45%,transparent 75%);
       pointer-events:none;
     }
     /* Settings modal buttons — transparent default, theme gradient hover */
@@ -360,22 +360,34 @@
     body.chat-themed .server-icon-wrapper:hover::after{
       opacity:0.4;
     }
-    /* Server icon glow uses theme gradient */
+    /* Server icon glow uses theme color (box-shadow can't take gradients) */
     body.chat-themed button.server-active{
-      box-shadow:0 0 12px var(--ct-accent,#4a3f6c), 0 0 24px var(--ct-accent,#4a3f6c);
+      box-shadow:0 0 12px var(--ct-glow,#6b5a8a), 0 0 24px var(--ct-glow,#6b5a8a);
     }
     body.chat-themed button:hover{
-      box-shadow:0 0 8px var(--ct-accent,#4a3f6c);
+      box-shadow:0 0 8px var(--ct-glow,#6b5a8a);
     }
+    /* User avatars — grayscale + theme gradient overlay (same as server icons) */
+    body.chat-themed .avatar-wrapper > img{
+      filter:grayscale(100%) brightness(.8);
+    }
+    body.chat-themed .avatar-wrapper::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      background:var(--ct-gradient,#4a3f6c);
+      opacity:.55;
+      mix-blend-mode:multiply;
+      pointer-events:none;
+      z-index:1;
+    }
+    body.chat-themed .avatar-wrapper:hover::after{opacity:.4}
+    body.chat-themed .avatar-wrapper .member-status-dot{z-index:2}
     
-    /* Members list — status text with theme gradient + outline */
+    /* Members list — status text stays default muted color like Discord */
     body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
-      background:var(--ct-gradient,#e8e4f0);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent!important;
-      -webkit-text-stroke: 0.3px rgba(255,255,255,.6);
-      paint-order: stroke fill;
+      color:#949ba4!important;
     }
     /* Override Tailwind hover:bg-dark-800 on member items */
     body.chat-themed #membersList [class*="hover:bg-dark-800"]:hover{background:var(--ct-gradient,#4a3f6c)!important;color:#fff}
@@ -787,17 +799,17 @@
 
 <!-- USER PROFILE POPUP (Discord-style) -->
 <div id="userPopup" class="fixed z-[350] hidden w-72 rounded-xl overflow-hidden shadow-2xl border border-dark-600" style="background:#111214">
-  <div id="upBanner" class="h-14 bg-gradient-to-r from-bch/40 to-kiro/40 relative">
-    <div class="absolute -bottom-4 left-4">
-      <div class="relative avatar-wrapper" style="width:80px;height:80px">
-        <img id="upAvatar" src="" class="w-20 h-20 rounded-full border-4 border-[#111214] object-cover bg-dark-800">
+  <div id="upBanner" class="h-16 bg-gradient-to-r from-bch/40 to-kiro/40 relative">
+    <div class="absolute -bottom-8 left-4">
+      <div class="relative avatar-wrapper" style="width:96px;height:96px">
+        <img id="upAvatar" src="" class="w-24 h-24 rounded-full border-4 border-[#111214] object-cover bg-dark-800">
         <span id="upDot" class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#111214] status-online"></span>
       </div>
     </div>
   </div>
-  <div class="pt-6 px-4 pb-3">
-    <div id="upHandle" class="font-bold text-white text-base leading-tight flex items-center gap-1.5"></div>
-    <div id="upStatusLine" class="text-xs text-slate-400 mono mt-0.5"></div>
+  <div class="pt-10 px-4 pb-3">
+    <div id="upHandle" class="font-bold text-white text-lg leading-tight flex items-center gap-1.5"></div>
+    <div id="upStatusLine" class="text-sm text-slate-400 mono mt-0.5"></div>
     <div class="mt-3 bg-[#1e1f22] rounded-lg p-3 space-y-2">
       <div>
         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">About Me</div>
@@ -1340,7 +1352,7 @@
     <h2 class="font-bold text-white mb-4"><i class="fa-solid fa-server text-bch"></i> Create Server</h2>
     <div class="space-y-3">
       <div class="flex items-center gap-3">
-        <img id="newServerIconPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=server" class="w-14 h-14 rounded-2xl object-cover border border-dark-600">
+        <img id="newServerIconPreview" src="https://api.dicebear.com/7.x/shapes/svg?seed=server" class="w-14 h-14 rounded-2xl object-cover border border-dark-600">
         <div class="flex-1">
           <div class="flex gap-1 mb-2 text-[10px] mono">
             <button onclick="serverIconMethod('seed')" id="sim-seed" class="px-2 py-0.5 rounded bg-bch/20 text-bch">Seed</button>
@@ -1357,7 +1369,7 @@
           </div>
         </div>
       </div>
-      <p class="text-[10px] text-slate-500">Server icons use the same DiceBear style as user avatars</p>
+      <p class="text-[10px] text-slate-500">Server icons are generated from the seed (Shapes style)</p>
       <div><label for="newServerName" class="field-label">Server Name</label><input type="text" id="newServerName" maxlength="40" class="field"></div>
       <div class="bg-dark-950/50 border border-dark-700 rounded-lg p-3 space-y-3">
         <label class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Server Tag (Required)</label>
@@ -1431,7 +1443,7 @@
         <div>
           <label class="field-label">Server Icon</label>
           <div class="flex items-center gap-3 mb-2">
-            <img id="ssIconPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=server" class="w-16 h-16 rounded-2xl object-cover border border-dark-600">
+            <img id="ssIconPreview" src="https://api.dicebear.com/7.x/shapes/svg?seed=server" class="w-16 h-16 rounded-2xl object-cover border border-dark-600">
             <div class="flex-1">
               <div class="flex gap-1 mb-2 text-[10px] mono">
                 <button onclick="ssIconMethod('seed')" id="ssim-seed" class="px-2 py-0.5 rounded bg-bch/20 text-bch">Seed</button>
@@ -1449,7 +1461,7 @@
               </div>
             </div>
           </div>
-          <p class="text-[10px] text-slate-500">Same DiceBear style as user avatars</p>
+          <p class="text-[10px] text-slate-500">Shapes style – generated from the server seed</p>
         </div>
         <div><label class="field-label">Name</label><input type="text" id="ssName" class="field"></div>
         <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 space-y-3">
@@ -1694,7 +1706,7 @@ const ICE = {
 
 // Different styles so servers look distinct from user avatars
 const USER_AVATAR_STYLE = 'bottts';      // robots for users
-const SERVER_ICON_STYLE = 'bottts';     // same style as user avatars
+const SERVER_ICON_STYLE = 'shapes';     // geometric shapes generated from seed
 
 // ========== POST-QUANTUM SECURITY LAYER ==========
 // NOTE: Currently disabled. Requires proper key exchange (X3DH or similar) for multi-user support.
@@ -1980,6 +1992,14 @@ function serverIcon(seed){
   // Use DiceBear but apply grayscale + theme gradient overlay via CSS
   return `https://api.dicebear.com/7.x/${SERVER_ICON_STYLE}/svg?seed=${encodeURIComponent(seed||'server')}`;
 }
+// Resolve a server's icon: custom uploads pass through; DiceBear URLs are always
+// regenerated from their embedded seed so the current style/seed is used.
+function serverIconUrl(s){
+  const url = s?.iconUrl || '';
+  if(url && !url.includes('dicebear.com')) return url;
+  const m = url.match(/seed=([^&]+)/);
+  return serverIcon(m ? decodeURIComponent(m[1]) : (s?.id || 'server'));
+}
 
 const EMOJI_MAP = {
   ':smile:':'😄',':smiley:':'😃',':grinning:':'😀',':grin:':'😁',':laughing:':'😆',':satisfied:':'😆',
@@ -2163,22 +2183,22 @@ function formatMsgContent(content){
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
-  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#3B63D6 0%,#1E2A78 15%,#9B55C6 30%,#F648AC 45%,#EB6A7C 60%,#E28F48 75%,#FFB36B 90%,#1a0533 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)' },
-  { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)' },
-  { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)' },
-  { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)' },
-  { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)' },
-  { id:'cyber',  name:'Cyberpunk 2077', css:'linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%)', accent:'linear-gradient(90deg,#ff00ff,#00ffff)' },
-  { id:'vapor',  name:'Vaporwave Dreams', css:'linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%)', accent:'linear-gradient(90deg,#ff71ce,#01cdfe)' },
-  { id:'neon',   name:'Neon Tokyo', css:'linear-gradient(135deg,#ff006e 0%,#8338ec 50%,#3a86ff 100%)', accent:'linear-gradient(90deg,#8338ec,#3a86ff)' },
-  { id:'holo',   name:'Hologram', css:'linear-gradient(135deg,#00f5d4 0%,#00bbf9 50%,#9b5de5 100%)', accent:'linear-gradient(90deg,#00bbf9,#9b5de5)' },
-  { id:'quantum',name:'Quantum Realm', css:'linear-gradient(135deg,#000428 0%,#004e92 50%,#00c6ff 100%)', accent:'linear-gradient(90deg,#004e92,#00c6ff)' },
-  { id:'glitch', name:'Glitch Protocol', css:'linear-gradient(135deg,#ff0000 0%,#00ff00 50%,#0000ff 100%)', accent:'linear-gradient(90deg,#ff0000,#00ff00)' },
-  { id:'circuit',name:'Circuit Board', css:'linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%)', accent:'linear-gradient(90deg,#0f3460,#e94560)' },
-  { id:'aurora', name:'Aurora Borealis', css:'linear-gradient(135deg,#00ff87 0%,#60efff 50%,#7b2ff7 100%)', accent:'linear-gradient(90deg,#00ff87,#7b2ff7)' },
-  { id:'prism',  name:'Prism Shift', css:'linear-gradient(135deg,#ff9a9e 0%,#fecfef 25%,#a18cd1 50%,#84fab0 75%,#8fd3f4 100%)', accent:'linear-gradient(90deg,#a18cd1,#84fab0)' },
-  { id:'hacker', name:'Hacker Terminal', css:'linear-gradient(135deg,#000000 0%,#001100 50%,#003300 100%)', accent:'linear-gradient(90deg,#00ff00,#00aa00)' },
+  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#1D0030 0%,#2E49BF 12%,#3B63D6 24%,#826092 36%,#9B55C6 48%,#F648AC 60%,#FF2B90 70%,#EB6A7C 80%,#DF7B4D 90%,#FFBC24 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)', glow:'#F648AC' },
+  { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)', glow:'#6b5a8a' },
+  { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)', glow:'#962C34' },
+  { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)', glow:'#ff2975' },
+  { id:'ocean',  name:'Deep Ocean Abyss', css:'linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%)', accent:'linear-gradient(90deg,#0e5a8a,#1b9aaa)', glow:'#1b9aaa' },
+  { id:'matrix', name:'Matrix Digital Rain', css:'linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%)', accent:'linear-gradient(90deg,#052e16,#0f5132)', glow:'#22c55e' },
+  { id:'cyber',  name:'Cyberpunk 2077', css:'linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%)', accent:'linear-gradient(90deg,#ff00ff,#00ffff)', glow:'#00ffff' },
+  { id:'vapor',  name:'Vaporwave Dreams', css:'linear-gradient(135deg,#ff71ce 0%,#01cdfe 50%,#05ffa1 100%)', accent:'linear-gradient(90deg,#ff71ce,#01cdfe)', glow:'#ff71ce' },
+  { id:'neon',   name:'Neon Tokyo', css:'linear-gradient(135deg,#ff006e 0%,#8338ec 50%,#3a86ff 100%)', accent:'linear-gradient(90deg,#8338ec,#3a86ff)', glow:'#ff006e' },
+  { id:'holo',   name:'Hologram', css:'linear-gradient(135deg,#00f5d4 0%,#00bbf9 50%,#9b5de5 100%)', accent:'linear-gradient(90deg,#00bbf9,#9b5de5)', glow:'#00f5d4' },
+  { id:'quantum',name:'Quantum Realm', css:'linear-gradient(135deg,#000428 0%,#004e92 50%,#00c6ff 100%)', accent:'linear-gradient(90deg,#004e92,#00c6ff)', glow:'#00c6ff' },
+  { id:'glitch', name:'Glitch Protocol', css:'linear-gradient(135deg,#ff0000 0%,#00ff00 50%,#0000ff 100%)', accent:'linear-gradient(90deg,#ff0000,#00ff00)', glow:'#00ff00' },
+  { id:'circuit',name:'Circuit Board', css:'linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%)', accent:'linear-gradient(90deg,#0f3460,#e94560)', glow:'#e94560' },
+  { id:'aurora', name:'Aurora Borealis', css:'linear-gradient(135deg,#00ff87 0%,#60efff 50%,#7b2ff7 100%)', accent:'linear-gradient(90deg,#00ff87,#7b2ff7)', glow:'#00ff87' },
+  { id:'prism',  name:'Prism Shift', css:'linear-gradient(135deg,#ff9a9e 0%,#fecfef 25%,#a18cd1 50%,#84fab0 75%,#8fd3f4 100%)', accent:'linear-gradient(90deg,#a18cd1,#84fab0)', glow:'#a18cd1' },
+  { id:'hacker', name:'Hacker Terminal', css:'linear-gradient(135deg,#000000 0%,#001100 50%,#003300 100%)', accent:'linear-gradient(90deg,#00ff00,#00aa00)', glow:'#00ff00' },
 ];
 // Effective theme id: null (never chosen) -> 'gta6' default; '__dark' sentinel -> '' (Default Dark)
 function currentChatThemeId(){
@@ -2195,6 +2215,7 @@ function applyChatTheme(){
   document.body.style.setProperty('--ct-gradient', th?.css || 'linear-gradient(#0a0e1c,#2d1b3d)');
   // Accent should be a solid color or simple gradient for buttons
   document.body.style.setProperty('--ct-accent', th?.accent || 'linear-gradient(90deg,#4a3f6c,#6b5a8a)');
+  document.body.style.setProperty('--ct-glow', th?.glow || '#6b5a8a');
   // Refresh server icons with new theme colors
   if(typeof window.refreshServerIcons === 'function') window.refreshServerIcons();
 }
@@ -2224,8 +2245,20 @@ const BADGES = [
   { id: 'admin_basic', name: 'Admin', symbol: '⚡', textColor: '#FF0000', bgColor: '#000000', description: 'Server Administrator', isAdmin: true },
   { id: 'admin_mod', name: 'Moderator', symbol: '🛡️', textColor: '#FF0000', bgColor: '#000000', description: 'Server Moderator', isAdmin: true },
 ];
-function saveRemember(email, pass){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email,pass})); else localStorage.removeItem('havoc_remember'); }
-function loadRemember(){ try{ const d=JSON.parse(localStorage.getItem('havoc_remember')||'null'); if(d?.email){ $('lEmail').value=d.email; $('lPass').value=d.pass||''; $('rememberMe').checked=true; } }catch{} }
+// Remember me stores ONLY the email — never the password.
+function saveRemember(email){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email})); else localStorage.removeItem('havoc_remember'); }
+function loadRemember(){
+  try{
+    const d=JSON.parse(localStorage.getItem('havoc_remember')||'null');
+    if(d?.email){
+      $('lEmail').value=d.email;
+      $('lPass').value=''; // never prefill passwords
+      $('rememberMe').checked=true;
+      // Migrate legacy entries that stored the password
+      if(d.pass) localStorage.setItem('havoc_remember', JSON.stringify({email:d.email}));
+    }
+  }catch{}
+}
 
 const S = {
   user:null, profile:null, isAdmin:false,
@@ -2463,7 +2496,7 @@ window.doLogin = async e => { e.preventDefault(); clearAuthErr(); const email=$(
   const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
   if(ban1.exists()) return showAuthErr('This account is banned');
   await signInWithEmailAndPassword(auth,email,pass);
-  saveRemember(email,pass);
+  saveRemember(email);
   closeModal('auth');
   // Auth state handler will update UI automatically
 }catch(err){ showAuthErr(err.message); } };
@@ -2471,6 +2504,7 @@ window.doRegister = async e => {
   e.preventDefault(); clearAuthErr();
   const handle=$('rHandle').value.trim(), email=$('rEmail').value.trim().toLowerCase(), pass=$('rPass').value;
   if(!handle) return showAuthErr('Handle required');
+  if(pass.length < 8) return showAuthErr('Password must be at least 8 characters');
   const domain=email.split('@')[1];
   if(domain){ const ban=await getDoc(doc(db,'blacklistedDomains',domain)); if(ban.exists()) return showAuthErr(`@${domain} is blocked`); }
   try{
@@ -3140,7 +3174,7 @@ window.renderDiscovery = (servers) => {
   
   empty.classList.add('hidden');
   grid.innerHTML = servers.map(s => {
-    const icon = s.iconUrl || serverIcon(s.id);
+    const icon = serverIconUrl(s);
     const banner = s.bannerUrl || '';
     const tags = (s.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join('');
     
@@ -3511,19 +3545,31 @@ async function ghUploadFile(file){
   if(file.size > GH_MAX_UPLOAD) throw new Error('File too large for GitHub ('+fmtSize(file.size)+', max 50MB)');
   const path = `${GH_IMAGE_DIR}/${ghSanitize(file.name||'image.png')}`;
   const b64 = toBase64(await file.arrayBuffer());
-  const ref = await ghApi(`/repos/${info.owner}/${info.repo}/git/ref/heads/${info.branch}`);
-  const commitSha = ref.object.sha;
-  const commit = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits/${commitSha}`);
-  const blob = await ghApi(`/repos/${info.owner}/${info.repo}/git/blobs`, { method:'POST', json:{ content:b64, encoding:'base64' } });
-  const tree = await ghApi(`/repos/${info.owner}/${info.repo}/git/trees`, { method:'POST', json:{
-    base_tree: commit.tree.sha,
-    tree: [{ path, mode:'100644', type:'blob', sha: blob.sha }]
-  }});
-  const nc = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits`, { method:'POST', json:{
-    message: `Add ${path.split('/').pop()}`, tree: tree.sha, parents: [commitSha]
-  }});
-  await ghApi(`/repos/${info.owner}/${info.repo}/git/refs/heads/${info.branch}`, { method:'PATCH', json:{ sha: nc.sha } });
-  return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${path}`;
+  // Retry loop: the branch ref can move between read and update (auto-init,
+  // concurrent uploads), which surfaces as 422 "Update is not a fast forward".
+  let lastErr;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const ref = await ghApi(`/repos/${info.owner}/${info.repo}/git/ref/heads/${info.branch}`);
+      const commitSha = ref.object.sha;
+      const commit = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits/${commitSha}`);
+      const blob = await ghApi(`/repos/${info.owner}/${info.repo}/git/blobs`, { method:'POST', json:{ content:b64, encoding:'base64' } });
+      const tree = await ghApi(`/repos/${info.owner}/${info.repo}/git/trees`, { method:'POST', json:{
+        base_tree: commit.tree.sha,
+        tree: [{ path, mode:'100644', type:'blob', sha: blob.sha }]
+      }});
+      const nc = await ghApi(`/repos/${info.owner}/${info.repo}/git/commits`, { method:'POST', json:{
+        message: `Add ${path.split('/').pop()}`, tree: tree.sha, parents: [commitSha]
+      }});
+      await ghApi(`/repos/${info.owner}/${info.repo}/git/refs/heads/${info.branch}`, { method:'PATCH', json:{ sha: nc.sha } });
+      return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${path}`;
+    }catch(e){
+      lastErr = e;
+      if(!/422|fast forward/i.test(e.message) || attempt===2) throw e;
+      await new Promise(r=>setTimeout(r, 600*(attempt+1)));
+    }
+  }
+  throw lastErr;
 }
 window.ghUploadPick = (e) => {
   const f = e.target.files?.[0]; e.target.value='';
@@ -4226,7 +4272,8 @@ function renderServerRail(servers){
     const btn = document.createElement('button');
     btn.title = (s.tag ? `[${s.tag}] ` : '') + safe(s.name,'Server') + (muted?' (muted)':'');
     btn.className = `w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-dark-800 hover:bg-bch text-slate-400 hover:text-black transition-all flex items-center justify-center font-bold text-xs overflow-hidden ${S.server?.id===s.id?'server-active':''} ${muted?'muted-server':''}`;
-    if(s.iconUrl) btn.innerHTML = `<div class="server-icon-wrapper w-full h-full"><img src="${esc(s.iconUrl)}" class="w-full h-full object-cover"></div>`;
+    const ic = s.iconUrl ? serverIconUrl(s) : null;
+    if(ic) btn.innerHTML = `<div class="server-icon-wrapper w-full h-full"><img src="${esc(ic)}" class="w-full h-full object-cover"></div>`;
     else btn.innerHTML = `<div class="server-icon-wrapper w-full h-full flex items-center justify-center font-bold text-xs">${safe(s.name,'??').slice(0,2).toUpperCase()}</div>`;
     btn.onclick = () => switchServer(s);
     btn.oncontextmenu = e => { e.preventDefault(); showServerContext(e,s); };
@@ -4267,6 +4314,14 @@ window.showUserProfile = async (e, uid, fallbackHandle, fallbackAvatar) => {
   // Reset immediately so it never shows old data
   $('upHandle').textContent = fallbackHandle || 'Loading…';
   $('upAvatar').src = fallbackAvatar || userAvatar(uid);
+  const upB = $('upBanner');
+  if(upB){
+    upB.className = 'h-16 bg-gradient-to-r from-bch/40 to-kiro/40 relative';
+    upB.style.background = '';
+    upB.style.backgroundImage = '';
+    upB.style.backgroundSize = '';
+    upB.style.backgroundPosition = '';
+  }
   $('upBio').textContent = '…';
   $('upCreated').textContent = '—';
   $('upServerJoinWrap')?.classList.add('hidden');
@@ -4303,6 +4358,19 @@ window.showUserProfile = async (e, uid, fallbackHandle, fallbackAvatar) => {
   $('upHandle').textContent = handle;
   styleName($('upHandle'), { style });
   $('upAvatar').src = avatar;
+  // Apply the user's saved banner (image/GIF URL or gradient color)
+  const bn = style?.banner;
+  if(upB && bn){
+    if((bn.type === 'url' || bn.type === 'gif') && bn.value){
+      upB.classList.remove('bg-gradient-to-r','from-bch/40','to-kiro/40');
+      upB.style.backgroundImage = `url("${String(bn.value).replace(/["\\]/g,'')}")`;
+      upB.style.backgroundSize = 'cover';
+      upB.style.backgroundPosition = 'center';
+    } else if(bn.type === 'color' && bn.value){
+      upB.classList.remove('bg-gradient-to-r','from-bch/40','to-kiro/40');
+      upB.style.background = bn.value;
+    }
+  }
   $('upBio').textContent = bio || 'No bio set.';
   $('upStatusLine').textContent = status.charAt(0).toUpperCase() + status.slice(1);
 
