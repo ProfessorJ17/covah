@@ -163,11 +163,13 @@
     body.ct-synth{--text-primary:#fff;--text-secondary:#e0aaff}
     body.ct-ocean{--text-primary:#e0f7fa;--text-secondary:#b0bec5}
     body.ct-sunset{--text-primary:#fff3e0;--text-secondary:#ffcc80}
-    /* GTA6 Vice City only: DM button gets its own background art behind the logo */
-    body.ct-sunset #dmHomeBtn{
+    /* GTA6 themes only: DM button gets its own background art behind the logo */
+    body.ct-sunset #dmHomeBtn,
+    body.ct-gta6 #dmHomeBtn{
       background-image:url('DMbuttonbackground.png')!important;
       background-size:cover!important;
       background-position:center!important;
+      background-repeat:no-repeat!important;
     }
     body.ct-matrix{--text-primary:#e8f5e9;--text-secondary:#a5d6a7}
     body.ct-cyber{--text-primary:#e0e0ff;--text-secondary:#b0b0ff}
@@ -779,14 +781,8 @@
     <!-- AD SPACE — banner below the chat composer + click-to-watch rewarded video -->
     <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 relative flex items-center justify-center gap-3 px-4 py-2" style="min-height:90px">
       <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><span class="text-[10px] mono text-slate-600 tracking-widest uppercase">Advertisement</span></div>
-      <div id="houseAd" class="absolute inset-0 hidden items-center justify-center z-20" style="background:linear-gradient(135deg,#0b0f19,#141a2e)">
-        <div class="flex items-center gap-3">
-          <img src="HAVOC.png" class="h-9 w-9 rounded-lg object-cover shadow-lg" alt="Havoc">
-          <div class="text-left">
-            <div class="text-xs font-bold text-white tracking-wide">Havoc</div>
-            <div class="text-[9px] text-slate-400 uppercase tracking-widest">Advertisement</div>
-          </div>
-        </div>
+      <div id="houseAd" class="absolute inset-0 hidden items-center justify-center z-20 overflow-hidden" style="background:#0b0f19">
+        <img src="adhavoc.png" onerror="this.onerror=null;this.src='HAVOC.png'" class="w-full h-full object-cover" alt="Advertisement">
       </div>
       <div id="gamBanner" class="relative z-10 flex-1 max-w-3xl min-h-[50px] flex items-center justify-center"></div>
       <ins class="adsbygoogle relative z-10" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
