@@ -144,7 +144,7 @@
     body.ct-gta6{background:linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%) fixed}
     body.ct-synth{background:linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%) fixed}
     body.ct-ocean{background:linear-gradient(160deg,#020b1a 0%,#0a2a4a 45%,#0e5a8a 75%,#1b9aaa 100%) fixed}
-    body.ct-sunset{background:linear-gradient(160deg,#1D0030 0%,#2E49BF 12%,#3B63D6 24%,#826092 36%,#9B55C6 48%,#F648AC 60%,#FF2B90 70%,#EB6A7C 80%,#DF7B4D 90%,#FFBC24 100%) fixed}
+    body.ct-sunset{background:linear-gradient(160deg,#231B78 0%,#2B1B75 11%,#341A70 22%,#3E1966 33%,#47195A 44%,#511B4C 55%,#5B203E 67%,#642832 78%,#6B3128 89%,#713822 100%) fixed}
     body.ct-matrix{background:linear-gradient(160deg,#020a04 0%,#052e16 55%,#0f5132 100%) fixed}
     /* New themes */
     body.ct-cyber{background:linear-gradient(135deg,#0f0c29 0%,#302b63 25%,#24243e 50%,#ff00ff 75%,#00ffff 100%) fixed}
@@ -405,8 +405,9 @@
     body.chat-themed .avatar-wrapper:has(> img[src*="dicebear.com"]):hover::after{opacity:.4}
     body.chat-themed .avatar-wrapper .member-status-dot{z-index:2}
     /* Members sidebar avatars stay clean — no grayscale/gradient overlay */
-    body.chat-themed #membersList .avatar-wrapper > img{filter:none!important}
-    body.chat-themed #membersList .avatar-wrapper::after{display:none!important}
+    body.chat-themed #membersPanel .avatar-wrapper > img{filter:none!important}
+    body.chat-themed #membersPanel .avatar-wrapper::after{display:none!important}
+    body.chat-themed #membersPanel .avatar-wrapper::before{display:none!important}
     
     /* Members list — status text stays default muted color like Discord */
     body.chat-themed #membersList .min-w-0.flex-1 > div:last-child{
@@ -2207,7 +2208,7 @@ function formatMsgContent(content){
 
 // ===== CHAT BACKGROUND THEMES =====
 const CHAT_THEMES = [
-  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#1D0030 0%,#2E49BF 12%,#3B63D6 24%,#826092 36%,#9B55C6 48%,#F648AC 60%,#FF2B90 70%,#EB6A7C 80%,#DF7B4D 90%,#FFBC24 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)', glow:'#F648AC' },
+  { id:'sunset', name:'GTA6 Vice City', css:'linear-gradient(160deg,#231B78 0%,#2B1B75 11%,#341A70 22%,#3E1966 33%,#47195A 44%,#511B4C 55%,#5B203E 67%,#642832 78%,#6B3128 89%,#713822 100%)', accent:'linear-gradient(90deg,#c73e6b,#f7971e)', glow:'#F648AC' },
   { id:'',       name:'Default Dark', css:'linear-gradient(160deg,#0f1218,#0f1218)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)', glow:'#6b5a8a' },
   { id:'gta6',   name:'Sunset Ember', css:'linear-gradient(135deg,#1E2A78 0%,#3C27AE 17%,#4C249E 33%,#5D1F86 50%,#6E1B69 67%,#811E4E 83%,#962C34 100%)', accent:'linear-gradient(90deg,#4a3f6c,#6b5a8a)', glow:'#962C34' },
   { id:'synth',  name:'Synthwave Neon', css:'linear-gradient(160deg,#12002e 0%,#3d0a63 45%,#a4139b 75%,#ff2975 100%)', accent:'linear-gradient(90deg,#a4139b,#ff2975)', glow:'#ff2975' },
@@ -2272,17 +2273,16 @@ const BADGES = [
   { id: 'admin_basic', name: 'Admin', symbol: '⚡', textColor: '#FF0000', bgColor: '#000000', description: 'Server Administrator', isAdmin: true },
   { id: 'admin_mod', name: 'Moderator', symbol: '🛡️', textColor: '#FF0000', bgColor: '#000000', description: 'Server Moderator', isAdmin: true },
 ];
-// Remember me stores ONLY the email — never the password.
-function saveRemember(email){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email})); else localStorage.removeItem('havoc_remember'); }
+// Remember me stores email + password locally so login can be one click.
+// Note: stored in plaintext in localStorage — anyone with device/browser access can read it.
+function saveRemember(email,pass){ if($('rememberMe')?.checked) localStorage.setItem('havoc_remember', JSON.stringify({email,pass})); else localStorage.removeItem('havoc_remember'); }
 function loadRemember(){
   try{
     const d=JSON.parse(localStorage.getItem('havoc_remember')||'null');
     if(d?.email){
       $('lEmail').value=d.email;
-      $('lPass').value=''; // never prefill passwords
+      $('lPass').value=d.pass||'';
       $('rememberMe').checked=true;
-      // Migrate legacy entries that stored the password
-      if(d.pass) localStorage.setItem('havoc_remember', JSON.stringify({email:d.email}));
     }
   }catch{}
 }
@@ -2523,7 +2523,7 @@ window.doLogin = async e => { e.preventDefault(); clearAuthErr(); const email=$(
   const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
   if(ban1.exists()) return showAuthErr('This account is banned');
   await signInWithEmailAndPassword(auth,email,pass);
-  saveRemember(email);
+  saveRemember(email,pass);
   closeModal('auth');
   // Auth state handler will update UI automatically
 }catch(err){ showAuthErr(err.message); } };
@@ -7549,7 +7549,13 @@ window.saveChanExtras = async () => {
 };
 function showChanTopic(topic){
   const el = $('chanTopic'); if(!el) return;
-  if(topic){ el.textContent = topic; el.classList.remove('hidden'); }
+  if(topic){
+    // Discord-style: masked links [text](url) plus bare-URL linkification
+    let html = esc(topic).replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
+      (m,txt,u)=>`<a href="${u}" target="_blank" rel="noopener noreferrer" class="text-bch hover:underline">${txt}</a>`);
+    el.innerHTML = parseLinks(html);
+    el.classList.remove('hidden');
+  }
   else el.classList.add('hidden');
 }
 window.renameChannel = async () => {
