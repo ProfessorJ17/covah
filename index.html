@@ -1349,12 +1349,34 @@
     </div>
 
     <!-- SATOSHI BALANCE / REWARDED ADS -->
-    <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
-      <div class="min-w-0">
-        <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Balance</div>
-        <div id="profileSatsBtc" class="text-sm font-bold text-bch mono">0.00000000 BTC</div>
+    <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 mb-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Balance</div>
+          <div id="profileSatsBtc" class="text-sm font-bold text-bch mono">0.00000000 BTC</div>
+          <div class="text-[9px] text-slate-500 mono mt-0.5">Lifetime earned: <span id="profileSatsEarned" class="text-slate-300">0.00000000 BTC</span></div>
+          <div class="text-[9px] text-slate-500 mono mt-0.5">Havoc Total Cashouts: <span id="havocTotalCashouts" class="text-slate-300">—</span></div>
+          <div id="havocPayoutAge" class="text-[9px] text-slate-600 mono"></div>
+        </div>
+        <button id="watchAdBtn" onclick="watchRewardedAd()" class="shrink-0 px-3 py-1.5 btn-primary text-[10px] font-bold rounded-lg"><i class="fa-solid fa-play mr-1"></i>Watch Ad</button>
       </div>
-      <button id="watchAdBtn" onclick="watchRewardedAd()" class="shrink-0 px-3 py-1.5 btn-primary text-[10px] font-bold rounded-lg"><i class="fa-solid fa-play mr-1"></i>Watch Ad +1 sat</button>
+    </div>
+
+    <!-- CASHOUT -->
+    <div class="bg-dark-950/50 border border-dark-700 rounded-xl p-3 mb-4 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Cash Out</div>
+        <div class="text-[9px] text-slate-600 mono">min 42,000 sats</div>
+      </div>
+      <input type="text" id="cashoutAddr" placeholder="Bitcoin address (bc1… / 1… / 3…)" class="field w-full text-xs">
+      <div class="flex items-center gap-2">
+        <button onclick="requestCashout()" class="btn-primary px-3 py-1.5 text-[10px] font-bold rounded-lg"><i class="fa-solid fa-money-bill-transfer mr-1"></i>Request Cashout</button>
+      </div>
+      <div id="cashoutStatus"></div>
+      <div class="pt-2 border-t border-dark-700/60">
+        <div class="text-[9px] mono text-slate-500 uppercase tracking-widest font-bold mb-1">Recent Payouts</div>
+        <div id="payoutFeedList" class="space-y-1 max-h-44 overflow-y-auto"></div>
+      </div>
     </div>
     <label class="flex items-center gap-2 cursor-pointer -mt-2 mb-4">
       <input type="checkbox" id="adsEnabledToggle" checked onchange="setAdsEnabled(this.checked)" class="w-3.5 h-3.5 rounded border-dark-600 bg-dark-800 accent-[#0AC18E]">
@@ -1365,7 +1387,6 @@
       <button onclick="saveProfile()" class="flex-1 py-2.5 btn-primary text-sm font-bold shadow-lg shadow-bch/10">Save Changes</button>
       <button onclick="doSignOut()" class="px-4 py-2.5 logout-btn text-red-400 font-bold rounded-lg text-sm border border-dark-700">Logout</button>
     </div>
-    <div id="profileMsg" class="mt-2 text-xs mono hidden text-center"></div>
     <div id="profileMsg" class="mt-2 text-xs mono hidden text-center"></div>
   </div>
 </div>
@@ -1680,6 +1701,7 @@
       <button onclick="adminTab('images')" id="at-images" class="py-2 px-3 text-xs mono tab-inactive">Images</button>
       <button onclick="adminTab('bans')" id="at-bans" class="py-2 px-3 text-xs mono tab-inactive">Bans</button>
       <button onclick="adminTab('ads')" id="at-ads" class="py-2 px-3 text-xs mono tab-inactive">Ads</button>
+      <button onclick="adminTab('payouts')" id="at-payouts" class="py-2 px-3 text-xs mono tab-inactive">Payouts</button>
     </div>
     <div class="flex-1 overflow-y-auto p-5">
       <div id="ap-servers">
@@ -1741,6 +1763,15 @@
         <button onclick="addVideoAd()" class="btn-primary px-4 py-2 text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Add Video Ad</button>
         <div id="videoAdList" class="space-y-2"></div>
       </div>
+      <div id="ap-payouts" class="hidden space-y-4">
+        <p class="text-xs text-slate-400">Cashout requests. Approve → the watcher polls the Bitcoin blockchain for payment to your address and marks it paid automatically once confirmed.</p>
+        <div class="flex gap-2">
+          <input type="text" id="payoutAddrInput" placeholder="Your Bitcoin payout address (bc1… / 1… / 3…)" class="field flex-1 text-xs">
+          <button onclick="savePayoutAddress()" class="btn-primary px-3 text-xs">Save</button>
+          <button onclick="checkPayouts(true)" class="px-3 py-2 text-xs border border-dark-600 rounded text-slate-300 hover:bg-dark-800">Check now</button>
+        </div>
+        <div id="cashoutList" class="space-y-2"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1760,7 +1791,7 @@
       <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/10"><div id="videoAdProgress" class="h-full bg-bch transition-all" style="width:0%"></div></div>
     </div>
     <div class="px-4 py-3 flex items-center justify-between gap-3">
-      <div class="text-[10px] text-slate-500 mono">Watch to the end to earn <span class="text-bch font-bold">+1 sat</span> · closing early earns nothing</div>
+      <div class="text-[10px] text-slate-500 mono">Watch to the end to earn <span id="videoAdRewardAmt" class="text-bch font-bold">sats</span> · closing early earns nothing</div>
       <button id="videoAdMuteBtn" onclick="toggleVideoAdMute()" class="text-[10px] text-slate-400 hover:text-white shrink-0"><i class="fa-solid fa-volume-high"></i></button>
     </div>
   </div>
@@ -2898,14 +2929,140 @@ const satsToBtc = s => (s / 1e8).toFixed(8);
 function updateSatsDisplay(){
   const el = $('profileSatsBtc');
   if(el) el.textContent = satsToBtc(rawSats()) + ' BTC';
+  const earnedEl = $('profileSatsEarned');
+  if(earnedEl) earnedEl.textContent = satsToBtc(rawEarned()) + ' BTC';
 }
-async function addSats(n){
-  if(!S.user) return;
+// Lifetime earned sats — encoded with the same uid-derived key (field `earnedX`)
+function rawEarned(){
+  if(!S.profile) return 0;
+  if(typeof S.profile.earnedX === 'number') return decSats(S.profile.earnedX, S.user?.uid);
+  return typeof S.profile.earned === 'number' ? S.profile.earned : 0;
+}
+// Reward tiers (sats) by ad duration — survey-site style randomized payouts.
+// TODO: tune ranges to taste. ~30s ads → 1-2 sats, ~90s+ ads → 4-7 sats.
+const REWARD_30S = [1, 2];
+const REWARD_90S = [4, 7];
+function rewardForDuration(sec){
+  const [lo, hi] = (sec > 45 ? REWARD_90S : REWARD_30S);
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
+}
+async function addSats(n, countAsEarned = true){
+  if(!S.user || !n) return;
   const cur = rawSats() + n;
-  if(S.profile){ S.profile.satsX = encSats(cur, S.user.uid); delete S.profile.sats; }
+  const upd = {satsX: encSats(cur, S.user.uid), sats: null};
+  if(countAsEarned && n > 0){
+    const earned = rawEarned() + n;
+    upd.earnedX = encSats(earned, S.user.uid);
+    upd.earned = null;
+    if(S.profile){ S.profile.earnedX = upd.earnedX; delete S.profile.earned; }
+  }
+  if(S.profile){ S.profile.satsX = upd.satsX; delete S.profile.sats; }
   updateSatsDisplay();
-  try{ await updateDoc(doc(db,'users',S.user.uid), {satsX: S.profile.satsX, sats: null}); }
+  try{ await updateDoc(doc(db,'users',S.user.uid), upd); }
   catch(e){ console.error('sats save error:', e); }
+}
+// Adjust balance without touching lifetime earnings (cashout escrow/refunds)
+async function adjustSats(n){
+  if(!S.user || !n) return;
+  const cur = rawSats() + n;
+  const upd = {satsX: encSats(cur, S.user.uid), sats: null};
+  if(S.profile){ S.profile.satsX = upd.satsX; delete S.profile.sats; }
+  updateSatsDisplay();
+  try{ await updateDoc(doc(db,'users',S.user.uid), upd); }
+  catch(e){ console.error('sats adjust error:', e); }
+}
+
+// ===== CASHOUTS =====
+const CASHOUT_MIN_SATS = 42000; // 0.00042000 BTC
+const satAddrRe = /^(bc1[a-z0-9]{25,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/;
+
+async function requestCashout(){
+  if(!S.user || !S.profile) return alert('Sign in first');
+  const bal = rawSats();
+  if(bal < CASHOUT_MIN_SATS) return alert(`Minimum cashout is ${CASHOUT_MIN_SATS} sats (${satsToBtc(CASHOUT_MIN_SATS)} BTC). You have ${bal}.`);
+  const addr = ($('cashoutAddr')?.value || S.profile.payoutAddress || '').trim();
+  if(!satAddrRe.test(addr)) return alert('Enter a valid Bitcoin address (bc1… or 1…/3…).');
+  // persist address on profile
+  try{ await updateDoc(doc(db,'users',S.user.uid), {payoutAddress: addr}); S.profile.payoutAddress = addr; }catch(e){}
+  let pending;
+  try{
+    const ps = await getDocs(query(collection(db,'cashouts'), where('uid','==',S.user.uid)));
+    pending = ps.docs.filter(d => ['pending','approved'].includes(d.data().status));
+  }catch(e){ return alert('Cashout request failed: ' + e.message); }
+  if(pending.length) return alert('You already have a cashout in progress.');
+  try{
+    await addDoc(collection(db,'cashouts'), {
+      uid: S.user.uid, handle: S.profile.handle || 'User',
+      amountSats: bal, btcAddress: addr,
+      status: 'pending', txid: null, adminNote: '',
+      createdAt: Date.now(), updatedAt: Date.now()
+    });
+  }catch(e){ return alert('Cashout request failed: ' + e.message); }
+  await adjustSats(-bal); // escrow — balance reserved until paid/denied
+  loadMyCashout();
+  alert(`Cashout request sent — ${bal} sats (${satsToBtc(bal)} BTC) reserved. Admin will review and pay to ${addr}.`);
+}
+
+// Public stat: total BTC paid out across all users + time since first payout
+async function loadPayoutStats(){
+  const el = $('havocTotalCashouts'), age = $('havocPayoutAge');
+  if(!el) return;
+  try{
+    const s = await getDoc(doc(db,'config','site'));
+    if(!s.exists()){ el.textContent = '0.00000000 BTC'; if(age) age.textContent = 'No payouts yet'; return; }
+    const d = s.data();
+    el.textContent = satsToBtc(d.totalPaidSats || 0) + ' BTC';
+    if(age){
+      if(d.firstPaidAt){
+        const days = Math.floor((Date.now() - d.firstPaidAt) / 86400000);
+        const months = Math.floor(days / 30.44);
+        const years = Math.floor(months / 12);
+        age.textContent = `First payout ${years}y ${months % 12}mo ${Math.floor(days % 30.44)}d ago`;
+      } else age.textContent = 'No payouts yet';
+    }
+  }catch(e){ el.textContent = '—'; }
+}
+
+// Public "Recent Payouts" feed — proof-of-payout list for all members
+function timeAgo(ts){
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if(s < 60) return 'just now';
+  const m = Math.floor(s/60); if(m < 60) return m + 'm ago';
+  const h = Math.floor(m/60); if(h < 24) return h + 'h ago';
+  const d = Math.floor(h/24); if(d < 30) return d + 'd ago';
+  const mo = Math.floor(d/30.44); if(mo < 12) return mo + 'mo ago';
+  return Math.floor(mo/12) + 'y ago';
+}
+async function loadPayoutFeed(){
+  const el = $('payoutFeedList'); if(!el) return;
+  try{
+    const snap = await getDocs(query(collection(db,'payoutFeed'), orderBy('paidAt','desc'), limit(15)));
+    if(snap.empty){ el.innerHTML = '<div class="text-[10px] text-slate-600 mono py-1">No payouts yet — be the first.</div>'; return; }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const p = d.data();
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between gap-2 text-[10px] mono';
+      row.innerHTML = `
+        <span class="text-slate-300 truncate">${esc(p.handle || 'User')}</span>
+        <span class="text-bch shrink-0">${satsToBtc(p.amountSats || 0)} BTC</span>
+        <span class="text-slate-600 shrink-0">${timeAgo(p.paidAt || 0)}</span>
+        ${p.txid ? `<a href="https://blockstream.info/tx/${esc(p.txid)}" target="_blank" rel="noopener noreferrer" class="text-slate-500 hover:text-bch shrink-0" title="${esc(p.txid)}"><i class="fa-solid fa-link"></i></a>` : ''}`;
+      el.appendChild(row);
+    });
+  }catch(e){ el.innerHTML = '<div class="text-[10px] text-slate-600 mono py-1">—</div>'; }
+}
+
+async function loadMyCashout(){
+  const box = $('cashoutStatus'); if(!box) return;
+  try{
+    const snap = await getDocs(query(collection(db,'cashouts'), where('uid','==',S.user.uid)));
+    if(snap.empty){ box.innerHTML = ''; return; }
+    const docs = snap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const c = docs[0];
+    const label = {pending:'⏳ Pending admin review', approved:'✅ Approved — waiting for blockchain payment', paid:'💰 Paid', denied:'❌ Denied'}[c.status] || c.status;
+    box.innerHTML = `<div class="text-[10px] mono ${c.status==='paid'?'text-green-400':c.status==='denied'?'text-red-400':'text-amber-300'}">${label} — ${c.amountSats} sats (${satsToBtc(c.amountSats)} BTC) → ${esc(c.btcAddress||'')}${c.txid ? ' · tx ' + esc(String(c.txid).slice(0,16)) + '…' : ''}</div>`;
+  }catch(e){ box.innerHTML = ''; }
 }
 let _gptLoading = null;
 function loadGPT(){
@@ -2926,14 +3083,14 @@ window.watchRewardedAd = async () => {
   // viewer earns +1 sat on completed view (survey-style).
   const directAds = await getActiveVideoAds();
   if(directAds.length){
-    if(!confirm('Watch an ad to earn +1 satoshi (0.00000001 BTC)?')) return;
+    if(!confirm('Watch an ad to earn sats (0.00000001 BTC each)?')) return;
     _wireVideoAd();
     showRewardedVideoAd(pickVideoAd(directAds));
     return;
   }
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
   // GAM policy: explicit user opt-in before any rewarded ad
-  if(!confirm('Watch an ad to earn +1 satoshi (0.00000001 BTC)?')) return;
+  if(!confirm('Watch an ad to earn sats (0.00000001 BTC each)?')) return;
   try{ await loadGPT(); console.log('[ads] GPT loaded, apiReady:', !!window.googletag?.apiReady); }
   catch(e){ console.error('[ads] GPT failed to load:', e); return alert('Could not load the ad network.'); }
   googletag.cmd.push(() => {
@@ -2987,8 +3144,13 @@ function pickVideoAd(ads){
 }
 
 let _videoAdFinished = false;
+let _videoAdReward = 1;
 function _wireVideoAd(){
   const v = $('rewardedVideo'); if(!v || v.dataset.wired) return; v.dataset.wired = '1';
+  v.addEventListener('loadedmetadata', () => {
+    _videoAdReward = rewardForDuration(v.duration || 0);
+    const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's');
+  });
   v.addEventListener('timeupdate', () => {
     if(v.duration) $('videoAdProgress').style.width = (v.currentTime / v.duration * 100) + '%';
   });
@@ -2998,6 +3160,7 @@ function _wireVideoAd(){
 window.showRewardedVideoAd = (ad) => {
   const modal = $('modal-videoAd'); if(!modal) return;
   _videoAdFinished = false;
+  _videoAdReward = 1;
   $('videoAdProgress').style.width = '0%';
   $('videoAdMeta').textContent = `${ad.title || 'Sponsored'}${ad.advertiser ? ' · ' + ad.advertiser : ''}`;
   $('videoAdMuteBtn').innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
@@ -3017,7 +3180,8 @@ window.closeVideoAd = async (completed) => {
   v.pause(); v.removeAttribute('src'); v.load();
   modal.classList.add('hidden'); modal.classList.remove('flex');
   if(reward){
-    await addSats(1);
+    const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's') + ' earned';
+    await addSats(_videoAdReward || 1);
     if(adId){ try{ await updateDoc(doc(db,'videoAds',adId), {views: increment(1), lastViewAt: Date.now()}); invalidateVideoAds(); }catch(e){} }
     updateSatsDisplay();
   }
@@ -3030,6 +3194,10 @@ window.toggleVideoAdMute = () => {
 
 window.initProfileEditor = () => {
   updateSatsDisplay();
+  const ca = $('cashoutAddr'); if(ca) ca.value = S.profile?.payoutAddress || '';
+  loadMyCashout();
+  loadPayoutStats();
+  loadPayoutFeed();
   const fp = $('fontPicker');
   if(fp) {
     fp.innerHTML = '';
@@ -8007,7 +8175,7 @@ window.deleteServerFromRail = async (sid, name) => {
   if(wasCurrent) resetAfterServerDelete(); else loadMyServers();
 };
 window.adminTab = tab => {
-  ['servers','users','blacklist','gifs','images','bans','ads'].forEach(t => {
+  ['servers','users','blacklist','gifs','images','bans','ads','payouts'].forEach(t => {
     $(`ap-${t}`)?.classList.add('hidden');
     $(`at-${t}`)?.classList.remove('tab-active'); $(`at-${t}`)?.classList.add('tab-inactive');
   });
@@ -8020,6 +8188,7 @@ window.adminTab = tab => {
   if(tab === 'images') loadAdminImages();
   if(tab === 'bans') loadBans();
   if(tab === 'ads') loadVideoAds();
+  if(tab === 'payouts'){ loadCashouts(); if(!_cashoutWatchIv) _cashoutWatchIv = setInterval(() => checkPayouts(false), 60000); }
 };
 
 window.loadAdminImages = async () => {
@@ -8109,6 +8278,128 @@ window.deleteVideoAd = async id => {
   if(!confirm('Delete this ad?')) return;
   await deleteDoc(doc(db,'videoAds',id));
   invalidateVideoAds(); loadVideoAds();
+};
+
+// ===== CASHOUT ADMIN + BLOCKCHAIN WATCHER =====
+window.loadCashouts = async () => {
+  const el = $('cashoutList'); if(!el) return;
+  el.innerHTML = '<p class="text-[10px] text-slate-500 py-2">Loading…</p>';
+  try{
+    const s = await getDoc(doc(db,'config','site'));
+    if(s.exists() && !$('payoutAddrInput').value) $('payoutAddrInput').value = s.data().payoutBtcAddress || '';
+  }catch(e){}
+  let snap;
+  try{ snap = await getDocs(collection(db,'cashouts')); }
+  catch(e){ el.innerHTML = '<p class="text-[10px] text-red-400 py-2">Failed to load cashouts — check Firestore rules allow reads on `cashouts`.</p>'; return; }
+  const docs = snap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  if(!docs.length){ el.innerHTML = '<p class="text-[10px] text-slate-500 py-3 text-center">No cashout requests.</p>'; return; }
+  el.innerHTML = '';
+  docs.forEach(c => {
+    const stColor = {pending:'text-amber-300', approved:'text-blue-300', paid:'text-green-400', denied:'text-red-400'}[c.status] || 'text-slate-400';
+    const div = document.createElement('div');
+    div.className = 'border border-dark-700 rounded-lg p-3';
+    div.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <div class="text-xs font-bold text-white truncate">${esc(c.handle || 'User')} <span class="text-slate-500 font-normal mono">${esc(c.uid || '')}</span></div>
+          <div class="text-[10px] text-slate-500 mono truncate">${c.amountSats} sats (${satsToBtc(c.amountSats)} BTC) → ${esc(c.btcAddress || '')}</div>
+          <div class="text-[10px] mono ${stColor}">${esc(c.status)}${c.txid ? ' · tx ' + esc(String(c.txid).slice(0,24)) + '…' : ''}${c.adminNote ? ' · ' + esc(c.adminNote) : ''}</div>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          ${c.status === 'pending' ? `<button onclick="approveCashout('${esc(c.id)}')" class="text-[10px] px-2 py-1 rounded border border-green-500/40 text-green-400 hover:bg-green-900/20">Approve</button><button onclick="denyCashout('${esc(c.id)}')" class="text-[10px] px-2 py-1 rounded border border-red-500/30 text-red-400 hover:bg-red-900/20">Deny</button>` : ''}
+        </div>
+      </div>`;
+    el.appendChild(div);
+  });
+  checkPayouts(false); // opportunistic check each time the tab loads
+};
+
+window.approveCashout = async id => {
+  try{ await updateDoc(doc(db,'cashouts',id), {status:'approved', updatedAt:Date.now()}); }
+  catch(e){ return alert('Approve failed: ' + e.message); }
+  checkPayouts(false);
+  loadCashouts();
+};
+
+window.denyCashout = async id => {
+  const snap = await getDoc(doc(db,'cashouts',id)); if(!snap.exists()) return;
+  const c = snap.data();
+  const note = prompt(`Deny ${c.handle || 'user'}'s cashout of ${c.amountSats} sats?\nReason (optional, shown to user):`, '') ?? '';
+  if(note === null) return;
+  try{ await updateDoc(doc(db,'cashouts',id), {status:'denied', adminNote: note, updatedAt:Date.now()}); }
+  catch(e){ return alert('Deny failed: ' + e.message); }
+  // refund the escrowed sats to the user (encoded with THEIR uid key)
+  try{
+    const uref = doc(db,'users', c.uid);
+    const us = await getDoc(uref);
+    if(us.exists()){
+      const u = us.data();
+      const cur = (typeof u.satsX === 'number' ? decSats(u.satsX, c.uid) : (u.sats || 0)) + (c.amountSats || 0);
+      await updateDoc(uref, {satsX: encSats(cur, c.uid), sats: null});
+    }
+  }catch(e){ console.error('cashout refund failed:', e); }
+  loadCashouts();
+};
+
+window.savePayoutAddress = async () => {
+  const addr = ($('payoutAddrInput')?.value || '').trim();
+  if(!satAddrRe.test(addr)) return alert('Enter a valid Bitcoin address.');
+  try{ await setDoc(doc(db,'config','site'), {payoutBtcAddress: addr}, {merge:true}); }
+  catch(e){ return alert('Save failed: ' + e.message); }
+  checkPayouts(false);
+};
+
+let _cashoutWatchIv = null;
+// Polls blockstream.info for confirmed incoming txs to the payout address and
+// marks approved cashouts paid. Runs on the admin's browser — best practice is
+// server-side, but this keeps everything client-side for now.
+window.checkPayouts = async (manual) => {
+  const addr = ($('payoutAddrInput')?.value || '').trim() || (await (async()=>{ try{ const s = await getDoc(doc(db,'config','site')); return s.exists()? s.data().payoutBtcAddress||'' : ''; }catch(e){ return ''; } })());
+  if(!addr){ if(manual) alert('Set and save your Bitcoin payout address first.'); return; }
+  let snap;
+  try{ snap = await getDocs(collection(db,'cashouts')); }
+  catch(e){ if(manual) alert('Failed to load cashouts: ' + e.message); return; }
+  const all = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  const approved = all.filter(c => c.status === 'approved');
+  if(!approved.length){ if(manual) alert('No approved cashouts waiting for payment.'); return; }
+  let txs;
+  try{
+    const r = await fetch(`https://blockstream.info/api/address/${encodeURIComponent(addr)}/txs`);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    txs = await r.json();
+  }catch(e){ if(manual) alert('Blockchain API unreachable: ' + e.message); return; }
+  const usedTxids = new Set(all.map(c => c.txid).filter(Boolean));
+  let paid = 0;
+  for(const c of approved){
+    const need = c.amountSats || 0;
+    const hit = (Array.isArray(txs) ? txs : []).find(tx =>
+      !usedTxids.has(tx.txid) && tx.status && tx.status.confirmed &&
+      Array.isArray(tx.vout) && tx.vout.some(o => o.scriptpubkey_address === addr && (o.value || 0) >= need));
+    if(hit){
+      try{
+        await updateDoc(doc(db,'cashouts',c.id), {status:'paid', txid:hit.txid, paidAt:Date.now(), updatedAt:Date.now()});
+        usedTxids.add(hit.txid); paid++;
+        // running total + first-payout timestamp for the public "Havoc Total Cashouts" stat
+        try{
+          const cfg = await getDoc(doc(db,'config','site'));
+          const cur = cfg.exists() ? cfg.data() : {};
+          await setDoc(doc(db,'config','site'), {
+            totalPaidSats: (cur.totalPaidSats || 0) + (c.amountSats || 0),
+            firstPaidAt: cur.firstPaidAt || Date.now()
+          }, {merge:true});
+        }catch(e){}
+        // public payout feed — world-readable proof-of-payout list
+        try{
+          await addDoc(collection(db,'payoutFeed'), {
+            handle: c.handle || 'User', amountSats: c.amountSats || 0,
+            txid: hit.txid, cashoutId: c.id, paidAt: Date.now()
+          });
+        }catch(e){}
+      }catch(e){ console.error('mark paid failed:', e); }
+    }
+  }
+  if(manual) alert(paid ? `✅ ${paid} cashout(s) confirmed on-chain and marked paid.` : 'No matching confirmed payments found yet.');
+  loadCashouts();
 };
 
 window.loadAdminGifs = async () => {
