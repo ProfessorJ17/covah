@@ -1385,7 +1385,7 @@
         <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Cash Out</div>
         <div id="cashoutMinLabel" class="text-[9px] text-slate-600 mono">min 42,000 sats</div>
       </div>
-      <div class="flex gap-2">
+      <div id="payoutAccountsRow" class="flex gap-2">
         <select id="payoutAccountSel" onchange="selectPayoutAccount(this.value)" class="field flex-1 min-w-0 text-xs px-2 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-slate-300">
           <option value="">— payout account —</option>
         </select>
@@ -3114,7 +3114,10 @@ function validPayoutTarget(method, t){
 // Legacy profile.payoutMethod/payoutAddress migrates into the list automatically.
 const MAX_PAYOUT_ACCOUNTS = 5;
 function payoutAccounts(){
-  let list = Array.isArray(S.profile?.payoutAccounts) ? S.profile.payoutAccounts.filter(a => a && a.id && a.method && a.target) : [];
+  // localStorage cache keeps accounts available even before profile loads
+  let cached = [];
+  try{ cached = JSON.parse(localStorage.getItem('havoc_payout_accounts') || '[]'); }catch(e){}
+  let list = Array.isArray(S.profile?.payoutAccounts) ? S.profile.payoutAccounts.filter(a => a && a.id && a.method && a.target) : cached.filter(a => a && a.id && a.method && a.target);
   // migrate legacy single payout if present and list is empty
   const lm = S.profile?.payoutMethod, la = (S.profile?.payoutAddress || '').trim();
   if(!list.length && lm && la && validPayoutTarget(lm, la)){
@@ -3127,11 +3130,14 @@ async function savePayoutAccounts(list, selectedId){
   const upd = {payoutAccounts: list, payoutAccountId: selectedId};
   try{ await updateDoc(doc(db,'users',S.user.uid), upd); }catch(e){ console.warn('save payout accounts failed:', e); }
   S.profile.payoutAccounts = list; S.profile.payoutAccountId = selectedId;
+  try{ localStorage.setItem('havoc_payout_accounts', JSON.stringify(list)); localStorage.setItem('havoc_payout_account_id', selectedId); }catch(e){}
 }
 function renderPayoutAccountSelect(){
   const sel = $('payoutAccountSel'); if(!sel) return;
   const list = payoutAccounts();
-  sel.innerHTML = '<option value="">— saved payout accounts —</option>';
+  const row = $('payoutAccountsRow');
+  if(row) row.classList.toggle('hidden', !list.length);
+  sel.innerHTML = '<option value="">— payout account —</option>';
   list.forEach(a => {
     const o = document.createElement('option');
     o.value = a.id;
@@ -3399,8 +3405,7 @@ function initGam(){
       if(!window.googletag?.defineSlot){ console.warn('[ads] defineSlot still missing inside cmd'); return; }
       console.log('[ads] GPT ready — defining slots');
       const pubads = googletag.pubads();
-      // single-request is default in current GPT; collapseEmptyDivs → setConfig
-      googletag.setConfig({collapseDiv: true});
+      // single-request is GPT default; no collapse config needed — house-ad layer covers empty divs
 
       // ---- Banner slot ----
       const bslot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[320,50]], 'gamBanner');
@@ -7133,27 +7138,31 @@ async function refreshPresence(){
   (S.friends || []).forEach(f => f.uid && uids.add(f.uid));
   (S.membersCache || []).forEach(m => m.uid && uids.add(m.uid));
   const list = [...uids].slice(0, 150);
-  await Promise.all(list.map(async uid => {
-    try{
-      const snap = await getDoc(doc(db,'users', uid));
-      if(!snap.exists()) return;
-      const u = snap.data();
-      const prev = S.profileCache[uid] || {};
-      S.profileCache[uid] = {
-        ...prev,
-        handle: u.handle || prev.handle || 'User',
-        avatar: u.avatar || prev.avatar || userAvatar(uid),
-        presence: computePresence(u),
-        status: u.status,
-        lastSeen: u.lastSeen,
-        customStatus: u.customStatus || null,
-        style: u.style || prev.style || null,
-        userTag: u.userTag || prev.userTag || '',
-        createdAt: u.createdAt || prev.createdAt || 0,
-        _ts: Date.now()
-      };
-    }catch(e){}
-  }));
+  // Chunk the lookups — 150 parallel getDoc calls each open a Firestore listen
+  // stream and overflow the webchannel (400 Bad Request spam). Batches of 15.
+  for(let i = 0; i < list.length; i += 15){
+    await Promise.all(list.slice(i, i + 15).map(async uid => {
+      try{
+        const snap = await getDoc(doc(db,'users', uid));
+        if(!snap.exists()) return;
+        const u = snap.data();
+        const prev = S.profileCache[uid] || {};
+        S.profileCache[uid] = {
+          ...prev,
+          handle: u.handle || prev.handle || 'User',
+          avatar: u.avatar || prev.avatar || userAvatar(uid),
+          presence: computePresence(u),
+          status: u.status,
+          lastSeen: u.lastSeen,
+          customStatus: u.customStatus || null,
+          style: u.style || prev.style || null,
+          userTag: u.userTag || prev.userTag || '',
+          createdAt: u.createdAt || prev.createdAt || 0,
+          _ts: Date.now()
+        };
+      }catch(e){}
+    }));
+  }
   try{ if($('friendsList')) renderFriends(); }catch(e){}
   try{ if($('dmList')) renderDMList(); }catch(e){}
   try{ if(S.server) listenMembers(S.server.id); }catch(e){}
