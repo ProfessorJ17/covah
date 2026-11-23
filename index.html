@@ -3166,10 +3166,12 @@ let _rewardedSlot = null, _rewardedReady = false, _rewardedPending = false, _rew
 // GPT requires ALL slots defined before a single enableServices() — define the
 // banner and rewarded slots together in one cmd batch, then display both.
 function initGam(){
-  if($('gamBanner') == null) return;
-  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return; // adsense only
+  console.log('[ads] initGam() called');
+  if($('gamBanner') == null){ console.warn('[ads] #gamBanner not found'); return; }
+  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE'){ console.warn('[ads] GAM_NETWORK_CODE not set'); return; }
   loadGPT().then(() => {
-    if(!window.googletag?.defineSlot) return;
+    if(!window.googletag?.defineSlot){ console.warn('[ads] GPT loaded but defineSlot missing — apiReady:', !!window.googletag?.apiReady); return; }
+    console.log('[ads] GPT ready — defining slots');
     googletag.cmd.push(() => {
       const pubads = googletag.pubads();
       pubads.enableSingleRequest();
