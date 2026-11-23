@@ -1387,10 +1387,12 @@
       </div>
       <div class="flex gap-2">
         <select id="payoutAccountSel" onchange="selectPayoutAccount(this.value)" class="field flex-1 min-w-0 text-xs px-2 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-slate-300">
-          <option value="">— saved payout accounts —</option>
+          <option value="">— payout account —</option>
         </select>
+        <button onclick="editPayoutAccount()" title="Edit selected account" class="shrink-0 px-2 py-1.5 text-[10px] rounded-lg border border-dark-500 text-slate-300 hover:bg-dark-700"><i class="fa-solid fa-pen"></i></button>
         <button onclick="removePayoutAccount()" title="Remove selected account" class="shrink-0 px-2 py-1.5 text-[10px] rounded-lg border border-red-500/40 text-red-400 hover:bg-red-900/20"><i class="fa-solid fa-trash"></i></button>
       </div>
+      <div class="text-[9px] mono text-slate-600">Add or edit a payout account:</div>
       <div class="flex gap-2">
         <select id="cashoutMethod" onchange="updateCashoutPlaceholder()" class="field shrink-0 text-xs px-2 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-slate-300">
           <option value="bitcoin">Bitcoin</option>
@@ -1398,7 +1400,7 @@
           <option value="cashapp">Cash App</option>
         </select>
         <input type="text" id="cashoutAddr" placeholder="Bitcoin address (bc1… / 1… / 3…)" class="field flex-1 min-w-0 text-xs">
-        <button onclick="connectPayout()" class="shrink-0 px-2 py-1.5 text-[10px] font-bold rounded-lg border border-bch/40 text-bch hover:bg-bch/10"><i class="fa-solid fa-floppy-disk mr-1"></i>Save</button>
+        <button id="payoutSaveBtn" onclick="connectPayout()" class="shrink-0 px-2 py-1.5 text-[10px] font-bold rounded-lg border border-bch/40 text-bch hover:bg-bch/10"><i class="fa-solid fa-floppy-disk mr-1"></i>Save</button>
       </div>
       <div id="payoutConnected" class="text-[9px] mono text-slate-500"></div>
       <div class="flex items-center gap-2">
@@ -3139,11 +3141,29 @@ function renderPayoutAccountSelect(){
   const want = S.profile?.payoutAccountId || list[0]?.id || '';
   sel.value = list.some(a => a.id === want) ? want : '';
 }
+let _payoutEditId = null;
+function resetPayoutSaveBtn(){
+  _payoutEditId = null;
+  const btn = $('payoutSaveBtn');
+  if(btn) btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i>Save';
+}
 window.selectPayoutAccount = async id => {
   if(!S.user || !S.profile) return;
+  resetPayoutSaveBtn();
   S.profile.payoutAccountId = id;
   try{ await updateDoc(doc(db,'users',S.user.uid), {payoutAccountId: id}); }catch(e){}
   updatePayoutConnected(); updateCashoutBtn();
+};
+window.editPayoutAccount = () => {
+  const id = $('payoutAccountSel')?.value;
+  const acct = payoutAccounts().find(a => a.id === id);
+  if(!acct) return alert('Select a saved payout account to edit.');
+  _payoutEditId = acct.id;
+  const m = $('cashoutMethod'), a = $('cashoutAddr');
+  if(m){ m.value = acct.method; updateCashoutPlaceholder(); }
+  if(a){ a.value = acct.target; a.focus(); }
+  const btn = $('payoutSaveBtn');
+  if(btn) btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Update';
 };
 window.connectPayout = async () => {
   if(!S.user || !S.profile) return alert('Sign in first');
@@ -3151,7 +3171,22 @@ window.connectPayout = async () => {
   const target = ($('cashoutAddr')?.value || '').trim();
   if(!validPayoutTarget(method, target)) return alert(method === 'bitcoin' ? 'Enter a valid Bitcoin address (bc1… or 1…/3…).' : method === 'paypal' ? 'Enter a valid PayPal email or @username.' : 'Enter a valid Cash App $tag (e.g. $username).');
   const list = payoutAccounts();
-  // dedupe: same method+target already saved → just select it
+  // EDIT MODE: update the account being edited
+  if(_payoutEditId){
+    const idx = list.findIndex(a => a.id === _payoutEditId);
+    if(idx >= 0){
+      const conflict = list.find(a => a.id !== _payoutEditId && a.method === method && a.target === target);
+      if(conflict) return alert('That payout account already exists.');
+      list[idx] = {...list[idx], method, target, updatedAt: Date.now()};
+      await savePayoutAccounts(list, _payoutEditId);
+      resetPayoutSaveBtn();
+      renderPayoutAccountSelect();
+      const inp2 = $('cashoutAddr'); if(inp2) inp2.value = '';
+      updatePayoutConnected(); updateCashoutBtn();
+      return;
+    }
+    resetPayoutSaveBtn();
+  }
   const dup = list.find(a => a.method === method && a.target === target);
   if(dup){
     await savePayoutAccounts(list, dup.id);
