@@ -3311,9 +3311,9 @@ function initGam(){
           if(e.slot !== bslot) return;
           if(e.isEmpty){ console.log('[ads] banner no-fill'); return; }
           if(_houseAdActive) return; // house-ad break — our own creative, doesn't count
-          // Skip our own GAM house creatives — only real third-party demand counts
+          // Skip our own GAM house creatives — only count verified non-house line items
           const liId = bslot.getResponseInformation?.()?.lineItemId;
-          if(liId && HOUSE_LINE_ITEM_IDS.has(String(liId))) return;
+          if(!liId || HOUSE_LINE_ITEM_IDS.has(String(liId))) return;
           // Third-party banner impressions are tracked (not rewarded per-view);
           // every 100 counted views grants 100 sats — see trackBannerView()
           if(adsEnabled() && S.user && !document.hidden) trackBannerView();
@@ -3458,12 +3458,8 @@ async function onVideoAdError(){
 function _wireVideoAd(){
   const v = $('rewardedVideo'); if(!v || v.dataset.wired) return; v.dataset.wired = '1';
   v.addEventListener('loadedmetadata', () => {
-    if(!_videoAdIsHouse){
-      _videoAdReward = rewardForDuration(v.duration || 0);
-      const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's');
-    }else{
-      const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = 'house ad — no sats';
-    }
+    // Only Google-served ads pay sats — direct-sold & house videos pay nothing
+    const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = 'no sats — Google ads only';
   });
   v.addEventListener('timeupdate', () => {
     if(v.duration) $('videoAdProgress').style.width = (v.currentTime / v.duration * 100) + '%';
@@ -3497,23 +3493,8 @@ window.closeVideoAd = async (completed) => {
   modal.classList.add('hidden'); modal.classList.remove('flex');
   if(reward){
     const amt = $('videoAdRewardAmt');
-    if(adId === 'house'){
-      // House ads pay nothing — only real advertiser/Google ads grant sats
-      if(amt) amt.textContent = 'House ad — no sats earned';
-      updateSatsDisplay();
-      return;
-    }
-    if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's') + ' earned';
-    // Anti-farm: sats grant at most once per AD_REWARD_COOLDOWN_MS; the view
-    // itself still counts for advertiser billing either way.
-    const last = +localStorage.getItem('havoc_last_ad_reward') || 0;
-    if(Date.now() - last >= AD_REWARD_COOLDOWN_MS){
-      localStorage.setItem('havoc_last_ad_reward', String(Date.now()));
-      await addSats(_videoAdReward || 1);
-    }else{
-      console.log('[ads] reward on cooldown — view counted, sats skipped');
-      if(amt) amt.textContent = 'Reward cooldown — try again in a minute';
-    }
+    // House + direct-sold videos never pay — only Google-served ads grant sats
+    if(amt) amt.textContent = 'Ad watched — no sats (Google ads only reward)';
     if(adId && adId !== 'house'){ try{ await updateDoc(doc(db,'videoAds',adId), {views: increment(1), lastViewAt: Date.now()}); invalidateVideoAds(); }catch(e){} }
     updateSatsDisplay();
   }
