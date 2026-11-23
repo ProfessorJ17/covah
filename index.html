@@ -2922,6 +2922,8 @@ S.profileStyle = {
 const GAM_NETWORK_CODE = '22101006229';
 const GAM_REWARDED_UNIT = 'havoc_rewarded_video';
 const GAM_BANNER_UNIT = 'havoc_bottom_banner';
+const REWARDED_AD_SATS = 2;  // sats granted per fully-watched rewarded video
+const BANNER_AD_SATS = 1;    // sats granted per rendered banner impression (~every 60s)
 
 // Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
 // so the balance isn't a readable/hand-editable plaintext number in the console.
@@ -2949,9 +2951,9 @@ function rawEarned(){
   return typeof S.profile.earned === 'number' ? S.profile.earned : 0;
 }
 // Reward tiers (sats) by ad duration — survey-site style randomized payouts.
-// TODO: tune ranges to taste. ~30s ads → 1-2 sats, ~90s+ ads → 4-7 sats.
-const REWARD_30S = [1, 2];
-const REWARD_90S = [4, 7];
+// ~30s and ~90s+ ads → flat 2 sats each.
+const REWARD_30S = [2, 2];
+const REWARD_90S = [2, 2];
 function rewardForDuration(sec){
   const [lo, hi] = (sec > 45 ? REWARD_90S : REWARD_30S);
   return lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -3090,16 +3092,20 @@ function loadGPT(){
 // Banner ad: GAM display slot first; AdSense <ins> stays as fallback if GAM
 // has no fill or isn't configured yet.
 let _bannerSlot = null;
-const BANNER_ROTATE_MS = 60000; // GAM policy: 30s min between refreshes, 60s is the safe standard
-const HOUSE_AD_BREAK_MS = 5000; // 5s house-ad break between rotations
+const BANNER_MIN_MS = 60000;  // GAM policy: 30s min between refreshes, 60s+ is the safe standard
+const BANNER_MAX_MS = 120000; // random rotation interval: 1-2 minutes
+const HOUSE_AD_BREAK_MS = 5000; // 5s house-ad break between rotations (0 sats — it's our own ad)
+let _houseAdActive = false;
 function showHouseAdBreak(){
   if(!adsEnabled() || document.hidden) return; // never rotate/refresh in a hidden tab
   const house = $('houseAd'); if(!house) return;
   const wrap = $('gamBanner'), ins = document.querySelector('.ad-banner .adsbygoogle');
+  _houseAdActive = true;
   if(wrap) wrap.style.visibility = 'hidden';
   if(ins) ins.style.visibility = 'hidden';
   house.classList.remove('hidden'); house.classList.add('flex');
   setTimeout(() => {
+    _houseAdActive = false;
     house.classList.add('hidden'); house.classList.remove('flex');
     if(wrap) wrap.style.visibility = '';
     if(ins) ins.style.visibility = '';
@@ -3109,7 +3115,12 @@ function showHouseAdBreak(){
     }
   }, HOUSE_AD_BREAK_MS);
 }
-setInterval(showHouseAdBreak, BANNER_ROTATE_MS);
+// Randomized rotation: next break scheduled 1-2 minutes out
+function scheduleBannerBreak(){
+  const delay = BANNER_MIN_MS + Math.random() * (BANNER_MAX_MS - BANNER_MIN_MS);
+  setTimeout(() => { showHouseAdBreak(); scheduleBannerBreak(); }, delay);
+}
+scheduleBannerBreak();
 
 function initBannerAds(){
   const wrap = $('gamBanner'); if(!wrap) return;
@@ -3125,9 +3136,13 @@ function initBannerAds(){
       googletag.pubads().collapseEmptyDivs();
       googletag.pubads().addEventListener('slotRenderEnded', e => {
         if(e.slot !== slot) return;
-        const ins = document.querySelector('.ad-banner .adsbygoogle');
-        if(e.isEmpty){ console.log('[ads] banner no-fill — showing AdSense fallback'); }
-        else if(ins){ ins.style.display = 'none'; }
+        if(e.isEmpty){ console.log('[ads] banner no-fill'); return; }
+        if(_houseAdActive) return; // house-ad break — our own creative, 0 sats
+        // Each rendered third-party banner impression earns the viewer BANNER_AD_SATS
+        if(adsEnabled() && S.user && !document.hidden){
+          console.log(`[ads] banner impression — +${BANNER_AD_SATS} sat`);
+          addSats(BANNER_AD_SATS);
+        }
       });
       googletag.enableServices();
       googletag.display(slot);
@@ -3142,7 +3157,7 @@ window.watchRewardedAd = async () => {
   const directAds = await getActiveVideoAds();
   console.log('[ads] direct-sold inventory:', directAds.length, directAds.map(a=>a.id));
   if(directAds.length){
-    if(!confirm('Watch an ad to earn sats (0.00000001 BTC each)?')) return;
+    if(!confirm('Watch an ad to earn sats?')) return;
     _videoAdFailed = new Set();
     const ad = pickVideoAd(directAds);
     if(!ad) return alert('No ads available right now — try again later.');
@@ -3152,7 +3167,7 @@ window.watchRewardedAd = async () => {
   }
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
   // GAM policy: explicit user opt-in before any rewarded ad
-  if(!confirm('Watch an ad to earn sats (0.00000001 BTC each)?')) return;
+  if(!confirm('Watch an ad to earn sats?')) return;
   try{ await loadGPT(); console.log('[ads] GPT loaded, apiReady:', !!window.googletag?.apiReady); }
   catch(e){ console.error('[ads] GPT failed to load:', e); return alert('Could not load the ad network.'); }
   googletag.cmd.push(() => {
@@ -3168,7 +3183,7 @@ window.watchRewardedAd = async () => {
       console.log('[ads] rewardedSlotReady — showing overlay');
       e.slot.makeRewardedVisible();
     });
-    googletag.pubads().addEventListener('rewardedSlotGranted', () => { oopShown = true; console.log('[ads] REWARDED — granting +1 sat'); addSats(1); });
+    googletag.pubads().addEventListener('rewardedSlotGranted', () => { oopShown = true; console.log(`[ads] REWARDED — granting +${REWARDED_AD_SATS} sats`); addSats(REWARDED_AD_SATS); });
     googletag.pubads().addEventListener('rewardedSlotClosed', () => { oopShown = true; console.log('[ads] rewarded slot closed'); });
     googletag.pubads().addEventListener('slotRenderEnded', e => console.log('[ads] slotRenderEnded:', e?.slot?.getAdUnitPath?.(), 'empty:', e?.isEmpty));
     googletag.enableServices();
