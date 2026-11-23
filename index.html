@@ -2943,7 +2943,7 @@ const GAM_REWARDED_UNIT = 'havoc_rewarded_video';
 const GAM_BANNER_UNIT = 'havoc_bottom_banner';
 const REWARDED_AD_SATS = 2;  // sats granted per fully-watched rewarded video
 // Fallback "house" video when GAM rewarded has no fill — clearly labeled,
-// still pays the reward (it's our own content) but see the cooldown in closeVideoAd.
+// pays 0 sats (house placeholder only). See the 'house' check in closeVideoAd.
 const HOUSE_VIDEO_AD = { id:'house', title:'Havoc', advertiser:'Havoc (house ad)', videoUrl:'https://raw.githubusercontent.com/ProfessorJ17/covah/main/test-ad-video-720p.mp4' };
 const AD_REWARD_COOLDOWN_MS = 60000; // min 60s between sat-granting ad completions (anti-farm)
 
@@ -3458,8 +3458,12 @@ async function onVideoAdError(){
 function _wireVideoAd(){
   const v = $('rewardedVideo'); if(!v || v.dataset.wired) return; v.dataset.wired = '1';
   v.addEventListener('loadedmetadata', () => {
-    // Only Google-served ads pay sats — direct-sold & house videos pay nothing
-    const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = 'no sats — Google ads only';
+    if(!_videoAdIsHouse){
+      _videoAdReward = rewardForDuration(v.duration || 0);
+      const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's');
+    }else{
+      const amt = $('videoAdRewardAmt'); if(amt) amt.textContent = 'house ad — no sats';
+    }
   });
   v.addEventListener('timeupdate', () => {
     if(v.duration) $('videoAdProgress').style.width = (v.currentTime / v.duration * 100) + '%';
@@ -3493,8 +3497,23 @@ window.closeVideoAd = async (completed) => {
   modal.classList.add('hidden'); modal.classList.remove('flex');
   if(reward){
     const amt = $('videoAdRewardAmt');
-    // House + direct-sold videos never pay — only Google-served ads grant sats
-    if(amt) amt.textContent = 'Ad watched — no sats (Google ads only reward)';
+    if(adId === 'house'){
+      // House placeholder video pays nothing — real ads only
+      if(amt) amt.textContent = 'House ad — no sats earned';
+      updateSatsDisplay();
+      return;
+    }
+    if(amt) amt.textContent = '+' + _videoAdReward + ' sat' + (_videoAdReward === 1 ? '' : 's') + ' earned';
+    // Anti-farm: sats grant at most once per AD_REWARD_COOLDOWN_MS; the view
+    // itself still counts for advertiser billing either way.
+    const last = +localStorage.getItem('havoc_last_ad_reward') || 0;
+    if(Date.now() - last >= AD_REWARD_COOLDOWN_MS){
+      localStorage.setItem('havoc_last_ad_reward', String(Date.now()));
+      await addSats(_videoAdReward || 1);
+    }else{
+      console.log('[ads] reward on cooldown — view counted, sats skipped');
+      if(amt) amt.textContent = 'Reward cooldown — try again in a minute';
+    }
     if(adId && adId !== 'house'){ try{ await updateDoc(doc(db,'videoAds',adId), {views: increment(1), lastViewAt: Date.now()}); invalidateVideoAds(); }catch(e){} }
     updateSatsDisplay();
   }
