@@ -783,9 +783,7 @@
         <img src="adhavoc.png" onerror="this.onerror=null;this.src='HAVOC.png'" class="w-full h-full object-fill" alt="Advertisement" style="width:100%;height:100%;display:block">
       </div>
       <div id="gamBanner" class="relative z-10 flex-1 max-w-3xl min-h-[50px] flex items-center justify-center"></div>
-      <ins class="adsbygoogle relative z-10" style="display:block" data-ad-client="ca-pub-3839146786704737" data-ad-slot="REPLACE_WITH_AD_SLOT" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
     </div>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 
     <div id="voiceArea" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-dark-900/40 overflow-y-auto">
       <div class="text-center mb-4">
@@ -2923,7 +2921,7 @@ S.profileStyle = {
 // TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
 const GAM_NETWORK_CODE = '22101006229';
 const GAM_REWARDED_UNIT = 'havoc_rewarded_video';
-const GAM_BANNER_UNIT = 'havoc_banner'; // TODO: create a display ad unit with this name in GAM (Inventory → Ad units)
+const GAM_BANNER_UNIT = 'havoc_bottom_banner';
 
 // Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
 // so the balance isn't a readable/hand-editable plaintext number in the console.
@@ -3092,10 +3090,10 @@ function loadGPT(){
 // Banner ad: GAM display slot first; AdSense <ins> stays as fallback if GAM
 // has no fill or isn't configured yet.
 let _bannerSlot = null;
-const BANNER_ROTATE_MS = 30000; // rotate creatives every 30s
+const BANNER_ROTATE_MS = 60000; // GAM policy: 30s min between refreshes, 60s is the safe standard
 const HOUSE_AD_BREAK_MS = 5000; // 5s house-ad break between rotations
 function showHouseAdBreak(){
-  if(!adsEnabled()) return;
+  if(!adsEnabled() || document.hidden) return; // never rotate/refresh in a hidden tab
   const house = $('houseAd'); if(!house) return;
   const wrap = $('gamBanner'), ins = document.querySelector('.ad-banner .adsbygoogle');
   if(wrap) wrap.style.visibility = 'hidden';
@@ -3119,10 +3117,12 @@ function initBannerAds(){
   loadGPT().then(() => {
     if(!window.googletag?.defineSlot) return;
     googletag.cmd.push(() => {
-      const slot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[970,90],[320,50],[300,250],[336,280]], 'gamBanner');
+      const slot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[320,50]], 'gamBanner');
       if(!slot){ console.warn('[ads] banner slot null — check GAM_BANNER_UNIT'); return; }
       _bannerSlot = slot;
       slot.addService(googletag.pubads());
+      googletag.pubads().enableSingleRequest();
+      googletag.pubads().collapseEmptyDivs();
       googletag.pubads().addEventListener('slotRenderEnded', e => {
         if(e.slot !== slot) return;
         const ins = document.querySelector('.ad-banner .adsbygoogle');
@@ -3161,6 +3161,13 @@ window.watchRewardedAd = async () => {
     console.log('[ads] rewarded slot defined:', `/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`);
     slot.addService(googletag.pubads());
     let oopShown = false;
+    // GPT requires this listener — it fires when the rewarded ad is loaded and ready to show
+    googletag.pubads().addEventListener('rewardedSlotReady', e => {
+      if(e.slot !== slot) return;
+      oopShown = true; // overlay is showing — don't trigger the no-fill alert
+      console.log('[ads] rewardedSlotReady — showing overlay');
+      e.slot.makeRewardedVisible();
+    });
     googletag.pubads().addEventListener('rewardedSlotGranted', () => { oopShown = true; console.log('[ads] REWARDED — granting +1 sat'); addSats(1); });
     googletag.pubads().addEventListener('rewardedSlotClosed', () => { oopShown = true; console.log('[ads] rewarded slot closed'); });
     googletag.pubads().addEventListener('slotRenderEnded', e => console.log('[ads] slotRenderEnded:', e?.slot?.getAdUnitPath?.(), 'empty:', e?.isEmpty));
