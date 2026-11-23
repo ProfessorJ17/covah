@@ -3176,7 +3176,7 @@ function initGam(){
       if(!window.googletag?.defineSlot){ console.warn('[ads] defineSlot still missing inside cmd'); return; }
       console.log('[ads] GPT ready — defining slots');
       const pubads = googletag.pubads();
-      pubads.enableSingleRequest();
+      // single-request is default in current GPT — enableSingleRequest() is deprecated
       pubads.collapseEmptyDivs();
 
       // ---- Banner slot ----
