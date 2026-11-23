@@ -3170,9 +3170,11 @@ function initGam(){
   if($('gamBanner') == null){ console.warn('[ads] #gamBanner not found'); return; }
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE'){ console.warn('[ads] GAM_NETWORK_CODE not set'); return; }
   loadGPT().then(() => {
-    if(!window.googletag?.defineSlot){ console.warn('[ads] GPT loaded but defineSlot missing — apiReady:', !!window.googletag?.apiReady); return; }
-    console.log('[ads] GPT ready — defining slots');
+    // gpt.js onload can fire before its API is ready — cmd.push queues the
+    // callback and GPT runs it once defineSlot/pubads actually exist.
     googletag.cmd.push(() => {
+      if(!window.googletag?.defineSlot){ console.warn('[ads] defineSlot still missing inside cmd'); return; }
+      console.log('[ads] GPT ready — defining slots');
       const pubads = googletag.pubads();
       pubads.enableSingleRequest();
       pubads.collapseEmptyDivs();
