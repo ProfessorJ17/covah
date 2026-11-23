@@ -778,7 +778,7 @@
 
     <!-- AD SPACE — banner below the chat composer + click-to-watch rewarded video -->
     <div class="ad-banner shrink-0 border-t border-dark-700 bg-dark-950/70 relative flex items-center justify-center gap-3 px-4 py-2" style="min-height:90px">
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><span class="text-[10px] mono text-slate-600 tracking-widest uppercase">Advertisement</span></div>
+      <img src="adhavoc.png" onerror="this.onerror=null;this.src='HAVOC.png'" class="absolute inset-0 w-full h-full object-fill z-0" alt="Advertisement">
       <div id="houseAd" class="absolute inset-0 hidden items-center justify-center z-20 overflow-hidden" style="background:#0b0f19">
         <img src="adhavoc.png" onerror="this.onerror=null;this.src='HAVOC.png'" class="w-full h-full object-fill" alt="Advertisement" style="width:100%;height:100%;display:block">
       </div>
@@ -2702,6 +2702,7 @@ window.doSignOut = async () => {
   }
   
   S.server=null; S.channel=null; S.profile=null; S.inDMs=false; S.dmTarget=null;
+  updateAdBanner();
 
   // Clear last server/channel on sign out
   localStorage.removeItem('havoc_last_server');
@@ -2778,6 +2779,7 @@ window.openDMs = () => {
   if($('dmList')) $('dmList').innerHTML = '';
   loadFriends(); renderDMList(); // Note: renderDMList is now async but we don't await here
   dmTab('dms');
+  updateAdBanner();
 };
 function showDMView(){ $('channelsView').classList.add('hidden'); $('dmView').classList.remove('hidden'); const mp=$('membersPanel'); if(mp) mp.style.display='none'; }
 function showChannelsView(){ $('dmView').classList.add('hidden'); $('channelsView').classList.remove('hidden'); $('membersContent')?.classList.remove('hidden'); $('dmProfileContent')?.classList.add('hidden'); $('dmHomeBtn').classList.remove('dm-active'); const mp=$('membersPanel'); if(mp) mp.style.display=''; }
@@ -3196,15 +3198,23 @@ window.watchRewardedAd = async () => {
 
 // ===== AD AREA TOGGLE (per-device) =====
 function adsEnabled(){ return localStorage.getItem('havoc_ads_enabled') !== '0'; }
+// Google policy: no ads on screens without publisher content — only show the
+// banner when an actual conversation (text channel or DM) is open.
+function adHasContent(){
+  return !!((S.channel && S.channelType === 'text') || (S.inDMs && S.dmTarget));
+}
+function updateAdBanner(){
+  const show = adsEnabled() && adHasContent();
+  document.querySelectorAll('.ad-banner').forEach(el => el.style.display = show ? '' : 'none');
+}
 window.setAdsEnabled = (on) => {
   localStorage.setItem('havoc_ads_enabled', on ? '1' : '0');
-  applyAdToggle();
+  updateAdBanner();
 };
 function applyAdToggle(){
-  const on = adsEnabled();
-  document.querySelectorAll('.ad-banner').forEach(el => el.style.display = on ? '' : 'none');
-  const b = $('watchAdBtn'); if(b) b.disabled = !on;
-  const t = $('adsEnabledToggle'); if(t) t.checked = on;
+  updateAdBanner();
+  const b = $('watchAdBtn'); if(b) b.disabled = !adsEnabled();
+  const t = $('adsEnabledToggle'); if(t) t.checked = adsEnabled();
 }
 applyAdToggle();
 initBannerAds();
@@ -5570,6 +5580,7 @@ function switchChannel(c){
   if(window.hideNewMsgPill) window.hideNewMsgPill();
   const cs = $('chanSearch'); if(cs) cs.value = '';
   S.channel = c.id; S.channelType = 'text';
+  updateAdBanner();
 
   // Save last visited channel for this server
   if(S.server && c.id) {
@@ -7233,7 +7244,8 @@ window.startDM = (uid, handle, avatar) => {
   S.channel = null;
   S.channelType = null;
   S.dmTarget = { uid, handle, avatar };
-  
+  updateAdBanner();
+
   // Mark DM as read
   markDMAsRead(uid);
   $('dmVoiceBtn')?.classList.remove('hidden');
