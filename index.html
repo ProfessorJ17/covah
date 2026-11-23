@@ -1364,6 +1364,7 @@
           <div class="text-[10px] mono text-slate-500 uppercase tracking-widest font-bold">Balance</div>
           <div id="profileSatsBtc" class="text-sm font-bold text-bch mono">0.00000000 BTC</div>
           <div class="text-[9px] text-slate-500 mono mt-0.5">Lifetime earned: <span id="profileSatsEarned" class="text-slate-300">0.00000000 BTC</span></div>
+          <div class="text-[9px] text-slate-500 mono mt-0.5">Banner ads watched: <span id="profileBannerViews" class="text-slate-300">0</span></div>
           <div class="text-[9px] text-slate-500 mono mt-0.5">Havoc Total Cashouts: <span id="havocTotalCashouts" class="text-slate-300">—</span></div>
           <div id="havocPayoutAge" class="text-[9px] text-slate-600 mono"></div>
         </div>
@@ -1823,7 +1824,7 @@ import {
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, collectionGroup, addDoc, getDocs, query, where, writeBatch,
-  orderBy, startAfter, limit, onSnapshot, increment
+  orderBy, startAfter, limit, onSnapshot, increment, runTransaction
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js';
 
@@ -2925,7 +2926,6 @@ const GAM_NETWORK_CODE = '22101006229';
 const GAM_REWARDED_UNIT = 'havoc_rewarded_video';
 const GAM_BANNER_UNIT = 'havoc_bottom_banner';
 const REWARDED_AD_SATS = 2;  // sats granted per fully-watched rewarded video
-const BANNER_AD_SATS = 1;    // sats granted per rendered banner impression (~every 60s)
 
 // Sats are stored in Firestore XOR-encoded with a uid-derived key (field `satsX`)
 // so the balance isn't a readable/hand-editable plaintext number in the console.
@@ -2945,6 +2945,8 @@ function updateSatsDisplay(){
   if(el) el.textContent = satsToBtc(rawSats()) + ' BTC';
   const earnedEl = $('profileSatsEarned');
   if(earnedEl) earnedEl.textContent = satsToBtc(rawEarned()) + ' BTC';
+  const bvEl = $('profileBannerViews');
+  if(bvEl) bvEl.textContent = `${S.profile?.bannerViews || 0} / 100`;
 }
 // Lifetime earned sats — encoded with the same uid-derived key (field `earnedX`)
 function rawEarned(){
@@ -2984,6 +2986,40 @@ async function adjustSats(n){
   updateSatsDisplay();
   try{ await updateDoc(doc(db,'users',S.user.uid), upd); }
   catch(e){ console.error('sats adjust error:', e); }
+}
+
+// Banner ads: every 100 counted third-party impressions grants 100 sats.
+// Runs as a Firestore transaction so the count + reward are atomic —
+// two tabs/devices can't double-grant or lose counts.
+async function trackBannerView(){
+  if(!S.user) return;
+  const uid = S.user.uid;
+  try{
+    const ref = doc(db,'users',uid);
+    let cycle = 0, total = 0, granted = 0, satsX = null, earnedX = null;
+    await runTransaction(db, async tx => {
+      const snap = await tx.get(ref);
+      const d = snap.data() || {};
+      cycle = (d.bannerViews || 0) + 1;
+      total = (d.bannerViewsTotal || 0) + 1;
+      const upd = { bannerViews: cycle % 100, bannerViewsTotal: total };
+      if(cycle % 100 === 0){
+        const cur = typeof d.satsX === 'number' ? decSats(d.satsX, uid) : (typeof d.sats === 'number' ? d.sats : 0);
+        const earned = typeof d.earnedX === 'number' ? decSats(d.earnedX, uid) : (typeof d.earned === 'number' ? d.earned : 0);
+        satsX = encSats(cur + 100, uid); earnedX = encSats(earned + 100, uid);
+        Object.assign(upd, { satsX, sats: null, earnedX, earned: null });
+        granted = 100;
+      }
+      tx.set(ref, upd, { merge: true });
+    });
+    if(S.profile){
+      S.profile.bannerViews = cycle % 100;
+      S.profile.bannerViewsTotal = total;
+      if(granted){ S.profile.satsX = satsX; S.profile.earnedX = earnedX; delete S.profile.sats; delete S.profile.earned; }
+      updateSatsDisplay();
+    }
+    if(granted) console.log(`[ads] 100 banner views reached — +${granted} sats`);
+  }catch(e){ console.warn('[ads] banner view track failed:', e); }
 }
 
 // ===== CASHOUTS =====
@@ -3124,33 +3160,60 @@ function scheduleBannerBreak(){
 }
 scheduleBannerBreak();
 
-function initBannerAds(){
-  const wrap = $('gamBanner'); if(!wrap) return;
+// Preloaded rewarded-slot state (populated by initGam)
+let _rewardedSlot = null, _rewardedReady = false, _rewardedPending = false, _rewardedEmpty = false;
+
+// GPT requires ALL slots defined before a single enableServices() — define the
+// banner and rewarded slots together in one cmd batch, then display both.
+function initGam(){
+  if($('gamBanner') == null) return;
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return; // adsense only
   loadGPT().then(() => {
     if(!window.googletag?.defineSlot) return;
     googletag.cmd.push(() => {
-      const slot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[320,50]], 'gamBanner');
-      if(!slot){ console.warn('[ads] banner slot null — check GAM_BANNER_UNIT'); return; }
-      _bannerSlot = slot;
-      slot.addService(googletag.pubads());
-      googletag.pubads().enableSingleRequest();
-      googletag.pubads().collapseEmptyDivs();
-      googletag.pubads().addEventListener('slotRenderEnded', e => {
-        if(e.slot !== slot) return;
-        if(e.isEmpty){ console.log('[ads] banner no-fill'); return; }
-        if(_houseAdActive) return; // house-ad break — our own creative, 0 sats
-        // Each rendered third-party banner impression earns the viewer BANNER_AD_SATS
-        if(adsEnabled() && S.user && !document.hidden){
-          console.log(`[ads] banner impression — +${BANNER_AD_SATS} sat`);
-          addSats(BANNER_AD_SATS);
-        }
-      });
+      const pubads = googletag.pubads();
+      pubads.enableSingleRequest();
+      pubads.collapseEmptyDivs();
+
+      // ---- Banner slot ----
+      const bslot = googletag.defineSlot(`/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`, [[728,90],[320,50]], 'gamBanner');
+      if(bslot){
+        _bannerSlot = bslot;
+        bslot.addService(pubads);
+        pubads.addEventListener('slotRenderEnded', e => {
+          if(e.slot !== bslot) return;
+          if(e.isEmpty){ console.log('[ads] banner no-fill'); return; }
+          if(_houseAdActive) return; // house-ad break — our own creative, doesn't count
+          // Third-party banner impressions are tracked (not rewarded per-view);
+          // every 100 counted views grants 100 sats — see trackBannerView()
+          if(adsEnabled() && S.user && !document.hidden) trackBannerView();
+        });
+      } else { console.warn('[ads] banner slot null — check GAM_BANNER_UNIT'); }
+
+      // ---- Rewarded slot (preloaded; shown only after user opt-in) ----
+      const rslot = googletag.defineOutOfPageSlot(`/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`, googletag.enums.OutOfPageFormat.REWARDED);
+      if(rslot){
+        _rewardedSlot = rslot;
+        rslot.addService(pubads);
+        pubads.addEventListener('rewardedSlotReady', e => {
+          if(e.slot !== rslot) return;
+          _rewardedReady = true;
+          console.log('[ads] rewardedSlotReady — ad preloaded, waiting for user opt-in');
+          if(_rewardedPending){ _rewardedPending = false; e.slot.makeRewardedVisible(); }
+        });
+        pubads.addEventListener('rewardedSlotGranted', () => { console.log(`[ads] REWARDED — granting +${REWARDED_AD_SATS} sats`); addSats(REWARDED_AD_SATS); });
+        pubads.addEventListener('rewardedSlotClosed', () => console.log('[ads] rewarded slot closed'));
+        pubads.addEventListener('slotRenderEnded', e => {
+          if(e.slot !== rslot) return;
+          if(e.isEmpty){ _rewardedEmpty = true; console.log('[ads] rewarded no-fill — GAM has no demand for this unit yet'); }
+        });
+      } else { console.warn('[ads] rewarded slot null — check GAM unit path'); }
+
       googletag.enableServices();
-      googletag.display(slot);
-      console.log('[ads] banner slot displayed:', `/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`);
+      if(bslot){ googletag.display(bslot); console.log('[ads] banner slot displayed:', `/${GAM_NETWORK_CODE}/${GAM_BANNER_UNIT}`); }
+      if(rslot){ googletag.display(rslot); console.log('[ads] rewarded slot preloaded:', `/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`); }
     });
-  }).catch(e => console.warn('[ads] banner GPT failed:', e));
+  }).catch(e => console.warn('[ads] GAM init failed:', e));
 }
 window.watchRewardedAd = async () => {
   if(!S.user || !S.profile) return alert('Sign in first');
@@ -3185,38 +3248,6 @@ window.watchRewardedAd = async () => {
   }
 };
 
-// Preload the GAM rewarded slot once at startup so Watch Ad opens instantly.
-// Google requires rewardedSlotReady before makeRewardedVisible(); the slot is
-// only shown after explicit user opt-in (see watchRewardedAd).
-let _rewardedSlot = null, _rewardedReady = false, _rewardedPending = false, _rewardedEmpty = false;
-function initRewardedSlot(){
-  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return;
-  loadGPT().then(() => {
-    if(!window.googletag?.defineOutOfPageSlot) return;
-    googletag.cmd.push(() => {
-      const slot = googletag.defineOutOfPageSlot(`/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`, googletag.enums.OutOfPageFormat.REWARDED);
-      if(!slot){ console.warn('[ads] rewarded slot null — check GAM unit path'); return; }
-      _rewardedSlot = slot;
-      slot.addService(googletag.pubads());
-      googletag.pubads().addEventListener('rewardedSlotReady', e => {
-        if(e.slot !== slot) return;
-        _rewardedReady = true;
-        console.log('[ads] rewardedSlotReady — ad preloaded, waiting for user opt-in');
-        if(_rewardedPending){ _rewardedPending = false; e.slot.makeRewardedVisible(); }
-      });
-      googletag.pubads().addEventListener('rewardedSlotGranted', () => { console.log(`[ads] REWARDED — granting +${REWARDED_AD_SATS} sats`); addSats(REWARDED_AD_SATS); });
-      googletag.pubads().addEventListener('rewardedSlotClosed', () => console.log('[ads] rewarded slot closed'));
-      googletag.pubads().addEventListener('slotRenderEnded', e => {
-        if(e.slot !== slot) return;
-        if(e.isEmpty){ _rewardedEmpty = true; console.log('[ads] rewarded no-fill — GAM has no demand for this unit yet'); }
-      });
-      googletag.enableServices();
-      googletag.display(slot);
-      console.log('[ads] rewarded slot preloaded:', `/${GAM_NETWORK_CODE}/${GAM_REWARDED_UNIT}`);
-    });
-  }).catch(e => console.warn('[ads] rewarded GPT failed:', e));
-}
-
 // ===== AD AREA TOGGLE (per-device) =====
 function adsEnabled(){ return localStorage.getItem('havoc_ads_enabled') !== '0'; }
 // Google policy: no ads on screens without publisher content — only show the
@@ -3238,8 +3269,7 @@ function applyAdToggle(){
   const t = $('adsEnabledToggle'); if(t) t.checked = adsEnabled();
 }
 applyAdToggle();
-initBannerAds();
-initRewardedSlot();
+initGam();
 
 // ===== DIRECT-SOLD VIDEO ADS =====
 // Survey-style model: advertisers pay the admin a CPM upfront; their videos
