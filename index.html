@@ -3755,18 +3755,23 @@ async function tryGamVideoAd(){
         const mb = $('videoAdMuteBtn'); if(mb) mb.style.display = 'none';
         container.classList.remove('hidden'); container.innerHTML = '';
 
-        try{
-          adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
-          adsManager.start();
-          // Progress bar from IMA's ad progress API
-          _imaProgressTimer = setInterval(() => {
-            try{
-              const p = adsManager.getAdProgress?.();
-              if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
-            }catch(e){}
-          }, 500);
-          done(true);
-        }catch(err){ console.warn('[ads] IMA init failed:', err); closeImaAd(); done(false); }
+        // IMA needs the container visible & laid out before playback init —
+        // it was display:none when the AdDisplayContainer was constructed
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          try{
+            displayContainer.initialize?.();
+            adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
+            adsManager.start();
+            // Progress bar from IMA's ad progress API
+            _imaProgressTimer = setInterval(() => {
+              try{
+                const p = adsManager.getAdProgress?.();
+                if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
+              }catch(e){}
+            }, 500);
+            done(true);
+          }catch(err){ console.warn('[ads] IMA init failed:', err); closeImaAd(); done(false); }
+        }));
       });
 
       const adsRequest = new google.ima.AdsRequest();
