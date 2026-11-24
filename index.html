@@ -3753,7 +3753,18 @@ async function tryGamVideoAd(){
     return await new Promise(resolve => {
       let settled = false;
       const done = ok => { if(settled) return; settled = true; _imaRequesting = false; if(!ok) closeImaAd(); resolve(ok); };
-      const displayContainer = new google.ima.AdDisplayContainer(container);
+      // Show a loading state BEFORE requesting — the SDK measures the ad
+      // container at request time and a display:none/0x0 container yields
+      // ads that load but never render (Google's sample keeps it visible)
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      container.classList.remove('hidden');
+      $('videoAdMeta').textContent = 'Loading ad…';
+      $('videoAdStatus').innerHTML = 'Fetching ad — this can take a few seconds';
+      // Google's sample passes the content <video> as the 2nd arg — the SDK
+      // uses it for pause/resume plumbing and ad-video wiring
+      const contentVideo = $('rewardedVideo');
+      const displayContainer = new google.ima.AdDisplayContainer(container, contentVideo);
+      displayContainer.initialize();
       const adsLoader = new google.ima.AdsLoader(displayContainer);
       // Outer no-fill timeout — cleared once the ad manager loads; the inner
       // never-started timeout covers post-load playback stalls instead
@@ -3765,11 +3776,11 @@ async function tryGamVideoAd(){
       });
       adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
         clearTimeout(reqTimeout);
-        // getAdsManager() takes the content <video> element (used for
-        // pause/resume plumbing), NOT the AdDisplayContainer — passing the
-        // container left the manager with no playback surface (0 events)
-        const contentVideo = $('rewardedVideo');
-        const adsManager = e.getAdsManager(contentVideo);
+        // getAdsManager() takes the content <video> element + rendering
+        // settings (per Google's official sample), NOT the AdDisplayContainer
+        const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+        adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+        const adsManager = e.getAdsManager(contentVideo, adsRenderingSettings);
         _imaAdsManager = adsManager; _imaActive = true;
 
         adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
@@ -3823,9 +3834,8 @@ async function tryGamVideoAd(){
         requestAnimationFrame(() => requestAnimationFrame(async () => {
           try{
             console.log('[ads] ima container size:', container.offsetWidth, 'x', container.offsetHeight);
-            // initialize() is async in current ima3.js — must await before
-            // init/start or playback silently never begins (0 ads, no events)
-            await Promise.resolve(displayContainer.initialize?.());
+            // displayContainer.initialize() already ran before requestAds —
+            // calling it again here can detach the wired-up playback surface
             adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
             adsManager.start();
             // Chrome blocks unmuted autoplay once user activation expires —
@@ -3864,6 +3874,7 @@ async function tryGamVideoAd(){
 
       const adsRequest = new google.ima.AdsRequest();
       adsRequest.adTagUrl = imaAdTagUrl();
+      console.log('[ads] IMA request tag:', adsRequest.adTagUrl.slice(0, 140));
       try{ adsRequest.setAdWillAutoPlay(true); }catch(e){}
       try{ adsRequest.linearAdSlotWidth = 640; adsRequest.linearAdSlotHeight = 360; }catch(e){}
       adsLoader.requestAds(adsRequest);
