@@ -3677,14 +3677,15 @@ async function tryGamVideoAd(){
     return await new Promise(resolve => {
       let settled = false;
       const done = ok => { if(settled) return; settled = true; _imaRequesting = false; if(!ok) closeImaAd(); resolve(ok); };
-      const adsLoader = new google.ima.AdsLoader(container);
+      const displayContainer = new google.ima.AdDisplayContainer(container);
+      const adsLoader = new google.ima.AdsLoader(displayContainer);
 
       adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, e => {
         console.log('[ads] IMA video no-fill/error:', e.getError?.()?.getMessage?.() || e);
         done(false);
       });
       adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
-        const adsManager = e.getAdsManager(container);
+        const adsManager = e.getAdsManager(displayContainer);
         _imaAdsManager = adsManager; _imaActive = true;
 
         adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
