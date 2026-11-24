@@ -3779,6 +3779,7 @@ async function tryGamVideoAd(){
       });
       adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
         clearTimeout(reqTimeout);
+        console.log('[ads] ADS_MANAGER_LOADED fired');
         // getAdsManager() takes the content <video> element + rendering
         // settings (per Google's official sample), NOT the AdDisplayContainer
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
@@ -3820,7 +3821,7 @@ async function tryGamVideoAd(){
           closeImaAd();
         });
         // Debug: log every IMA lifecycle event to see where playback stalls
-        ['LOADED','STARTED','FIRST_QUARTILE','MIDPOINT','THIRD_QUARTILE','COMPLETE','PAUSED','RESUMED','SKIPPED','ALL_ADS_COMPLETED','CONTENT_PAUSE_REQUESTED','CONTENT_RESUME_REQUESTED','USER_CLOSE'].forEach(t => {
+        ['LOADED','STARTED','FIRST_QUARTILE','MIDPOINT','THIRD_QUARTILE','COMPLETE','PAUSED','RESUMED','SKIPPED','ALL_ADS_COMPLETED','CONTENT_PAUSE_REQUESTED','CONTENT_RESUME_REQUESTED','USER_CLOSE','LOG','AD_BREAK_FETCH_ERROR'].forEach(t => {
           try{ adsManager.addEventListener(google.ima.AdEvent.Type[t], () => console.log('[ads] IMA event:', t)); }catch(x){}
         });
 
