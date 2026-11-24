@@ -1830,6 +1830,7 @@
     </div>
     <div class="relative bg-black">
       <video id="rewardedVideo" class="w-full aspect-video" playsinline></video>
+      <div id="imaAdContainer" class="hidden w-full aspect-video bg-black"></div>
       <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/10"><div id="videoAdProgress" class="h-full bg-bch transition-all" style="width:0%"></div></div>
     </div>
     <div class="px-4 py-3 flex items-center justify-between gap-3">
@@ -2956,6 +2957,7 @@ S.profileStyle = {
 // TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
 const GAM_NETWORK_CODE = '22101006229';
 const GAM_REWARDED_UNIT = 'havoc_rewarded';
+const GAM_VIDEO_UNIT = 'havoc_rewarded_video'; // IMA SDK video rewarded unit
 const GAM_BANNER_UNIT = 'havoc_bottom_banner';
 const REWARDED_AD_SATS = 2;  // sats granted per fully-watched rewarded video
 // Fallback "house" video when GAM rewarded has no fill — clearly labeled,
@@ -3468,7 +3470,9 @@ window.watchRewardedAd = async () => {
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
   // GAM policy: explicit user opt-in before any rewarded ad
   if(!confirm('Watch an ad to earn sats?')) return;
-  // GAM already reported no-fill for this unit — go straight to the house video
+  // Real video ads via IMA SDK first — falls through on no-fill
+  if(await tryGamVideoAd()) return;
+  // GPT display rewarded reported no-fill — go straight to the house video
   if(_rewardedEmpty){
     console.log('[ads] GAM rewarded no-fill — playing house video fallback');
     _wireVideoAd(); showRewardedVideoAd(HOUSE_VIDEO_AD);
@@ -3590,6 +3594,7 @@ window.showRewardedVideoAd = (ad) => {
   const p = v.play(); if(p && p.catch) p.catch(() => {});
 };
 window.closeVideoAd = async (completed) => {
+  if(_imaActive){ closeImaAd(); return; } // IMA ad — X button = no reward
   const modal = $('modal-videoAd'); if(!modal) return;
   const v = $('rewardedVideo');
   const adId = v.dataset.adId || '';
@@ -3624,6 +3629,120 @@ window.toggleVideoAdMute = () => {
   v.muted = !v.muted;
   $('videoAdMuteBtn').innerHTML = v.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
 };
+
+// ===== IMA SDK — GAM rewarded VIDEO ads =====
+// Real video ads served through GAM's VAST pipeline. Reward is granted
+// client-side on the COMPLETE event (watch to the end) with the same
+// anti-farm cooldown as direct-sold ads.
+let _imaLoader = null, _imaAdsManager = null, _imaActive = false, _imaRequesting = false, _imaProgressTimer = null;
+function loadIMA(){
+  if(window.google?.ima?.AdsLoader) return Promise.resolve();
+  if(_imaLoader) return _imaLoader;
+  _imaLoader = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+    s.async = true; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  return _imaLoader;
+}
+function imaAdTagUrl(){
+  return 'https://pubads.g.doubleclick.net/gampad/ads?' +
+    `iu=/${GAM_NETWORK_CODE}/${GAM_VIDEO_UNIT}` +
+    `&description_url=${encodeURIComponent(location.origin + '/')}` +
+    '&tfcd=0&npa=0&sz=640x480&gdfp_req=1&output=vast' +
+    '&unviewed_position_start=1&env=vp&impl=s' +
+    `&correlator=${Math.floor(Math.random()*1e15)}`;
+}
+function closeImaAd(){
+  if(_imaProgressTimer){ clearInterval(_imaProgressTimer); _imaProgressTimer = null; }
+  try{ _imaAdsManager?.destroy(); }catch(e){}
+  _imaAdsManager = null; _imaActive = false;
+  const c = $('imaAdContainer'); if(c){ c.innerHTML=''; c.classList.add('hidden'); }
+  const v = $('rewardedVideo'); if(v) v.style.display = '';
+  const mb = $('videoAdMuteBtn'); if(mb) mb.style.display = '';
+  const modal = $('modal-videoAd');
+  if(modal){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
+}
+// Returns true if a GAM video ad is playing; false → caller falls through
+// to the GPT display rewarded / house fallback chain.
+async function tryGamVideoAd(){
+  if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE' || _imaRequesting) return false;
+  _imaRequesting = true;
+  try{
+    await loadIMA();
+    const container = $('imaAdContainer'), modal = $('modal-videoAd');
+    if(!container || !modal || !window.google?.ima) return false;
+
+    return await new Promise(resolve => {
+      let settled = false;
+      const done = ok => { if(settled) return; settled = true; _imaRequesting = false; if(!ok) closeImaAd(); resolve(ok); };
+      const adsLoader = new google.ima.AdsLoader(container);
+
+      adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, e => {
+        console.log('[ads] IMA video no-fill/error:', e.getError?.()?.getMessage?.() || e);
+        done(false);
+      });
+      adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
+        const adsManager = e.getAdsManager(container);
+        _imaAdsManager = adsManager; _imaActive = true;
+
+        adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
+          // Watched to the end — grant sats (same cooldown as direct-sold)
+          const last = +localStorage.getItem('havoc_last_ad_reward') || 0;
+          const amt = $('videoAdRewardAmt');
+          if(Date.now() - last >= AD_REWARD_COOLDOWN_MS){
+            localStorage.setItem('havoc_last_ad_reward', String(Date.now()));
+            addSats(REWARDED_AD_SATS);
+            if(amt) amt.textContent = '+' + REWARDED_AD_SATS + ' sats earned';
+          }else{
+            if(amt) amt.textContent = 'Reward cooldown — try again in a minute';
+            console.log('[ads] IMA reward on cooldown — view counted, sats skipped');
+          }
+          updateSatsDisplay();
+          setTimeout(closeImaAd, 1500);
+        });
+        adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => { console.log('[ads] IMA ad skipped — no reward'); closeImaAd(); });
+        adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, err => {
+          console.log('[ads] IMA ad error:', err.getError?.()?.getMessage?.() || err);
+          closeImaAd();
+        });
+
+        // Show the modal only once a real ad is loaded
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+        $('videoAdMeta').textContent = 'Google video ad';
+        $('videoAdRewardAmt').textContent = '+' + REWARDED_AD_SATS + ' sats';
+        $('videoAdProgress').style.width = '0%';
+        const v = $('rewardedVideo'); if(v){ v.style.display='none'; v.pause(); v.removeAttribute('src'); v.load(); }
+        const mb = $('videoAdMuteBtn'); if(mb) mb.style.display = 'none';
+        container.classList.remove('hidden'); container.innerHTML = '';
+
+        try{
+          adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
+          adsManager.start();
+          // Progress bar from IMA's ad progress API
+          _imaProgressTimer = setInterval(() => {
+            try{
+              const p = adsManager.getAdProgress?.();
+              if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
+            }catch(e){}
+          }, 500);
+          done(true);
+        }catch(err){ console.warn('[ads] IMA init failed:', err); closeImaAd(); done(false); }
+      });
+
+      const adsRequest = new google.ima.AdsRequest();
+      adsRequest.adTagUrl = imaAdTagUrl();
+      adsLoader.requestAds(adsRequest);
+      // No-fill timeout — don't leave the user hanging
+      setTimeout(() => { if(!settled) done(false); }, 10000);
+    });
+  }catch(e){
+    console.warn('[ads] IMA setup failed:', e);
+    _imaRequesting = false;
+    return false;
+  }
+}
 
 window.initProfileEditor = () => {
   updateSatsDisplay();
