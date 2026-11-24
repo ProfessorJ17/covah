@@ -3775,6 +3775,14 @@ async function tryGamVideoAd(){
             displayContainer.initialize?.();
             adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
             adsManager.start();
+            // Chrome blocks unmuted autoplay once user activation expires —
+            // the async IMA load outlives the click. Mute the ad video so
+            // playback can start (mute button is hidden anyway).
+            const muteAdVideos = () => container.querySelectorAll('video').forEach(v => {
+              v.muted = true; v.volume = 0; v.setAttribute('muted',''); v.setAttribute('playsinline','');
+            });
+            muteAdVideos();
+            new MutationObserver(muteAdVideos).observe(container, { childList:true, subtree:true });
             // Progress bar from IMA's ad progress API
             _imaProgressTimer = setInterval(() => {
               try{
