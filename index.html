@@ -3745,8 +3745,13 @@ async function tryGamVideoAd(){
         // ad (black player, ad blockers) never fires this and falls back instead
         adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => { console.log('[ads] IMA ad started — playing'); done(true); });
         adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, err => {
-          console.log('[ads] IMA ad error:', err.getError?.()?.getMessage?.() || err);
+          const ge = err.getError?.() || {};
+          console.log('[ads] IMA ad error:', ge.getMessage?.() || err, '| code:', ge.getErrorCode?.(), '| inner:', ge.getInnerError?.()?.getErrorCode?.(), ge.getInnerError?.()?.getMessage?.());
           closeImaAd();
+        });
+        // Debug: log every IMA lifecycle event to see where playback stalls
+        ['LOADED','STARTED','FIRST_QUARTILE','MIDPOINT','THIRD_QUARTILE','COMPLETE','PAUSED','RESUMED','SKIPPED','ALL_ADS_COMPLETED','CONTENT_PAUSE_REQUESTED','CONTENT_RESUME_REQUESTED','USER_CLOSE'].forEach(t => {
+          try{ adsManager.addEventListener(google.ima.AdEvent.Type[t], () => console.log('[ads] IMA event:', t)); }catch(x){}
         });
 
         // Show the modal only once a real ad is loaded
@@ -3762,6 +3767,7 @@ async function tryGamVideoAd(){
         // it was display:none when the AdDisplayContainer was constructed
         requestAnimationFrame(() => requestAnimationFrame(() => {
           try{
+            console.log('[ads] ima container size:', container.offsetWidth, 'x', container.offsetHeight);
             displayContainer.initialize?.();
             adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
             adsManager.start();
