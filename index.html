@@ -3445,6 +3445,8 @@ function initGam(){
         pubads.addEventListener('rewardedSlotClosed', () => console.log('[ads] rewarded slot closed'));
         pubads.addEventListener('slotRenderEnded', e => {
           if(e.slot !== rslot) return;
+          const ri = e.slot.getResponseInformation?.() || {};
+          console.log('[ads] rewarded slotRenderEnded — isEmpty:', e.isEmpty, '| lineItem:', ri.lineItemId, '| creative:', ri.creativeId, '| advertiser:', ri.advertiserId, '| keys:', Object.keys(ri).join(','));
           if(e.isEmpty){ _rewardedEmpty = true; console.log('[ads] rewarded no-fill — GAM has no demand for this unit yet'); }
         });
       } else { console.warn('[ads] rewarded slot null — check GAM unit path'); }
@@ -3475,7 +3477,12 @@ window.watchRewardedAd = async () => {
   if(!confirm('Watch an ad to earn sats?')) return;
   // GPT rewarded slot serves video creatives natively (havoc_rewarded_video
   // unit) — Google's own player handles playback, autoplay and reward events.
-  // GPT display rewarded reported no-fill — go straight to the house video
+  if(_rewardedEmpty && _rewardedSlot){
+    // First request no-filled — refresh once on click; a fresh request may fill
+    console.log('[ads] rewarded previously no-fill — refreshing slot');
+    _rewardedEmpty = false; _rewardedReady = false;
+    try{ googletag.pubads().refresh([_rewardedSlot]); }catch(e){ console.warn('[ads] rewarded refresh failed:', e); }
+  }
   if(_rewardedEmpty){
     console.log('[ads] GAM rewarded no-fill — playing house video fallback');
     _wireVideoAd(); showRewardedVideoAd(HOUSE_VIDEO_AD);
