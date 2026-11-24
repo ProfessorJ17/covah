@@ -3767,7 +3767,6 @@ async function tryGamVideoAd(){
       // uses it for pause/resume plumbing and ad-video wiring
       const contentVideo = $('rewardedVideo');
       const displayContainer = new google.ima.AdDisplayContainer(container, contentVideo);
-      displayContainer.initialize();
       const adsLoader = new google.ima.AdsLoader(displayContainer);
       // Outer no-fill timeout — cleared once the ad manager loads; the inner
       // never-started timeout covers post-load playback stalls instead
@@ -3842,8 +3841,9 @@ async function tryGamVideoAd(){
         requestAnimationFrame(() => requestAnimationFrame(async () => {
           try{
             console.log('[ads] ima container size:', container.offsetWidth, 'x', container.offsetHeight);
-            // displayContainer.initialize() already ran before requestAds —
-            // calling it again here can detach the wired-up playback surface
+            // initialize() goes here — right before init/start, matching the
+            // official sample's playAds() flow exactly
+            try{ displayContainer.initialize(); }catch(e){ console.warn('[ads] displayContainer.initialize:', e); }
             adsManager.init(640, 360);
             // setAdWillPlayMuted is only a signal — actually mute the ad
             try{ adsManager.setVolume(0); }catch(e){}
