@@ -3704,6 +3704,9 @@ function loadIMA(){
   return _imaLoader;
 }
 function imaAdTagUrl(){
+  // localStorage override for testing — set havoc_ima_tag in console to any VAST URL
+  const override = localStorage.getItem('havoc_ima_tag');
+  if(override) return override;
   return 'https://pubads.g.doubleclick.net/gampad/ads?' +
     `iu=/${GAM_NETWORK_CODE}/${GAM_VIDEO_UNIT}` +
     `&description_url=${encodeURIComponent(location.origin + '/')}` +
@@ -3788,12 +3791,12 @@ async function tryGamVideoAd(){
         // Show the modal only once a real ad is loaded
         modal.classList.remove('hidden'); modal.classList.add('flex');
         $('videoAdMeta').textContent = 'Google video ad';
-        $('videoAdRewardAmt').textContent = '+' + REWARDED_AD_SATS + ' sats';
+        const rAmt = $('videoAdRewardAmt'); if(rAmt) rAmt.textContent = '+' + REWARDED_AD_SATS + ' sats';
         $('videoAdProgress').style.width = '0%';
         const v = $('rewardedVideo'); if(v){ v.style.display='none'; v.pause(); v.removeAttribute('src'); v.load(); }
         const mb = $('videoAdMuteBtn'); if(mb) mb.style.display = 'none';
         const x = $('videoAdCloseBtn'); if(x) x.classList.add('hidden'); // no click-away mid-ad
-        const st = $('videoAdStatus'); if(st) st.innerHTML = 'Watch to the end to earn <span class="text-bch font-bold">+2 sats</span> · closing early earns nothing';
+        const st = $('videoAdStatus'); if(st) st.innerHTML = 'Watch to the end to earn <span id="videoAdRewardAmt" class="text-bch font-bold">+' + REWARDED_AD_SATS + ' sats</span> · closing early earns nothing';
         const db = $('videoAdDoneBtn'); if(db) db.classList.add('hidden');
         container.classList.remove('hidden'); container.innerHTML = '';
 
