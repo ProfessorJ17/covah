@@ -3716,12 +3716,16 @@ async function tryGamVideoAd(){
       const done = ok => { if(settled) return; settled = true; _imaRequesting = false; if(!ok) closeImaAd(); resolve(ok); };
       const displayContainer = new google.ima.AdDisplayContainer(container);
       const adsLoader = new google.ima.AdsLoader(displayContainer);
+      // Outer no-fill timeout — cleared once the ad manager loads; the inner
+      // never-started timeout covers post-load playback stalls instead
+      const reqTimeout = setTimeout(() => { if(!settled) done(false); }, 10000);
 
       adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, e => {
         console.log('[ads] IMA video no-fill/error:', e.getError?.()?.getMessage?.() || e);
         done(false);
       });
       adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
+        clearTimeout(reqTimeout);
         const adsManager = e.getAdsManager(displayContainer);
         _imaAdsManager = adsManager; _imaActive = true;
 
@@ -3787,8 +3791,6 @@ async function tryGamVideoAd(){
       const adsRequest = new google.ima.AdsRequest();
       adsRequest.adTagUrl = imaAdTagUrl();
       adsLoader.requestAds(adsRequest);
-      // No-fill timeout — don't leave the user hanging
-      setTimeout(() => { if(!settled) done(false); }, 10000);
     });
   }catch(e){
     console.warn('[ads] IMA setup failed:', e);
