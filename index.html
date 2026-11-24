@@ -3729,6 +3729,7 @@ function imaAdTagUrl(){
 }
 function closeImaAd(){
   if(_imaProgressTimer){ clearInterval(_imaProgressTimer); _imaProgressTimer = null; }
+  $('imaTapOverlay')?.remove();
   try{ _imaAdsManager?.destroy(); }catch(e){}
   _imaAdsManager = null; _imaActive = false;
   const c = $('imaAdContainer'); if(c){ c.innerHTML=''; c.classList.add('hidden'); }
@@ -3747,6 +3748,8 @@ async function tryGamVideoAd(){
   _imaRequesting = true;
   try{
     await loadIMA();
+    // Inline playback on iOS — without this the SDK forces fullscreen
+    try{ google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true); }catch(e){}
     const container = $('imaAdContainer'), modal = $('modal-videoAd');
     if(!container || !modal || !window.google?.ima) return false;
 
@@ -3806,7 +3809,11 @@ async function tryGamVideoAd(){
         adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => { console.log('[ads] IMA ad skipped — no reward'); closeImaAd(); });
         // Only count as shown once playback actually starts — a loaded-but-blocked
         // ad (black player, ad blockers) never fires this and falls back instead
-        adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => { console.log('[ads] IMA ad started — playing'); done(true); });
+        adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
+          console.log('[ads] IMA ad started — playing');
+          $('imaTapOverlay')?.remove();
+          done(true);
+        });
         adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, err => {
           const ge = err.getError?.() || {};
           console.log('[ads] IMA ad error:', ge.getMessage?.() || err, '| code:', ge.getErrorCode?.(), '| inner:', ge.getInnerError?.()?.getErrorCode?.(), ge.getInnerError?.()?.getMessage?.());
@@ -3836,8 +3843,29 @@ async function tryGamVideoAd(){
             console.log('[ads] ima container size:', container.offsetWidth, 'x', container.offsetHeight);
             // displayContainer.initialize() already ran before requestAds —
             // calling it again here can detach the wired-up playback surface
-            adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
+            adsManager.init(640, 360);
+            // setAdWillPlayMuted is only a signal — actually mute the ad
+            try{ adsManager.setVolume(0); }catch(e){}
             adsManager.start();
+            // Autoplay policy: the ad <video> is created seconds after the
+            // click, when user activation has expired — play() gets rejected
+            // and IMA stalls silently (0 events, empty container). A click on
+            // the ad surface is a fresh activation, so wire tap-to-play.
+            const playAdVideos = () => container.querySelectorAll('video').forEach(v => {
+              v.muted = true; v.volume = 0; v.setAttribute('muted',''); v.setAttribute('playsinline','');
+              const p = v.play(); if(p && p.catch) p.catch(()=>{});
+            });
+            container.addEventListener('click', playAdVideos);
+            // If playback doesn't start on its own, surface a tap-to-play
+            // overlay instead of silently stalling for 10s
+            const tapOverlay = document.createElement('div');
+            tapOverlay.id = 'imaTapOverlay';
+            tapOverlay.className = 'absolute inset-0 z-10 hidden items-center justify-center bg-black/60 cursor-pointer';
+            tapOverlay.innerHTML = '<span class="flex items-center gap-2 bg-bch text-black font-bold mono text-xs px-4 py-2 rounded-full"><i class="fa-solid fa-play"></i> TAP TO PLAY AD</span>';
+            tapOverlay.onclick = () => { playAdVideos(); tapOverlay.classList.add('hidden'); tapOverlay.classList.remove('flex'); };
+            const relBox = container.parentElement;
+            if(relBox){ relBox.style.position = 'relative'; relBox.appendChild(tapOverlay); }
+            setTimeout(() => { if(!settled && tapOverlay.parentElement) tapOverlay.classList.remove('hidden'), tapOverlay.classList.add('flex'); }, 3000);
             // Chrome blocks unmuted autoplay once user activation expires —
             // the async IMA load outlives the click. Mute the ad video so
             // playback can start (mute button is hidden anyway).
@@ -3875,8 +3903,12 @@ async function tryGamVideoAd(){
       const adsRequest = new google.ima.AdsRequest();
       adsRequest.adTagUrl = imaAdTagUrl();
       console.log('[ads] IMA request tag:', adsRequest.adTagUrl.slice(0, 140));
+      // Signals to the SDK/server: ad autoplays AND plays muted. These don't
+      // mute anything themselves — adsManager.setVolume(0) does that below.
       try{ adsRequest.setAdWillAutoPlay(true); }catch(e){}
+      try{ adsRequest.setAdWillPlayMuted(true); }catch(e){}
       try{ adsRequest.linearAdSlotWidth = 640; adsRequest.linearAdSlotHeight = 360; }catch(e){}
+      try{ adsRequest.nonLinearAdSlotWidth = 640; adsRequest.nonLinearAdSlotHeight = 150; }catch(e){}
       adsLoader.requestAds(adsRequest);
     });
   }catch(e){
