@@ -3511,9 +3511,46 @@ function updateAdBanner(){
   const show = adsEnabled() && adHasContent();
   document.querySelectorAll('.ad-banner').forEach(el => el.style.display = show ? '' : 'none');
 }
+// Polite notice when ads are enabled — ad blockers (incl. Opera GX's built-in
+// one) can block Google ads; self-hosted/direct-sold ads always play anyway.
+function showAdBlockerNotice(){
+  if(sessionStorage.getItem('havoc_adblock_notice') === '1') return;
+  const ua = navigator.userAgent;
+  const isElectron = /Electron/i.test(ua) || !!window.process?.versions?.electron;
+  // Per-browser blocker-disable instructions — detected from the UA string
+  const BROWSERS = [
+    [/OPR\/|Opera/i, 'Opera', 'Settings → Privacy &amp; security → Block ads → Off'],
+    [/Edg\//i, 'Edge', 'Settings → Privacy, search, and services → Block potentially unwanted apps &amp; tracking prevention → choose "Basic" or allow ads'],
+    [/Vivaldi/i, 'Vivaldi', 'Settings → Privacy → uncheck "Block ads and trackers" or add an exception'],
+    [/Firefox/i, 'Firefox', 'uBlock Origin / adblocker extension → disable it or allow havoc.my.id'],
+    [/Safari/i, 'Safari', 'Settings → Websites → Content Blockers → turn off for havoc.my.id'],
+    [/Chrome\//i, 'Chrome', 'Any adblocker extension → disable it or allow havoc.my.id'],
+  ];
+  const illum = /Illumanet/i.test(ua);
+  const match = illum ? null : BROWSERS.find(([re]) => re.test(ua));
+  const [name, how] = illum
+    ? ['Illumanet', 'Settings → Privacy/Security → disable tracker or ad blocking for havoc.my.id']
+    : isElectron
+      ? ['this embedded browser', 'open havoc.my.id in Chrome, Edge, or Firefox for the full ad experience']
+      : match ? [match[1], match[2]] : ['your browser', 'disable your ad blocker or allowlist havoc.my.id'];
+  const el = document.createElement('div');
+  el.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[700] w-[92%] max-w-md bg-dark-900 border border-amber-500/40 rounded-xl shadow-2xl p-3.5 flex items-start gap-3';
+  el.innerHTML = `
+    <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i>
+    <div class="flex-1 min-w-0">
+      <div class="text-[11px] font-bold text-white mb-1">Ads are on</div>
+      <div class="text-[10px] text-slate-400 leading-relaxed">
+        ${name}'s ad blocker can block Google ads. For the full Havoc ad experience (including rewarded video), ${how} — Havoc and direct-sold ads always play either way.
+      </div>
+    </div>
+    <button class="text-slate-500 hover:text-white text-xs shrink-0" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>`;
+  el.querySelector('button').onclick = () => { sessionStorage.setItem('havoc_adblock_notice','1'); el.remove(); };
+  document.body.appendChild(el);
+}
 window.setAdsEnabled = (on) => {
   localStorage.setItem('havoc_ads_enabled', on ? '1' : '0');
   updateAdBanner();
+  if(on) showAdBlockerNotice();
 };
 function applyAdToggle(){
   updateAdBanner();
