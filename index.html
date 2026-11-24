@@ -3786,6 +3786,15 @@ async function tryGamVideoAd(){
             });
             muteAdVideos();
             new MutationObserver(muteAdVideos).observe(container, { childList:true, subtree:true });
+            // Inspect what IMA actually loaded/inserted
+            try{
+              const ads = adsManager.getAds?.() || [];
+              console.log('[ads] ima ads loaded:', ads.length, ads.map(a => ({type:a.getContentType?.(), dur:a.getDuration?.(), sz:a.getSize?.()?.toString()})));
+            }catch(e){ console.log('[ads] getAds failed:', e); }
+            setTimeout(() => {
+              console.log('[ads] ima container html:', container.innerHTML.slice(0, 400));
+              console.log('[ads] ima container children:', container.childElementCount, 'iframes:', container.querySelectorAll('iframe').length);
+            }, 2500);
             // Progress bar from IMA's ad progress API + video element diagnostics
             let _vidLogCount = 0;
             _imaProgressTimer = setInterval(() => {
