@@ -3741,6 +3741,9 @@ async function tryGamVideoAd(){
           setTimeout(closeImaAd, 1500);
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => { console.log('[ads] IMA ad skipped — no reward'); closeImaAd(); });
+        // Only count as shown once playback actually starts — a loaded-but-blocked
+        // ad (black player, ad blockers) never fires this and falls back instead
+        adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => { console.log('[ads] IMA ad started — playing'); done(true); });
         adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, err => {
           console.log('[ads] IMA ad error:', err.getError?.()?.getMessage?.() || err);
           closeImaAd();
@@ -3769,7 +3772,8 @@ async function tryGamVideoAd(){
                 if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
               }catch(e){}
             }, 500);
-            done(true);
+            // If playback never starts (blocked media, dead stream) bail to fallback
+            setTimeout(() => { if(!settled){ console.log('[ads] IMA ad never started — falling back'); closeImaAd(); done(false); } }, 10000);
           }catch(err){ console.warn('[ads] IMA init failed:', err); closeImaAd(); done(false); }
         }));
       });
