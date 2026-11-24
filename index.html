@@ -3799,10 +3799,12 @@ async function tryGamVideoAd(){
 
         // IMA needs the container visible & laid out before playback init —
         // it was display:none when the AdDisplayContainer was constructed
-        requestAnimationFrame(() => requestAnimationFrame(() => {
+        requestAnimationFrame(() => requestAnimationFrame(async () => {
           try{
             console.log('[ads] ima container size:', container.offsetWidth, 'x', container.offsetHeight);
-            displayContainer.initialize?.();
+            // initialize() is async in current ima3.js — must await before
+            // init/start or playback silently never begins (0 ads, no events)
+            await Promise.resolve(displayContainer.initialize?.());
             adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
             adsManager.start();
             // Chrome blocks unmuted autoplay once user activation expires —
