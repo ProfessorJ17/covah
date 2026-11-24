@@ -415,17 +415,20 @@
     body.chat-themed #membersPanel .avatar-wrapper > img{filter:none!important}
     body.chat-themed #membersPanel .avatar-wrapper::after{display:none!important}
     body.chat-themed #membersPanel .avatar-wrapper::before{display:none!important}
-    /* DM / Friends / Pending list avatars stay clean too — same as members */
+    /* DM / Friends / Pending / message feed avatars stay clean too — same as members */
+    body.chat-themed #msgFeed .avatar-wrapper > img,
     body.chat-themed #dmList .avatar-wrapper > img,
     body.chat-themed #friendsList .avatar-wrapper > img,
     body.chat-themed #incomingRequests .avatar-wrapper > img,
     body.chat-themed #outgoingRequests .avatar-wrapper > img,
     body.chat-themed #inviteFriendList .avatar-wrapper > img{filter:none!important}
+    body.chat-themed #msgFeed .avatar-wrapper::after,
     body.chat-themed #dmList .avatar-wrapper::after,
     body.chat-themed #friendsList .avatar-wrapper::after,
     body.chat-themed #incomingRequests .avatar-wrapper::after,
     body.chat-themed #outgoingRequests .avatar-wrapper::after,
     body.chat-themed #inviteFriendList .avatar-wrapper::after,
+    body.chat-themed #msgFeed .avatar-wrapper::before,
     body.chat-themed #dmList .avatar-wrapper::before,
     body.chat-themed #friendsList .avatar-wrapper::before,
     body.chat-themed #incomingRequests .avatar-wrapper::before,
@@ -3783,11 +3786,16 @@ async function tryGamVideoAd(){
             });
             muteAdVideos();
             new MutationObserver(muteAdVideos).observe(container, { childList:true, subtree:true });
-            // Progress bar from IMA's ad progress API
+            // Progress bar from IMA's ad progress API + video element diagnostics
+            let _vidLogCount = 0;
             _imaProgressTimer = setInterval(() => {
               try{
                 const p = adsManager.getAdProgress?.();
                 if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
+                if(_vidLogCount++ < 12){
+                  const vids = container.querySelectorAll('video');
+                  console.log('[ads] video els:', vids.length, Array.from(vids).map(v => ({paused:v.paused, rs:v.readyState, err:v.error?.code, src:(v.currentSrc||'').slice(0,60), muted:v.muted})));
+                }
               }catch(e){}
             }, 500);
             // If playback never starts (blocked media, dead stream) bail to fallback
