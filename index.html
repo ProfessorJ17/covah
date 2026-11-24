@@ -2959,8 +2959,8 @@ S.profileStyle = {
 // ===== SATOSHIS + GAM REWARDED ADS =====
 // TODO: fill these from your GAM network (GAM → Inventory → Ad units → rewarded unit path)
 const GAM_NETWORK_CODE = '22101006229';
-const GAM_REWARDED_UNIT = 'havoc_rewarded';
-const GAM_VIDEO_UNIT = 'havoc_rewarded_video'; // IMA SDK video rewarded unit
+const GAM_REWARDED_UNIT = 'havoc_rewarded_video'; // GPT rewarded slot — serves video creatives natively
+const GAM_VIDEO_UNIT = 'havoc_rewarded_video'; // kept for reference; IMA path no longer used
 const GAM_BANNER_UNIT = 'havoc_bottom_banner';
 const REWARDED_AD_SATS = 2;  // sats granted per fully-watched rewarded video
 // Fallback "house" video when GAM rewarded has no fill — clearly labeled,
@@ -3473,8 +3473,8 @@ window.watchRewardedAd = async () => {
   if(GAM_NETWORK_CODE === 'YOUR_NETWORK_CODE') return alert('No ads available right now — check back later.');
   // GAM policy: explicit user opt-in before any rewarded ad
   if(!confirm('Watch an ad to earn sats?')) return;
-  // Real video ads via IMA SDK first — falls through on no-fill
-  if(await tryGamVideoAd()) return;
+  // GPT rewarded slot serves video creatives natively (havoc_rewarded_video
+  // unit) — Google's own player handles playback, autoplay and reward events.
   // GPT display rewarded reported no-fill — go straight to the house video
   if(_rewardedEmpty){
     console.log('[ads] GAM rewarded no-fill — playing house video fallback');
@@ -3786,12 +3786,11 @@ async function tryGamVideoAd(){
             });
             muteAdVideos();
             new MutationObserver(muteAdVideos).observe(container, { childList:true, subtree:true });
-            // Inspect what IMA actually loaded/inserted
-            try{
-              const ads = adsManager.getAds?.() || [];
-              console.log('[ads] ima ads loaded:', ads.length, ads.map(a => ({type:a.getContentType?.(), dur:a.getDuration?.(), sz:a.getSize?.()?.toString()})));
-            }catch(e){ console.log('[ads] getAds failed:', e); }
             setTimeout(() => {
+              try{
+                const ads = adsManager.getAds?.() || [];
+                console.log('[ads] ima ads loaded:', ads.length, ads.map(a => ({type:a.getContentType?.(), dur:a.getDuration?.(), sz:a.getSize?.()?.toString()})));
+              }catch(e){ console.log('[ads] getAds failed:', e); }
               console.log('[ads] ima container html:', container.innerHTML.slice(0, 400));
               console.log('[ads] ima container children:', container.childElementCount, 'iframes:', container.querySelectorAll('iframe').length);
             }, 2500);
