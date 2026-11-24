@@ -3765,7 +3765,11 @@ async function tryGamVideoAd(){
             console.log('[ads] IMA reward on cooldown — view counted, sats skipped');
           }
           updateSatsDisplay();
-          setTimeout(closeImaAd, 1500);
+          // Ad complete — require explicit OK before closing so the user
+          // confirms they watched to the end
+          const st = $('videoAdStatus'); if(st) st.innerHTML = '<span class="text-emerald-400 font-bold">Ad complete — reward earned</span> · press OK to close';
+          const db = $('videoAdDoneBtn'); if(db){ db.textContent = 'OK'; db.classList.remove('hidden'); }
+          const x = $('videoAdCloseBtn'); if(x) x.classList.remove('hidden');
         });
         adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => { console.log('[ads] IMA ad skipped — no reward'); closeImaAd(); });
         // Only count as shown once playback actually starts — a loaded-but-blocked
