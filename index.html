@@ -1822,7 +1822,7 @@
 </div>
 
 <!-- REWARDED VIDEO AD (direct-sold) — viewers earn +1 sat on completed view -->
-<div id="modal-videoAd" class="fixed inset-0 z-[600] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+<div id="modal-videoAd" oncontextmenu="event.preventDefault()" class="fixed inset-0 z-[600] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
   <div class="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
     <div class="flex items-center justify-between px-4 py-2.5 border-b border-dark-700">
       <div class="flex items-center gap-2 min-w-0">
@@ -3460,8 +3460,19 @@ function initGam(){
     });
   }).catch(e => console.warn('[ads] GAM init failed:', e));
 }
+// Ad funnel analytics — fire-and-forget writes to the adEvents collection
+// so the admin can see Watch Ad clicks vs completed claims per ad.
+function trackAdEvent(action, extra = {}){
+  try{
+    console.log('[ads] event:', action, extra);
+    if(S.user?.uid) addDoc(collection(db,'adEvents'), {
+      uid: S.user.uid, action, ...extra, ts: Date.now()
+    }).catch(e => console.warn('[ads] event write failed:', e));
+  }catch(e){}
+}
 window.watchRewardedAd = async () => {
   if(!S.user || !S.profile) return alert('Sign in first');
+  trackAdEvent('watch_ad_click');
   // Direct-sold video ads take priority — advertiser paid the admin upfront,
   // viewer earns +1 sat on completed view (survey-style).
   const directAds = await getActiveVideoAds();
@@ -3621,6 +3632,7 @@ function _wireVideoAd(){
   });
   v.addEventListener('ended', () => {
     _videoAdFinished = true;
+    trackAdEvent('ad_complete', { adId: v.dataset.adId || '' });
     const done = $('videoAdDoneBtn'); if(done) done.classList.remove('hidden');
     const st = $('videoAdStatus'); if(st) st.innerHTML = 'Ad complete — claim your reward below';
   });
@@ -3660,6 +3672,7 @@ window.closeVideoAd = async (completed) => {
   const v = $('rewardedVideo');
   const adId = v.dataset.adId || '';
   const reward = completed && _videoAdFinished;
+  if(completed) trackAdEvent('ad_claim_click', { adId, finished: _videoAdFinished });
   v.pause(); v.removeAttribute('src'); v.load();
   modal.classList.add('hidden'); modal.classList.remove('flex');
   if(reward){
@@ -3760,6 +3773,7 @@ async function tryGamVideoAd(){
         _imaAdsManager = adsManager; _imaActive = true;
 
         adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
+          trackAdEvent('ima_ad_complete');
           // Watched to the end — grant sats (same cooldown as direct-sold)
           const last = +localStorage.getItem('havoc_last_ad_reward') || 0;
           const amt = $('videoAdRewardAmt');
@@ -9968,9 +9982,11 @@ window.authTab = tab => {
 
 document.querySelectorAll('[id^="modal-"]').forEach(m => {
   let clickTarget = null;
-  m.addEventListener('mousedown', e => { clickTarget = e.target; });
+  m.addEventListener('mousedown', e => { if(e.button !== 0){ clickTarget = null; return; } clickTarget = e.target; });
   m.addEventListener('mouseup', e => {
-    if(e.target === m && clickTarget === m) m.classList.add('hidden');
+    // Left-click on backdrop dismisses — EXCEPT the ad modal, which only
+    // closes via its own buttons (right-click must never kill a playing ad)
+    if(e.button === 0 && e.target === m && clickTarget === m && m.id !== 'modal-videoAd') m.classList.add('hidden');
     clickTarget = null;
   });
 });
