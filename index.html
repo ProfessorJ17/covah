@@ -3752,7 +3752,11 @@ async function tryGamVideoAd(){
       });
       adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, e => {
         clearTimeout(reqTimeout);
-        const adsManager = e.getAdsManager(displayContainer);
+        // getAdsManager() takes the content <video> element (used for
+        // pause/resume plumbing), NOT the AdDisplayContainer — passing the
+        // container left the manager with no playback surface (0 events)
+        const contentVideo = $('rewardedVideo');
+        const adsManager = e.getAdsManager(contentVideo);
         _imaAdsManager = adsManager; _imaActive = true;
 
         adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
@@ -3846,6 +3850,8 @@ async function tryGamVideoAd(){
 
       const adsRequest = new google.ima.AdsRequest();
       adsRequest.adTagUrl = imaAdTagUrl();
+      try{ adsRequest.setAdWillAutoPlay(true); }catch(e){}
+      try{ adsRequest.linearAdSlotWidth = 640; adsRequest.linearAdSlotHeight = 360; }catch(e){}
       adsLoader.requestAds(adsRequest);
     });
   }catch(e){
