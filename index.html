@@ -3845,6 +3845,9 @@ async function tryGamVideoAd(){
           const isHouse = !advertiser || /house/i.test(advertiser);
           const rAmt = $('videoAdRewardAmt');
           if(rAmt) rAmt.textContent = isHouse ? 'house ad — no sats' : '+' + REWARDED_AD_SATS + ' sats';
+          // Notify during playback too — don't let users think a house ad pays
+          const st = $('videoAdStatus');
+          if(isHouse && st) st.innerHTML = 'House ad — this is our own promo, <span class="text-slate-400">watching earns no sats</span> · press OK when done · <span id="videoAdRewardAmt" class="text-bch font-bold">house ad — no sats</span>';
           console.log('[ads] IMA LOADED — advertiser:', JSON.stringify(advertiser), '| house:', isHouse);
         });
         // Debug: log every IMA lifecycle event to see where playback stalls
