@@ -3789,11 +3789,26 @@ async function tryGamVideoAd(){
         const adsManager = e.getAdsManager(contentVideo, adsRenderingSettings);
         _imaAdsManager = adsManager; _imaActive = true;
 
-        adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
-          trackAdEvent('ima_ad_complete');
+        adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, (adEvent) => {
+          // Identify the advertiser — house creatives (our own $0 uploads)
+          // must pay 0 sats; sats are backed by real ad revenue only
+          const adObj = adEvent?.getAd?.();
+          const advertiser = adObj?.getAdvertiser?.() || '';
+          const adSystem = adObj?.getAdSystem?.() || '';
+          console.log('[ads] IMA ad complete — advertiser:', JSON.stringify(advertiser), '| adSystem:', adSystem);
+          trackAdEvent('ima_ad_complete', { advertiser, adSystem });
+          const isHouse = !advertiser || /house/i.test(advertiser);
+          const amt = $('videoAdRewardAmt');
+          const st = $('videoAdStatus');
+          if(isHouse){
+            if(amt) amt.textContent = 'House ad — no sats earned';
+            if(st) st.innerHTML = '<span class="text-slate-400 font-bold">Ad complete — house ad, no reward</span> · press OK to close';
+            const db = $('videoAdDoneBtn'); if(db){ db.textContent = 'OK'; db.classList.remove('hidden'); }
+            const x = $('videoAdCloseBtn'); if(x) x.classList.remove('hidden');
+            return;
+          }
           // Watched to the end — grant sats (same cooldown as direct-sold)
           const last = +localStorage.getItem('havoc_last_ad_reward') || 0;
-          const amt = $('videoAdRewardAmt');
           if(Date.now() - last >= AD_REWARD_COOLDOWN_MS){
             localStorage.setItem('havoc_last_ad_reward', String(Date.now()));
             addSats(REWARDED_AD_SATS);
@@ -3805,7 +3820,7 @@ async function tryGamVideoAd(){
           updateSatsDisplay();
           // Ad complete — require explicit OK before closing so the user
           // confirms they watched to the end
-          const st = $('videoAdStatus'); if(st) st.innerHTML = '<span class="text-emerald-400 font-bold">Ad complete — reward earned</span> · press OK to close';
+          if(st) st.innerHTML = '<span class="text-emerald-400 font-bold">Ad complete — reward earned</span> · press OK to close';
           const db = $('videoAdDoneBtn'); if(db){ db.textContent = 'OK'; db.classList.remove('hidden'); }
           const x = $('videoAdCloseBtn'); if(x) x.classList.remove('hidden');
         });
@@ -3821,6 +3836,16 @@ async function tryGamVideoAd(){
           const ge = err.getError?.() || {};
           console.log('[ads] IMA ad error:', ge.getMessage?.() || err, '| code:', ge.getErrorCode?.(), '| inner:', ge.getInnerError?.()?.getErrorCode?.(), ge.getInnerError?.()?.getMessage?.());
           closeImaAd();
+        });
+        adsManager.addEventListener(google.ima.AdEvent.Type.LOADED, (adEvent) => {
+          // Update the reward label as soon as the creative is known —
+          // house ads pay 0, so don't promise sats that won't come
+          const adObj = adEvent?.getAd?.();
+          const advertiser = adObj?.getAdvertiser?.() || '';
+          const isHouse = !advertiser || /house/i.test(advertiser);
+          const rAmt = $('videoAdRewardAmt');
+          if(rAmt) rAmt.textContent = isHouse ? 'house ad — no sats' : '+' + REWARDED_AD_SATS + ' sats';
+          console.log('[ads] IMA LOADED — advertiser:', JSON.stringify(advertiser), '| house:', isHouse);
         });
         // Debug: log every IMA lifecycle event to see where playback stalls
         ['LOADED','STARTED','FIRST_QUARTILE','MIDPOINT','THIRD_QUARTILE','COMPLETE','PAUSED','RESUMED','SKIPPED','ALL_ADS_COMPLETED','CONTENT_PAUSE_REQUESTED','CONTENT_RESUME_REQUESTED','USER_CLOSE','LOG','AD_BREAK_FETCH_ERROR'].forEach(t => {
@@ -3876,24 +3901,11 @@ async function tryGamVideoAd(){
             });
             muteAdVideos();
             new MutationObserver(muteAdVideos).observe(container, { childList:true, subtree:true });
-            setTimeout(() => {
-              try{
-                const ads = adsManager.getAds?.() || [];
-                console.log('[ads] ima ads loaded:', ads.length, ads.map(a => ({type:a.getContentType?.(), dur:a.getDuration?.(), sz:a.getSize?.()?.toString()})));
-              }catch(e){ console.log('[ads] getAds failed:', e); }
-              console.log('[ads] ima container html:', container.innerHTML.slice(0, 400));
-              console.log('[ads] ima container children:', container.childElementCount, 'iframes:', container.querySelectorAll('iframe').length);
-            }, 2500);
-            // Progress bar from IMA's ad progress API + video element diagnostics
-            let _vidLogCount = 0;
+            // Progress bar from IMA's ad progress API
             _imaProgressTimer = setInterval(() => {
               try{
                 const p = adsManager.getAdProgress?.();
                 if(p?.duration){ $('videoAdProgress').style.width = Math.min(100,(1 - p.remainingTime/p.duration)*100) + '%'; }
-                if(_vidLogCount++ < 12){
-                  const vids = container.querySelectorAll('video');
-                  console.log('[ads] video els:', vids.length, Array.from(vids).map(v => ({paused:v.paused, rs:v.readyState, err:v.error?.code, src:(v.currentSrc||'').slice(0,60), muted:v.muted})));
-                }
               }catch(e){}
             }, 500);
             // If playback never starts (blocked media, dead stream) bail to fallback
