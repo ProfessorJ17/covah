@@ -2696,9 +2696,11 @@ onAuthStateChanged(auth, async user => {
 });
 
 window.doLogin = async e => { e.preventDefault(); clearAuthErr(); const email=$('lEmail').value.trim(), pass=$('lPass').value; try{
-  const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
-  if(ban1.exists()) return showAuthErr('This account is banned');
-  await signInWithEmailAndPassword(auth,email,pass);
+  const cred = await signInWithEmailAndPassword(auth,email,pass);
+  try {
+    const ban1 = await getDoc(doc(db,'bannedUsers', email.toLowerCase()));
+    if(ban1.exists()) { await signOut(auth); return showAuthErr('This account is banned'); }
+  } catch(e2) { console.warn('bannedUsers check failed', e2); }
   saveRemember(email,pass);
   closeModal('auth');
   // Auth state handler will update UI automatically
@@ -2709,22 +2711,42 @@ window.doRegister = async e => {
   if(!handle) return showAuthErr('Handle required');
   if(pass.length < 8) return showAuthErr('Password must be at least 8 characters');
   const domain=email.split('@')[1];
-  if(domain){ const ban=await getDoc(doc(db,'blacklistedDomains',domain)); if(ban.exists()) return showAuthErr(`@${domain} is blocked`); }
   try{
+    // Create the auth user first — Firestore rules require auth for reads/writes,
+    // so uniqueness checks must run after sign-in, not before.
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    const cleanup = async msg => { try{ await cred.user.delete(); }catch(e){} try{ await signOut(auth); }catch(e){} showAuthErr(msg); };
+    // Firestore credential propagation races sign-in: requests fired right after
+    // createUser can go out before the new user's ID token reaches the SDK,
+    // yielding "Missing or insufficient permissions". Retry with backoff.
+    const writeWithRetry = async (fn, tries=5) => {
+      let last;
+      for(let i=0;i<tries;i++){
+        try{ return await fn(); }catch(e){ last=e; await new Promise(r=>setTimeout(r,400*(i+1))); }
+      }
+      throw last;
+    };
+
+    // Check if email domain is blacklisted
+    if(domain){
+      try { const ban=await writeWithRetry(() => getDoc(doc(db,'blacklistedDomains',domain))); if(ban.exists()) return await cleanup(`@${domain} is blocked`); }
+      catch(e){ console.warn('blacklistedDomains check failed', e); }
+    }
+
     // Check if handle is already taken
     const handleKey = handle.toLowerCase();
-    const taken = await getDoc(doc(db,'usernames', handleKey));
-    if(taken.exists()) return showAuthErr('Handle already taken');
+    try { const taken = await writeWithRetry(() => getDoc(doc(db,'usernames', handleKey))); if(taken.exists()) return await cleanup('Handle already taken'); }
+    catch(e){ console.warn('usernames check failed', e); }
 
     // Check if email is already registered (using emails collection for uniqueness)
-    const emailDoc = await getDoc(doc(db, 'emails', email));
-    if(emailDoc.exists()) return showAuthErr('Email already registered');
+    try { const emailDoc = await writeWithRetry(() => getDoc(doc(db, 'emails', email))); if(emailDoc.exists()) return await cleanup('Email already registered'); }
+    catch(e){ console.warn('emails check failed', e); }
 
-    const cred=await createUserWithEmailAndPassword(auth,email,pass);
     const profile={uid:cred.user.uid,email,handle,avatar:userAvatar(cred.user.uid),bio:'',status:'',createdAt:Date.now()};
-    await setDoc(doc(db,'users',cred.user.uid),profile);
-    await setDoc(doc(db,'usernames', handleKey), { uid:cred.user.uid, handle, updatedAt:Date.now() });
-    await setDoc(doc(db, 'emails', email), { uid:cred.user.uid, email, registeredAt:Date.now() }); // Email index for uniqueness
+    try { await writeWithRetry(() => setDoc(doc(db,'users',cred.user.uid),profile)); }
+    catch(e){ return await cleanup(e.message || 'Failed to create profile'); }
+    try { await writeWithRetry(() => setDoc(doc(db,'usernames', handleKey), { uid:cred.user.uid, handle, updatedAt:Date.now() })); } catch(e){ console.warn('usernames write failed', e); }
+    try { await writeWithRetry(() => setDoc(doc(db, 'emails', email), { uid:cred.user.uid, email, registeredAt:Date.now() })); } catch(e){ console.warn('emails write failed', e); } // Email index for uniqueness
     S.profile=profile; closeModal('auth');
   }catch(err){ showAuthErr(err.message); }
 };
@@ -2734,7 +2756,12 @@ window.doForgot = async () => { clearAuthErr(); const email=$('fEmail').value.tr
 window.doSignOut = async () => {
   console.log('Signing out...');
   try {
+    if(S.call) endCall(false);
     leaveVoice();
+    try{ incomingUnsub?.(); }catch(e){}
+    incomingUnsub = null;
+    try{ callDocUnsub?.(); callSignalUnsub?.(); }catch(e){}
+    callDocUnsub = callSignalUnsub = null;
     await signOut(auth);
     console.log('Signed out successfully');
   } catch(e) {
